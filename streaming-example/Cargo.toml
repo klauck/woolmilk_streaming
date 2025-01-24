@@ -1,0 +1,12 @@
+[package]
+name = "streaming-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ballista = "43.0.0"
+ballista-core = "43.0.0"
+ballista-executor = "43.0.0"
+ballista-scheduler = "43.0.0"
+datafusion = "43.0.0"
+tokio = "1.43.0"
