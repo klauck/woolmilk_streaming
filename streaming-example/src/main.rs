@@ -1,7 +1,6 @@
 use ballista::prelude::*;
 use datafusion::{
-    execution::SessionStateBuilder,
-    prelude::{DataFrame, ParquetReadOptions, SessionConfig, SessionContext},
+    execution::SessionStateBuilder, prelude::{DataFrame, ParquetReadOptions, SessionConfig, SessionContext}
 };
 use tokio;
 use std::env;
