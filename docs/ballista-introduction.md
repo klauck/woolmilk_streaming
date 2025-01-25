@@ -117,4 +117,4 @@ cargo run
 
 ## Continue Reading
 
-[Ballista Scheduler & Executer]("ballista-scheduler-executer.md")
+[Ballista Scheduler & Executer](ballista-scheduler-executer.md)

@@ -68,4 +68,4 @@ At the end, the Ballista Scheduler combines all results and sends them back to t
 
 ## Continue Reading
 
-[Nexmark Queries Over Ballista]("nexmark-queries-over-ballista.md")
+[Nexmark Queries Over Ballista](nexmark-queries-over-ballista.md)
