@@ -9,7 +9,7 @@ pub async fn nex_mark_q5(ctx: &SessionContext) -> Result<DataFrame, std::io::Err
             WITH WindowedBids AS (
                 SELECT auction, COUNT(*) AS num
                 FROM Bid
-                WHERE date_time >= CURRENT_TIMESTAMP - INTERVAL '60 minutes'
+                WHERE CAST(date_time AS TIMESTAMP) >= CURRENT_TIMESTAMP - INTERVAL '60 minutes'
                 GROUP BY auction
             ),
             MaxBidCount AS (
@@ -45,8 +45,8 @@ pub async fn nex_mark_q4(ctx: &SessionContext) -> Result<DataFrame, std::io::Err
                         ON 
                             A.id = B.auction
                         WHERE 
-                            B.datetime < A.expires 
-                            AND A.expires < CURRENT_TIMESTAMP
+                            B.date_time < A.expires 
+                            AND CAST( A.expires AS TIMESTAMP) < CURRENT_TIMESTAMP
                         GROUP BY 
                             A.id, A.category
                     ) Q
