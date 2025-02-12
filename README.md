@@ -3,6 +3,11 @@
 In this repository, we investigate how to run streaming queries in a multi-node cluster using [Apache DataFusion](https://datafusion.apache.org/), or more general in a composed data management system.
 The idea of using DataFusion is that we can "spend most time implementing value-adding features rather than replicating existing analytic engine technologies" [1].
 
+## Overview
+Sketch of data transfer from streaming sources to sink(s)
+
+![streaming_scenario](https://github.com/user-attachments/assets/7dc973de-dd1b-469e-9dbb-7b92d0764640)
+
 
 ## Resources
 
