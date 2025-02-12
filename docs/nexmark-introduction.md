@@ -16,13 +16,19 @@ cargo install nexmark --features bin
 
 ### Generating Data
 
-To generate data we have to run nexmark command just like
+To generate data, run the generate-data.py file located in the scripts folder. This Python script executes the following Nexmark command:
 
 ```bash
 nexmark -n 1000 --no-wait
 ```
 
-This command generates a text file containing JSON objects, one per line. The nexmark consist over `Auction`, `Bid` and `Person` objects.
+To generate the complete dataset, run the Python script as follows:
+
+```bash
+python3 generate-data.py 100000
+```
+
+Here, `100000` represents the number of records to generate. The script will also generate any missing category data. This command produces a text file containing JSON objects (one per line). The Nexmark dataset consists of `Auction`, `Bid`, `Category`, and `Person` objects.
 
 ## Converting Data Into Parqueet
 
@@ -41,7 +47,8 @@ data_path = os.path.join(data_dir, 'data.txt')
 data = {
     "Person": [],
     "Auction": [],
-    "Bid": []
+    "Bid": [],
+    "Category": []
 }
 
 # data file is in json lines format

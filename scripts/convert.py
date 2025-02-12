@@ -10,7 +10,8 @@ data_path = os.path.join(data_dir, 'data.txt')
 data = {
     "Person": [],
     "Auction": [],
-    "Bid": []
+    "Bid": [],
+    "Category": [],
 }
 
 # data file is in json lines format

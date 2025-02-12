@@ -13,6 +13,7 @@ async fn main() -> Result<(), std::io::Error>  {
     let auction_path = path.join("../data/auction.parquet").to_str().unwrap().to_string();
     let person_path = path.join("../data/person.parquet").to_str().unwrap().to_string();
     let bid_path = path.join("../data/bid.parquet").to_str().unwrap().to_string();
+    let category_path = path.join("../data/category.parquet").to_str().unwrap().to_string();
 
     //if we want to use datafusion without ballista we can set this to true
     let use_plain_datafusion = true;
@@ -43,14 +44,19 @@ async fn main() -> Result<(), std::io::Error>  {
     ctx.register_parquet("auction", auction_path, ParquetReadOptions::default()).await?;
     ctx.register_parquet("person", person_path, ParquetReadOptions::default()).await?;
     ctx.register_parquet("bid", bid_path, ParquetReadOptions::default()).await?;
+    ctx.register_parquet("category", category_path, ParquetReadOptions::default()).await?;
 
     let df_q1 = nexmark_queries::nex_mark_q1(&ctx).await?;
     let df_q2 = nexmark_queries::nex_mark_q2(&ctx).await?;
     let df_q3 = nexmark_queries::nex_mark_q3(&ctx).await?;
+    let df_q4 = nexmark_queries::nex_mark_q4(&ctx).await?;
+    let df_q5 = nexmark_queries::nex_mark_q5(&ctx).await?;
 
     df_q1.show().await?;
     df_q2.show().await?;
     df_q3.show().await?;
+    df_q4.show().await?;
+    df_q5.show().await?;
 
     Ok(())
 }
