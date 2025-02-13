@@ -46,6 +46,33 @@ class SimpleFlightServer(fl.FlightServerBase):
             raise NotImplementedError(
                 f"Unknown ticket: {ticket.ticket}"
             )
+        
+    def do_put(self, context, descriptor, reader, writer):
+        # get dataset name
+        dataset_name = descriptor.command.decode("utf-8")
+        print(f"Received dataset name: {dataset_name}")
+
+        # Read the table sent by the client
+        new_table = reader.read_all()
+
+        self.table = pa.concat_tables([self.table, new_table])
+
+        print("Data updated successfully!")
+
+
+    def do_action(self, context, action):
+        if action.type == "get_users_ids":
+            body_bytes = action.body.to_pybytes()
+            what_client_has_sent = body_bytes.decode("utf-8")
+
+            print(f"Server received action: {action.type}, with payload: {what_client_has_sent}")
+
+            # get all users ids
+            ids = self.table["id"].to_pylist()
+
+            for id in ids:
+                yield fl.Result(str(id).encode("utf-8"))
+
 
 
 if __name__ == "__main__":
