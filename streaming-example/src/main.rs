@@ -1,10 +1,12 @@
 use ballista::prelude::*;
 use datafusion::{
-    execution::SessionStateBuilder, prelude::{ParquetReadOptions, SessionConfig, SessionContext}
+    execution::SessionStateBuilder, logical_expr::LogicalPlan, prelude::{ParquetReadOptions, SessionConfig, SessionContext}
 };
+use substrait_test::{generate_substrait_plan_from_df, load_substrait_plan_from_file};
 use tokio;
 use std::env;
 mod nexmark_queries;
+mod substrait_test;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error>  {
@@ -17,7 +19,6 @@ async fn main() -> Result<(), std::io::Error>  {
 
     //if we want to use datafusion without ballista we can set this to true
     let use_plain_datafusion = true;
-
     let ctx: SessionContext;
 
     if use_plain_datafusion 
@@ -47,6 +48,11 @@ async fn main() -> Result<(), std::io::Error>  {
     ctx.register_parquet("category", category_path, ParquetReadOptions::default()).await?;
 
     let df_q1 = nexmark_queries::nex_mark_q1(&ctx).await?;
+
+    let out_file = "nx_1.json";
+    generate_substrait_plan_from_df(&df_q1, &ctx, out_file).await?;
+    load_substrait_plan_from_file(out_file, &ctx).await?;    
+
     let df_q2 = nexmark_queries::nex_mark_q2(&ctx).await?;
     let df_q3 = nexmark_queries::nex_mark_q3(&ctx).await?;
     let df_q4 = nexmark_queries::nex_mark_q4(&ctx).await?;
