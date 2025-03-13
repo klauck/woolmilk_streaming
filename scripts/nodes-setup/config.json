@@ -1,0 +1,29 @@
+{
+   "default_config": {
+      "chunk_size": 100000,
+      "data_dir": "/Users/usamabintariq/Documents/GitHub/woolmilk_streaming/data",
+      "script_name": "node_server_datafusion.py",
+      "serving_host": "0.0.0.0",
+      "serving_port": 8815,
+      "ssh_user": "testuser",
+      "ssh_port": 22,
+      "ssh_password": "6zY.{K3pB0Px"
+   },
+   "nodes": [
+      {
+         "name": "LocalNode",
+         "ssh_host": "192.168.0.103",
+         "ssh_user": "testuser",
+         "ssh_port": 22,
+         "ssh_password": "6zY.{K3pB0Px",
+         "serving_host": "0.0.0.0",
+         "serving_port": 8816,
+         "data_dir": "/Users/testuser/data",
+         "parquet_files": {
+            "bids": "bid_1.parquet",
+            "auctions": "auction_1.parquet",
+            "persons": "person_1.parquet"
+         }
+      }
+   ]
+}
