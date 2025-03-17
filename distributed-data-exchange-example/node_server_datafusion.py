@@ -3,15 +3,15 @@ import pyarrow.flight as fl
 from datafusion import SessionContext
 import os
 
-CHUNK_SIZE = 100000
-
 class NodeFlightServer(fl.FlightServerBase):
-    def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, **kwargs):
+    def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, chunk_size = 100000, **kwargs):
         location = f"grpc://{host}:{port}"
         super().__init__(location, **kwargs)
 
         self._host = host
         self._port = port
+        
+        self.CHUNK_SIZE = chunk_size
 
         self.ctx = SessionContext()
         for table_name, parquet_path in parquet_registrations.items():
@@ -71,7 +71,7 @@ class NodeFlightServer(fl.FlightServerBase):
         chunk_query = f"""
             SELECT *
             FROM ({base_sql}) AS sub
-            LIMIT {CHUNK_SIZE}
+            LIMIT {self.CHUNK_SIZE}
             OFFSET {offset}
         """
 
