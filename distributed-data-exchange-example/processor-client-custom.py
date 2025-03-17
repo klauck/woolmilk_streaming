@@ -2,29 +2,47 @@ import time
 import pyarrow as pa
 import pyarrow.flight as fl
 import pandas as pd
+import json
+from pyarrow._flight import Ticket
 
 class FlightDataClient:
-    def __init__(self, server_list):
-        self.server_list = server_list
-
-    def read_all_data_for_command(self, host, port, command: str):
+    def __init__(self, host, port, exit_host, exit_port, node_id=""):
+        self.host = host
+        self.port = port
+        self.node_id = node_id
         location = f"grpc://{host}:{port}"
-        client = fl.FlightClient(location)
+        self.client = fl.FlightClient(location)
+        exit_location = f"grpc://{exit_host}:{exit_port}"
+        self.exit_client = fl.FlightClient(exit_location)
+        print(f"Connected to {location}")
 
+    def read_all_data_for_command(self, command: str):
         descriptor = fl.FlightDescriptor.for_command(command.encode("utf-8"))
-        flight_info = client.get_flight_info(descriptor)
-
+        flight_info = self.client.get_flight_info(descriptor)
         ticket = flight_info.endpoints[0].ticket
 
         all_batches = []
         total_rows = 0
 
+        config = {
+            "node_id": self.node_id,
+            "command": command,
+        }
+        config_str = json.dumps(config)
+        new_ticket = Ticket(config_str)
+
+        descriptor = fl.FlightDescriptor.for_command(command)
+
         while True:
-            reader = client.do_get(ticket)
+            reader = self.client.do_get(new_ticket)
             chunk_table = reader.read_all()
 
             if chunk_table.num_rows == 0:
                 break
+
+            writer, _ = self.exit_client.do_put(descriptor, chunk_table.schema)
+            writer.write_table(chunk_table)
+            writer.close()
 
             total_rows += chunk_table.num_rows
             all_batches.extend(chunk_table.to_batches())
@@ -38,54 +56,40 @@ class FlightDataClient:
 
         return final_table
 
-    def run_nexmarkq1(self, host, port):
+    def run_command(self, command: str):
         start_time = time.time()
-        q1_table = self.read_all_data_for_command(host, port, "nexmarkq1")
+
+        q_table = self.read_all_data_for_command(command)
+
         end_time = time.time()
 
-        num_rows = q1_table.num_rows
-        data_mb = q1_table.nbytes / (1024 * 1024)
+        num_rows = q_table.num_rows
+        data_mb = q_table.nbytes / (1024 * 1024)
         total_sec = end_time - start_time
         data_rate = data_mb / total_sec if total_sec > 0 else 0
-        print(f"=== Nexmark Q1 on {host}:{port} ===")
+
+        print(f"=== {command} on {self.host}:{self.port} ===")
         print(f"Rows: {num_rows}")
         print(f"Data size: {data_mb:.2f} MB")
         print(f"Data rate: {data_rate:.2f} MB/sec")
         print(f"Time: {total_sec:.2f} sec")
         print("=== END ===\n")
-        return (num_rows, data_mb, end_time - start_time)
+        return num_rows, data_mb, total_sec
 
-    def run_nexmarkq2(self, host, port):
-        start_time = time.time()
-        q2_table = self.read_all_data_for_command(host, port, "nexmarkq2")
-        end_time = time.time()
+    def run_all_commands(self):
+        commands = ["nexmarkq1", "nexmarkq2"]
 
-        num_rows = q2_table.num_rows
-        data_mb = q2_table.nbytes / (1024 * 1024)
-        total_sec = end_time - start_time
-        data_rate = data_mb / total_sec if total_sec > 0 else 0
-        print(f"=== Nexmark Q2 on {host}:{port} ===")
-        print(f"Rows: {num_rows}")
-        print(f"Data size: {data_mb:.2f} MB")
-        print(f"Time: {end_time - start_time:.2f} sec")
-        print(f"Data rate: {data_rate:.2f} MB/sec")
-        print("=== END ===\n")
-        return (num_rows, data_mb, total_sec)
-
-    def run(self):
-        start = time.time()
-        for (host, port) in self.server_list:
-            print(f"--- Connecting to {host}:{port} ---\n")
-            self.run_nexmarkq1(host, port)
-            self.run_nexmarkq2(host, port)
-
-        end = time.time()
-        print(f"=== Finished all servers in {end - start:.2f} sec ===")
+        for command in commands:
+            self.run_command(command)
 
 if __name__ == "__main__":
-    servers = [
-        ("localhost", 8815),
-        ("localhost", 8816)
-    ]
-    client = FlightDataClient(servers)
-    client.run()
+    host = "localhost"
+    port = 8815
+    exit_host = "localhost"
+    exit_port = 8820
+    client1 = FlightDataClient(host, port, exit_host, exit_port, "node_1")
+    client2 = FlightDataClient(host, port, exit_host, exit_port, "node_2")
+    print("======NODE 1======\n")
+    client1.run_all_commands()
+    print("======NODE 2======\n")
+    client2.run_all_commands()
