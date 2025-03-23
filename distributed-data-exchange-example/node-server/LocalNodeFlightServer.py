@@ -4,7 +4,7 @@ import pyarrow as pa
 import pyarrow.flight as fl
 import os
 
-class IndividualNodeFlightServer(BaseNodeFlightServer):
+class LocalFlightServer(BaseNodeFlightServer):
     def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, chunk_size=100000, **kwargs):
         super().__init__(parquet_registrations, host, port, chunk_size, **kwargs)
         # { node_id: { command: rows_sent, ... }, ... }
