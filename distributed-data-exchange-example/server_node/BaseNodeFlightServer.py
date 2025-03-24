@@ -2,7 +2,17 @@ import pyarrow.flight as fl
 from datafusion import SessionContext
 
 class BaseNodeFlightServer(fl.FlightServerBase):
+    """
+    A Base Flight server that receives data from ProcessorNodes
+    """
     def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, chunk_size=100000, **kwargs):
+        """
+        Args:
+            parquet_registrations: Dict of table name to parquet file path.
+            host: Host for the server.
+            port: Port for the server.
+            chunk_size: Number of rows to return per chunk
+        """
         location = f"grpc://{host}:{port}"
         super().__init__(location, **kwargs)
 
@@ -15,6 +25,12 @@ class BaseNodeFlightServer(fl.FlightServerBase):
             self.ctx.register_parquet(table_name, parquet_path)
 
     def get_base_sql(self, command):
+        """
+        Get the base SQL query for the given command.
+
+        Args:
+            command: The command to run.
+        """
         if command == "nexmarkq1":
             return "SELECT auction, price, bidder, date_time FROM bids"
         elif command == "nexmarkq2":
@@ -34,6 +50,13 @@ class BaseNodeFlightServer(fl.FlightServerBase):
             raise fl.FlightInternalError(f"Unknown command '{command}'")
 
     def get_flight_info(self, context, descriptor):
+        """
+        Get the FlightInfo for the given descriptor.
+
+        Args:
+            context: The FlightContext for the request.
+            descriptor: The FlightDescriptor for the request.
+        """
         command = descriptor.command.decode("utf-8")
         base_sql = self.get_base_sql(command)
         schema_query = f"SELECT * FROM ({base_sql}) AS sub LIMIT 0"
