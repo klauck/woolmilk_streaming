@@ -1,4 +1,4 @@
-from BaseNodeFlightServer import BaseNodeFlightServer
+from .BaseNodeFlightServer import BaseNodeFlightServer
 import json
 import pyarrow as pa
 import pyarrow.flight as fl
@@ -6,11 +6,21 @@ import os
 
 class LocalFlightServer(BaseNodeFlightServer):
     def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, chunk_size=100000, **kwargs):
+        """
+        Args:
+            parquet_registrations: Dict of table name to parquet file path.
+            host: Host for the server.
+            port: Port for the server.
+            chunk_size: Number of rows to return per chunk.
+        """
         super().__init__(parquet_registrations, host, port, chunk_size, **kwargs)
         # { node_id: { command: rows_sent, ... }, ... }
         self.node_info = {}
 
     def do_get(self, context, ticket):
+        """
+        Receives a request for a chunk of data from a ProcessorNode.
+        """
         config_str = ticket.ticket.decode("utf-8")
         config = json.loads(config_str)
         command = config["command"]
@@ -52,7 +62,7 @@ if __name__ == "__main__":
         "persons":  os.path.join(data_dir, f"person_{node_index}.parquet"),
     }
 
-    server = IndividualNodeFlightServer(
+    server = LocalFlightServer(
         parquet_registrations=parquet_files,
         host="0.0.0.0",
         port=8815
