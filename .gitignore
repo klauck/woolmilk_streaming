@@ -1,2 +1,4 @@
 streaming-example/target
 data
+__pycache__
+venv
