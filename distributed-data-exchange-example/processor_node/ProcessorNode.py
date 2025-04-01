@@ -35,10 +35,11 @@ class ProcessorNode:
                 "id": location
             })
             print(f"[{self.node_id}] Connected to entry node at {location}")
-        
-        exit_location = f"grpc://{exit_host}:{exit_port}"
-        self.exit_client = fl.FlightClient(exit_location)
-        print(f"[{self.node_id}] Connected to exit node at {exit_location}\n")
+
+        if exit_host is not None and exit_port is not None:
+            exit_location = f"grpc://{exit_host}:{exit_port}"
+            self.exit_client = fl.FlightClient(exit_location)
+            print(f"[{self.node_id}] Connected to exit node at {exit_location}\n")
         
     def initialize_client_states(self, command: str):
         """
@@ -76,6 +77,10 @@ class ProcessorNode:
             command: The command to run.
             chunk_table: The table to forward.
         """
+        
+        if self.exit_client is None:
+            return
+
         descriptor = fl.FlightDescriptor.for_command(command)
         # Write the table to the exit node.
         writer, _ = self.exit_client.do_put(descriptor, chunk_table.schema)
