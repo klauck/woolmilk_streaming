@@ -13,6 +13,7 @@ class EntryNodeBase(BaseModel):
     serving_host: str
     serving_port: int
     parquet_files: Optional[Dict[str, str]] = None
+    env_name: str  # New field for environment name
 
 class EntryNodeCreate(EntryNodeBase):
     """
@@ -32,6 +33,7 @@ class EntryNodeUpdate(BaseModel):
     serving_host: Optional[str] = None
     serving_port: Optional[int] = None
     parquet_files: Optional[Dict[str, str]] = None
+    env_name: Optional[str] = None  # New field added for updates
     status: Optional[str] = None
     status_message: Optional[str] = None
 

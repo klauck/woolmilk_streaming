@@ -1,3 +1,4 @@
+# models/entry_node.py
 from sqlalchemy import Column, Integer, String, JSON
 from database import Base
 
@@ -12,8 +13,7 @@ class EntryNode(Base):
     ssh_password = Column(String)
     serving_host = Column(String)
     serving_port = Column(Integer)
-
     parquet_files = Column(JSON, nullable=True)
-
+    env_name = Column(String)  # New column for environment name
     status = Column(String, default="stopped")       # e.g. 'running','stopped','failed'
     status_message = Column(String, default="")
