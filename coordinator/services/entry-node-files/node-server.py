@@ -19,30 +19,16 @@ class BaseNodeFlightServer(fl.FlightServerBase):
         for table_name, parquet_path in parquet_registrations.items():
             self.ctx.register_parquet(table_name, parquet_path)
 
-    def get_base_sql(self, command):
-        if command == "nexmarkq1":
-            return "SELECT auction, price, bidder, date_time FROM bids"
-        elif command == "nexmarkq2":
-            return """
-                SELECT
-                    auction,
-                    price
-                FROM bids
-                WHERE
-                    auction = 1007
-                    OR auction = 1020
-                    OR auction = 2001
-                    OR auction = 2019
-                    OR auction = 2087
-            """
-        else:
-            raise fl.FlightInternalError(f"Unknown command '{command}'")
-
     def get_flight_info(self, context, descriptor):
-        command = descriptor.command.decode("utf-8")
-        base_sql = self.get_base_sql(command)
-        schema_query = f"SELECT * FROM ({base_sql}) AS sub LIMIT 0"
+        # Parse the JSON config passed in the descriptor.
+        config_str = descriptor.command.decode("utf-8")
+        config = json.loads(config_str)
+        if "command_str" not in config:
+            raise fl.FlightInternalError("Missing 'command_str' in ticket config")
 
+        command_str = config["command_str"]
+        # Wrap the provided SQL in a subquery to extract the schema.
+        schema_query = f"SELECT * FROM ({command_str}) AS sub LIMIT 0"
         schema_table = self.ctx.sql(schema_query).to_arrow_table()
         schema = schema_table.schema
 
@@ -64,20 +50,21 @@ class BaseNodeFlightServer(fl.FlightServerBase):
 class GroupNodeFlightServer(BaseNodeFlightServer):
     def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, chunk_size=100000, **kwargs):
         super().__init__(parquet_registrations, host, port, chunk_size, **kwargs)
-        # { command: rows_sent, ... }
-        self.group_rows_sent = {}
+        # Keep track of rows sent for each command_str.
+        self.group_rows_sent = {}  # { command_str: rows_sent }
 
     def do_get(self, context, ticket):
         config_str = ticket.ticket.decode("utf-8")
         config = json.loads(config_str)
-        command = config["command"]
+        if "command_str" not in config:
+            raise fl.FlightInternalError("Missing 'command_str' in ticket config")
+        command_str = config["command_str"]
 
-        base_sql = self.get_base_sql(command)
-        offset = self.group_rows_sent.get(command, 0)
+        offset = self.group_rows_sent.get(command_str, 0)
 
         chunk_query = f"""
             SELECT *
-            FROM ({base_sql}) AS sub
+            FROM ({command_str}) AS sub
             LIMIT {self.CHUNK_SIZE}
             OFFSET {offset}
         """
@@ -85,42 +72,58 @@ class GroupNodeFlightServer(BaseNodeFlightServer):
         chunk_table = self.ctx.sql(chunk_query).to_arrow_table()
 
         if chunk_table.num_rows == 0:
-            empty_schema = self.ctx.sql(f"{base_sql} LIMIT 0").to_arrow_table().schema
+            empty_schema_table = self.ctx.sql(f"{command_str} LIMIT 0").to_arrow_table()
+            empty_schema = empty_schema_table.schema
             empty_reader = pa.RecordBatchReader.from_batches(empty_schema, [])
             return fl.RecordBatchStream(empty_reader)
         else:
-            # Update the global offset.
-            self.group_rows_sent[command] = offset + chunk_table.num_rows
+            # Update offset.
+            self.group_rows_sent[command_str] = offset + chunk_table.num_rows
             return fl.RecordBatchStream(chunk_table.to_reader())
+
+def parse_parquet_files(files_str):
+    """
+    Expects a string of comma-separated key=value pairs, e.g.:
+        "bids=bid_1.parquet,auctions=auction.parquet,persons=person.parquet"
+    Returns a dict like:
+        {"bids": "bid_1.parquet", "auctions": "auction.parquet", "persons": "person.parquet"}
+    """
+    parquet_dict = {}
+    for pair in files_str.split(","):
+        key, val = pair.split("=")
+        parquet_dict[key.strip()] = val.strip()
+    return parquet_dict
 
 def main():
     parser = argparse.ArgumentParser(description="Group Node Flight Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=8815, help="Port to bind to (default: 8815)")
+    # const current file dir
+    current_file_dir = os.path.dirname(os.path.abspath(__file__))
     parser.add_argument(
         "--data_dir",
-        default=os.path.join("..", "..", "data"),
+        default=current_file_dir,
         help="Base directory containing the Parquet files (default: ../../data)"
     )
     parser.add_argument(
         "--parquet_files",
-        required=True,
+        default="bids=bid_1.parquet,auctions=auction.parquet,persons=person.parquet",
         help=(
-            "JSON string specifying relative Parquet file names for each dataset. "
-            "Example: '{\"bids\": \"bid.parquet\", \"auctions\": \"auction.parquet\", \"persons\": \"person.parquet\"}'"
+            "Comma-separated key=value pairs mapping dataset names to parquet filenames. "
+            "Example: 'bids=bid_1.parquet,auctions=auction.parquet,persons=person.parquet'"
         )
     )
 
     args = parser.parse_args()
 
-    # Load and parse the parquet file dictionary from the JSON string
-    parquet_files = json.loads(args.parquet_files)
-
-    # Prepend each file with the specified data directory (ignoring any node_index)
+    # Build the dictionary from the key=value string
+    parquet_files = parse_parquet_files(args.parquet_files)
     for key, file_name in parquet_files.items():
+        print(f"Loading {file_name} for {key}")
         parquet_files[key] = os.path.join(args.data_dir, file_name)
 
-    # Create and start the server
+    print(parquet_files)
+
     server = GroupNodeFlightServer(
         parquet_registrations=parquet_files,
         host=args.host,
@@ -129,7 +132,6 @@ def main():
 
     print(f"Serving Flight on {args.host}:{args.port}")
     server.serve()
-
 
 if __name__ == "__main__":
     main()

@@ -1,11 +1,10 @@
-# services/entry_node_service.py
 import os
 import json
 import paramiko
 from paramiko import SSHClient, AutoAddPolicy
 from typing import List, Optional
 from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from models.entry_node import EntryNode
 from schemas.entry_node import EntryNodeCreate
@@ -13,9 +12,17 @@ from schemas.entry_node import EntryNodeCreate
 # Timeout for SSH connections
 SSH_TIMEOUT = 5
 
-def create_entry_node(db: Session, node_data: EntryNodeCreate) -> EntryNode:
+def create_entry_node(db: Session, node_data: EntryNodeCreate, node_files: Optional[List[UploadFile]] = None) -> EntryNode:
     """
     Create an entry node in the database and attempt to deploy.
+    
+    Args:
+        db: Database session.
+        node_data: The data for the entry node.
+        node_files: A list of UploadFile objects that should be deployed.
+    
+    Returns:
+        The newly created EntryNode.
     """
     db_node = EntryNode(
         name=node_data.name,
@@ -40,8 +47,8 @@ def create_entry_node(db: Session, node_data: EntryNodeCreate) -> EntryNode:
     db.refresh(db_node)
 
     try:
-        # Deploy the node
-        deploy_entry_node(db_node)
+        # Deploy the node using the list of uploaded files.
+        deploy_entry_node(db_node, node_files)
         # Update the status
         db_node.status = "running"
         db_node.status_message = "Deployed successfully."
@@ -54,11 +61,15 @@ def create_entry_node(db: Session, node_data: EntryNodeCreate) -> EntryNode:
     return db_node
 
 def get_entry_node(db: Session, node_id: int) -> Optional[EntryNode]:
-    # Return None if not found
+    """
+    Return an entry node if found.
+    """
     return db.query(EntryNode).filter(EntryNode.id == node_id).first()
 
 def list_entry_nodes(db: Session) -> List[EntryNode]:
-    # Return all nodes
+    """
+    Return all entry nodes.
+    """
     return db.query(EntryNode).all()
 
 def delete_entry_node(db: Session, node: EntryNode) -> None:
@@ -78,9 +89,13 @@ def delete_entry_node(db: Session, node: EntryNode) -> None:
     db.delete(node)
     db.commit()
 
-def deploy_entry_node(node: EntryNode):
+def deploy_entry_node(node: EntryNode, node_files: Optional[List[UploadFile]] = None):
     """
-    Deploy the node on the remote server.
+    Deploy the node on the remote server using the uploaded files.
+    
+    Args:
+        node: The EntryNode instance.
+        node_files: A list of UploadFile objects to transfer.
     """
     ssh = SSHClient()
     ssh.set_missing_host_key_policy(AutoAddPolicy())
@@ -103,41 +118,62 @@ def deploy_entry_node(node: EntryNode):
             timeout=SSH_TIMEOUT
         )
 
-    # Retrieve the remote home directory
+    # Retrieve the remote home directory.
     stdin, stdout, stderr = ssh.exec_command("echo $HOME")
     home_dir = stdout.read().decode().strip()
-    print("home_dir")
-    print(home_dir)
     remote_dir = os.path.join(home_dir, f"flight_server_{node.name}")
 
-    # Create the directory in the user's home directory
+    # Create the directory in the user's home directory.
     ssh.exec_command(f"cd ~ && mkdir -p flight_server_{node.name}")
 
     sftp = ssh.open_sftp()
+    remote_node_script_path = os.path.join(remote_dir, "node_server.py")
+    
+    # Transfer the node-server script from the local filesystem.
     current_file_dir = os.path.dirname(os.path.abspath(__file__))
     local_node_script_path = os.path.join(current_file_dir, "entry-node-files", "node-server.py")
-    remote_node_script_path = os.path.join(remote_dir, "node_server.py")
     sftp.put(local_node_script_path, remote_node_script_path)
+
+    # If additional files were uploaded, transfer each of them.
+    if node_files is not None:
+        for file in node_files:
+            remote_file_path = os.path.join(remote_dir, file.filename)
+            file.file.seek(0)  # Reset file pointer
+            with sftp.file(remote_file_path, 'wb') as remote_file:
+                while True:
+                    data = file.file.read(1024 * 8)
+                    if not data:
+                        break
+                    remote_file.write(data)
+
     sftp.close()
 
-    # Kill any old process (if exists) running the node script
+    print("hello")
+    # Kill any old process (if exists) running the node script.
     kill_cmd = f"pkill -f {remote_node_script_path}"
     ssh.exec_command(kill_cmd)
 
-    # Activate the environment using the provided env_name
+    # Activate the environment and run the node script.
     activate_cmd = f"source ~/{node.env_name}/bin/activate"
-    parquet_str = json.dumps(node.parquet_files or {})
+    print("parquet2")
     remote_log_file = os.path.join(remote_dir, "logs.txt")
-    # Build command to activate the environment and start the node server in background
+    print("parquet1")
+
+    pairs = []
+    for table_name, parquet_name in node.parquet_files.items():
+        full_path = parquet_name
+        pairs.append(f"{table_name}={full_path}")
+    
+    parquet_str = ",".join(pairs)
+
+    # Build the command.
     cmd = (
         f"nohup bash -c \"{activate_cmd} && python {remote_node_script_path} "
         f"--host {node.serving_host} --port {node.serving_port} "
         f"--parquet_files '{parquet_str}' > {remote_log_file} 2>&1\" &"
     )
 
-    print("cmd")
-    print(cmd)
-
+    print(f"Executing command: {cmd}")
     ssh.exec_command(cmd)
     ssh.close()
 
@@ -170,7 +206,7 @@ def stop_remote_node(node: EntryNode):
         print(f"Could not connect to {node.ssh_host} (timeout/unreachable). Assuming it's already deleted.")
         return
 
-    # Use the same home directory logic to build the path
+    # Build the remote path.
     remote_dir = os.path.join(f"/Users/{node.ssh_user}", f"flight_server_{node.name}")
     remote_node_script_path = os.path.join(remote_dir, "node_server.py")
     kill_cmd = f"pkill -f {remote_node_script_path}"
