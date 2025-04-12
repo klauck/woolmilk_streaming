@@ -148,16 +148,11 @@ def deploy_entry_node(node: EntryNode, node_files: Optional[List[UploadFile]] = 
 
     sftp.close()
 
-    print("hello")
-    # Kill any old process (if exists) running the node script.
     kill_cmd = f"pkill -f {remote_node_script_path}"
     ssh.exec_command(kill_cmd)
 
-    # Activate the environment and run the node script.
     activate_cmd = f"source ~/{node.env_name}/bin/activate"
-    print("parquet2")
     remote_log_file = os.path.join(remote_dir, "logs.txt")
-    print("parquet1")
 
     pairs = []
     for table_name, parquet_name in node.parquet_files.items():
@@ -173,7 +168,6 @@ def deploy_entry_node(node: EntryNode, node_files: Optional[List[UploadFile]] = 
         f"--parquet_files '{parquet_str}' > {remote_log_file} 2>&1\" &"
     )
 
-    print(f"Executing command: {cmd}")
     ssh.exec_command(cmd)
     ssh.close()
 
