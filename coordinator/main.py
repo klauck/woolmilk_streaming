@@ -23,12 +23,12 @@ def update_all_node_status():
     try:
         nodes = list_entry_nodes(db)
         for node in nodes:
-            host_to_check = node.ssh_host
+            host_to_check = node.serving_host
             port_to_check = node.serving_port
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(2.0)
             try:
-                s.connect((host_to_check, port_to_check))
+                s.connect((host_to_check, port_to_check)) #TODO:  Instead opening and close, keep it open and check if the connection is open. 
                 s.close()
                 node.status = "running"
                 node.status_message = f"Port {port_to_check} on {host_to_check} is open. Node is working."
