@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List
-
+import json
 from database import get_db
 from services.entry_node import (
     create_entry_node,
@@ -15,11 +15,45 @@ import socket
 router = APIRouter()
 
 @router.post("/entry-node", response_model=EntryNodeOut)
-def create_node(node_in: EntryNodeCreate, db: Session = Depends(get_db)):
-    """
-    Create an entry node in the database and attempt to deploy it.
-    """
-    node = create_entry_node(db, node_in)
+async def create_node(
+    name: str = Form(...),
+    ssh_host: str = Form(...),
+    ssh_user: str = Form(...),
+    ssh_port: int = Form(...),
+    ssh_password: str = Form(None),
+    serving_host: str = Form(...),
+    serving_port: int = Form(...),
+    parquet_files: str = Form(None),
+    env_name: str = Form(...),
+    node_files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db)
+):
+    if parquet_files:
+        try:
+            parquet_files_data = json.loads(parquet_files)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON in parquet_files: {e}")
+    else:
+        parquet_files_data = None
+
+    node_data = {
+        "name": name,
+        "ssh_host": ssh_host,
+        "ssh_user": ssh_user,
+        "ssh_port": ssh_port,
+        "ssh_password": ssh_password,
+        "serving_host": serving_host,
+        "serving_port": serving_port,
+        "parquet_files": parquet_files_data,
+        "env_name": env_name
+    }
+    
+    try:
+        node_in_obj = EntryNodeCreate(**node_data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error constructing node data: {e}")
+    
+    node = create_entry_node(db, node_in_obj, node_files)
     return node
 
 @router.get("/entry-node", response_model=List[EntryNodeOut])
@@ -77,7 +111,6 @@ def check_node_status(node_id: int, db: Session = Depends(get_db)):
             "message": f"Port {port_to_check} on {host_to_check} is open. Node is working."
         }
     except Exception:
-        
         return {
             "node_id": node.id,
             "name": node.name,
