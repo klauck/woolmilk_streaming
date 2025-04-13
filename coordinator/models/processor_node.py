@@ -1,3 +1,5 @@
+# models/processor_node.py
+
 from sqlalchemy import Column, Integer, String, JSON
 from database import Base
 
@@ -13,8 +15,10 @@ class ProcessorNode(Base):
 
     exit_host = Column(String)
     exit_port = Column(Integer)
-    #JSON field containing a list of [host, port] pairs for entry nodes.
-    entry_endpoints = Column(JSON, nullable=True)
 
-    status = Column(String, default="stopped")       # e.g. 'running', 'stopped', 'failed'
+    entry_endpoints = Column(JSON, nullable=True)
+    queries = Column(JSON, nullable=True)
+
+    status = Column(String, default="stopped")  # e.g. 'running', 'stopped', 'failed'
     status_message = Column(String, default="")
+    

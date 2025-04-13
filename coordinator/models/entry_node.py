@@ -1,4 +1,3 @@
-# models/entry_node.py
 from sqlalchemy import Column, Integer, String, JSON
 from database import Base
 
