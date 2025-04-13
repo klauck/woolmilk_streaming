@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Optional, List, Dict, Any
 
 class ProcessorNodeBase(BaseModel):
     name: str
@@ -7,10 +7,12 @@ class ProcessorNodeBase(BaseModel):
     ssh_user: str
     ssh_port: int
     ssh_password: Optional[str] = None
-    ssh_password: Optional[str] = None
-    exit_host: Optional[str] = None  # Now optional, default is None
-    exit_port: Optional[int] = None    # Now optional, default is None
-    entry_endpoints: Optional[Any] = None
+    exit_host: Optional[str] = None
+    exit_port: Optional[int] = None
+
+    entry_endpoints: Optional[List[Dict[str, Any]]] = None
+
+    queries: Optional[List[Dict[str, Any]]] = None
 
 class ProcessorNodeCreate(ProcessorNodeBase):
     pass
@@ -23,7 +25,10 @@ class ProcessorNodeUpdate(BaseModel):
     ssh_password: Optional[str] = None
     exit_host: Optional[str] = None
     exit_port: Optional[int] = None
-    entry_endpoints: Optional[Any] = None
+
+    entry_endpoints: Optional[List[Dict[str, Any]]] = None
+    queries: Optional[List[Dict[str, Any]]] = None
+
     status: Optional[str] = None
     status_message: Optional[str] = None
 
