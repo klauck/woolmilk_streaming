@@ -168,6 +168,8 @@ def deploy_entry_node(node: EntryNode, node_files: Optional[List[UploadFile]] = 
         f"--parquet_files '{parquet_str}' > {remote_log_file} 2>&1\" &"
     )
 
+    print("Executing command", cmd)
+
     ssh.exec_command(cmd)
     ssh.close()
 
