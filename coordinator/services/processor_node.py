@@ -1,5 +1,4 @@
 import os
-import json
 import socket
 import paramiko
 from paramiko import SSHClient, AutoAddPolicy
@@ -26,8 +25,10 @@ def create_processor_node(db: Session, node_data: ProcessorNodeCreate) -> Proces
         exit_host=node_data.exit_host,
         exit_port=node_data.exit_port,
         entry_endpoints=node_data.entry_endpoints or [],
+        queries=node_data.queries or [],
         status="stopped",
-        status_message=""
+        status_message="",
+        env_name=node_data.env_name
     )
     db.add(db_node)
     try:
@@ -71,6 +72,34 @@ def delete_processor_node(db: Session, node: ProcessorNode) -> None:
     db.delete(node)
     db.commit()
 
+def build_entry_endpoints_str(endpoints: list) -> str:
+    parts = []
+    for ep in endpoints:
+        name = ep.get("name", "defaultName")
+        host = ep.get("host", "localhost")
+        port = ep.get("port", 8815)
+        services_list = ep.get("services", [])
+        if services_list:
+            services_str = ",".join(services_list)
+            entry_str = f"{name}|{host}|{port}|{services_str}"
+        else:
+            entry_str = f"{name}|{host}|{port}"
+        parts.append(entry_str)
+    return ";".join(parts)
+
+def build_queries_str(queries: list) -> str:
+    parts = []
+    for q in queries:
+        node_id = q.get("node_id", "defaultNode")
+        queries_list = q.get("queries_string", [])
+        if queries_list:
+            queries_combined = ",".join(queries_list)
+            query_str = f"{node_id}|{queries_combined}"
+        else:
+            query_str = f"{node_id}|"
+        parts.append(query_str)
+    return ";".join(parts)
+
 def deploy_processor_node(node: ProcessorNode):
     """
     Deploy the processor node on the remote server.
@@ -102,7 +131,6 @@ def deploy_processor_node(node: ProcessorNode):
     try:
         sftp.mkdir(remote_dir)
     except IOError:
-        # Directory might already exist.
         pass
 
     current_file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -114,19 +142,25 @@ def deploy_processor_node(node: ProcessorNode):
     kill_cmd = f"pkill -f {remote_node_script_path}"
     ssh.exec_command(kill_cmd)
 
-    python_bin = "python3"
+    activate_cmd = f"source ~/{node.env_name}/bin/activate"
 
-    # Convert the entry_endpoints to a JSON string (required by the processor node script).
-    entry_nodes_str = json.dumps(node.entry_endpoints or [])
+    python_bin = "python3"
+    endpoints_str = build_entry_endpoints_str(node.entry_endpoints or [])
+    queries_str = build_queries_str(node.queries or [])
     remote_log_file = os.path.join(remote_dir, "logs.txt")
+
+    # Wrap everything in bash -c so we can activate environment and then run Python
     cmd = (
-        f"nohup {python_bin} {remote_node_script_path} "
-        f"--entry_nodes '{entry_nodes_str}' "
+        f"nohup bash -c '{activate_cmd} && {python_bin} {remote_node_script_path} "
+        f"--entry_endpoints \"{endpoints_str}\" "
+        f"--queries \"{queries_str}\" "
         f"--exit_host {node.exit_host} "
         f"--exit_port {node.exit_port} "
-        f"--node_id {node.name} "
+        f"--node_id {node.name}' "
         f"> {remote_log_file} 2>&1 &"
     )
+
+    print(cmd)
 
     ssh.exec_command(cmd)
     ssh.close()
