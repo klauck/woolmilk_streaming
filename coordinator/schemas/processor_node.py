@@ -10,6 +10,8 @@ class ProcessorNodeBase(BaseModel):
     exit_host: Optional[str] = None
     exit_port: Optional[int] = None
 
+    env_name: str
+
     entry_endpoints: Optional[List[Dict[str, Any]]] = None
 
     queries: Optional[List[Dict[str, Any]]] = None
@@ -25,6 +27,7 @@ class ProcessorNodeUpdate(BaseModel):
     ssh_password: Optional[str] = None
     exit_host: Optional[str] = None
     exit_port: Optional[int] = None
+    env_name: Optional[str] = None
 
     entry_endpoints: Optional[List[Dict[str, Any]]] = None
     queries: Optional[List[Dict[str, Any]]] = None

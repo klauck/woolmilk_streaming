@@ -16,6 +16,8 @@ class ProcessorNode(Base):
     exit_host = Column(String)
     exit_port = Column(Integer)
 
+    env_name = Column(String)
+
     entry_endpoints = Column(JSON, nullable=True)
     queries = Column(JSON, nullable=True)
 
