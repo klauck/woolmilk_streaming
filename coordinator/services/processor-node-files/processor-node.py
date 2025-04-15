@@ -68,6 +68,7 @@ class ProcessorNode:
                 else:
                     num_rows = chunk_table.num_rows
                     total_rows += num_rows
+                    print(f"[{self.node_id}] Received {num_rows} rows from {state['id']}")
             if completed:
                 break
 
