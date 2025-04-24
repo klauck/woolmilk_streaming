@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from database import Base, engine, SessionLocal
 from routers.entry_node import router as entry_node_router
 from routers.processor_node import router as processor_node_router
+from routers.local_node_setup import router as local_node_setup_router
 from services.entry_node import list_entry_nodes  # Assumes this returns a list of node models
 
 # Create all tables if they do not exist.
@@ -16,6 +17,7 @@ app = FastAPI(title="Coordinator API", description="Manage Processor Nodes")
 
 app.include_router(entry_node_router, prefix="/api", tags=["entry_node"])
 app.include_router(processor_node_router, prefix="/api", tags=["processor_node"])
+app.include_router(local_node_setup_router, prefix="/api/local-node-setup", tags=["local_node_setup"])
 
 
 def update_all_node_status():

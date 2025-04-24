@@ -2,3 +2,4 @@ streaming-example/target
 data
 __pycache__
 venv
+local_node_setup
