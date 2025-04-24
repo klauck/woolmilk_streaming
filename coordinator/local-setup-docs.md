@@ -62,11 +62,10 @@ All endpoints return
 ### cURL example
 
 ```bash
-curl -X POST http://127.0.0.1:8000/entry-node \
-  -F "name=auction-entry" \
-  -F "node_files=@bids.parquet" \
-  -F 'parquet_files={"bids":"bids.parquet"}' \
-  -F "env_path=/home/you/venvs/flight-env"
+curl -X POST http://127.0.0.1:8000/api/local-node-setup/entry-node \
+  -F "name=bids-entry" \
+  -F "node_files=@/Users/usamabintariq/Documents/GitHub/woolmilk_streaming/data/bids.parquet" \
+  -F "env_path=/Users/usamabintariq/Documents/GitHub/woolmilk_streaming/test_env"
 ```
 
 Successful response:
@@ -97,7 +96,7 @@ sudo lsof -i :8815
 ### cURL example
 
 ```bash
-curl -X POST http://127.0.0.1:8000/processor-node \
+curl -X POST http://127.0.0.1:8000/api/local-node-setup/processor-node \
   -F "name=auction-processor" \
   -F "env_path=/home/you/venvs/flight-env"
 ```
