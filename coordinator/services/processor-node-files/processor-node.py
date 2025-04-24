@@ -139,12 +139,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--entry_endpoints",
         type=str,
-        default="entry1|localhost|8815|bids;entry2|192.168.0.2|8815",
+        default="entry1|localhost|8815|bids;",
     )
     parser.add_argument(
         "--queries",
         type=str,
-        default="bids|SELECT * FROM bids;another_node|SELECT * FROM auctions",
+        default="bids|SELECT * FROM bids;",
     )
     parser.add_argument("--exit_host", type=str, default=None)
     parser.add_argument("--exit_port", type=int, default=None)
