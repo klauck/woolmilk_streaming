@@ -5,12 +5,13 @@ from services.local_node_setup import (
     setup_local_processor,
 )
 import time
+import uuid
 
 router = APIRouter()
 
 @router.post("/entry-node")
 async def create_entry_local(
-    name: str = Form(...),
+    name: str = Form(str(uuid.uuid4())),
     node_files: List[UploadFile] = File(...),
     parquet_files: str | None = Form(None),
     env_path: str = Form(...),

@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+import uuid
 
 class ProcessorNodeBase(BaseModel):
-    name: str
+    name: Optional[str] = str(uuid.uuid4())
     ssh_host: str
     ssh_user: str
     ssh_port: int

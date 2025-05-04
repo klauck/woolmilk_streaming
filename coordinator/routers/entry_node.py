@@ -11,12 +11,13 @@ from services.entry_node import (
 )
 from schemas.entry_node import EntryNodeCreate, EntryNodeOut
 import socket
+import uuid
 
 router = APIRouter()
 
 @router.post("/entry-node", response_model=EntryNodeOut)
 async def create_node(
-    name: str = Form(...),
+    name: str = Form(str(uuid.uuid4())),
     ssh_host: str = Form(...),
     ssh_user: str = Form(...),
     ssh_port: int = Form(...),
