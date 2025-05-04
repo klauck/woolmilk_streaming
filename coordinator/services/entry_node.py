@@ -35,7 +35,8 @@ def create_entry_node(db: Session, node_data: EntryNodeCreate, node_files: Optio
         parquet_files=node_data.parquet_files or {},
         env_name=node_data.env_name,  # New field
         status="stopped",
-        status_message=""
+        status_message="",
+        bit_rate=node_data.bit_rate  # New field
     )
     db.add(db_node)
     try:

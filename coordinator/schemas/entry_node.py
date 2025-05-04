@@ -14,6 +14,7 @@ class EntryNodeBase(BaseModel):
     serving_port: int
     parquet_files: Optional[Dict[str, str]] = None
     env_name: str  # New field for environment name
+    bit_rate: int = 0  # New field for bit rate
 
 class EntryNodeCreate(EntryNodeBase):
     """

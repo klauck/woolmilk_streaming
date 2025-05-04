@@ -16,3 +16,4 @@ class EntryNode(Base):
     env_name = Column(String)  # New column for environment name
     status = Column(String, default="stopped")       # e.g. 'running','stopped','failed'
     status_message = Column(String, default="")
+    bit_rate = Column(Integer, default=0)  # New column for bit rate

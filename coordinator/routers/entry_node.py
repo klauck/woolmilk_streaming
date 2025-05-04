@@ -26,6 +26,7 @@ async def create_node(
     parquet_files: str = Form(None),
     env_name: str = Form(...),
     node_files: List[UploadFile] = File(...),
+    bit_rate: int = Form(...),
     db: Session = Depends(get_db)
 ):
     if parquet_files:
@@ -45,7 +46,8 @@ async def create_node(
         "serving_host": serving_host,
         "serving_port": serving_port,
         "parquet_files": parquet_files_data,
-        "env_name": env_name
+        "env_name": env_name,
+        "bit_rate": bit_rate,
     }
     
     try:
