@@ -102,7 +102,7 @@ def main():
     current_file_dir = os.path.dirname(os.path.abspath(__file__))
     parser.add_argument(
         "--data_dir",
-        default=current_file_dir,
+        default=None,
         help="Base directory containing the Parquet files (default: ../../data)"
     )
     parser.add_argument(
@@ -116,11 +116,17 @@ def main():
 
     args = parser.parse_args()
 
+    data_dir = args.data_dir
+
+    if data_dir == "." or data_dir == "./":
+        data_dir = current_file_dir 
+
     # Build the dictionary from the key=value string
     parquet_files = parse_parquet_files(args.parquet_files)
-    for key, file_name in parquet_files.items():
-        print(f"Loading {file_name} for {key}")
-        parquet_files[key] = os.path.join(args.data_dir, file_name)
+    if data_dir is not None:
+        for key, file_name in parquet_files.items():
+            print(f"Loading {file_name} for {key}")
+            parquet_files[key] = os.path.join(data_dir, file_name)
 
     print(parquet_files)
 
