@@ -11,6 +11,7 @@ from services.processor_node import (
     delete_processor_node
 )
 from schemas.processor_node import ProcessorNodeCreate, ProcessorNodeOut
+import uuid
 
 router = APIRouter()
 
@@ -19,6 +20,8 @@ def create_node(node_in: ProcessorNodeCreate, db: Session = Depends(get_db)):
     """
     Create a processor node in the database and deploy it remotely.
     """
+    if node_in.name is None:
+        node_in.name = str(uuid.uuid4())
     node = create_processor_node(db, node_in)
     return node
 

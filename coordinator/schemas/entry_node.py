@@ -1,12 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional, Dict
-import uuid
 
 class EntryNodeBase(BaseModel):
     """
     Common fields for creating and updating an entry node.
     """
-    name: Optional[str] = str(uuid.uuid4())
+    name: Optional[str] = None
     ssh_host: str
     ssh_user: str
     ssh_port: int

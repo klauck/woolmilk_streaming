@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.post("/entry-node", response_model=EntryNodeOut)
 async def create_node(
-    name: str = Form(str(uuid.uuid4())),
+    name: str = Form(None),
     ssh_host: str = Form(...),
     ssh_user: str = Form(...),
     ssh_port: int = Form(...),
@@ -30,6 +30,9 @@ async def create_node(
     bit_rate: int = Form(...),
     db: Session = Depends(get_db)
 ):
+    if name is None:
+        name = str(uuid.uuid4())
+        
     if parquet_files:
         try:
             parquet_files_data = json.loads(parquet_files)
