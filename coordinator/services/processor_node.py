@@ -12,6 +12,35 @@ from schemas.processor_node import ProcessorNodeCreate
 
 SSH_TIMEOUT = 5
 
+def create_processor_node_without_deploy(
+    db: Session, node_data: ProcessorNodeCreate, status: str = "stopped", status_message: str = ""
+) -> ProcessorNode:
+    """
+    Create a processor node in the database without deploying it.
+    """
+    db_node = ProcessorNode(
+        name=node_data.name,
+        ssh_host="",
+        ssh_port=0,
+        ssh_user="",
+        ssh_password="",
+        exit_host=node_data.exit_host,
+        exit_port=node_data.exit_port,
+        entry_endpoints=[e.dict() for e in node_data.entry_endpoints] if node_data.entry_endpoints else [],
+        queries=[q.dict() for q in node_data.queries] if node_data.queries else [],
+        status=status,
+        status_message=status_message,
+        env_name=node_data.env_name
+    )
+    db.add(db_node)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Processor node with the same name already exists.")
+    db.refresh(db_node)
+    return db_node
+
 def create_processor_node(db: Session, node_data: ProcessorNodeCreate) -> ProcessorNode:
     """
     Create a processor node in the database and attempt to deploy it.

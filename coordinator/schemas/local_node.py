@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import uuid
 
 class LocalEntryNodeBase(BaseModel):
@@ -18,5 +18,44 @@ class LocalEntryNodeBase(BaseModel):
 class LocalEntryNodeCreate(LocalEntryNodeBase):
     """
     Used for creating a new entry local node.
+    """
+    pass
+
+class EntryEndpoint(BaseModel):
+    name: str
+    host: str
+    port: str
+    query_name: str
+
+class Query(BaseModel):
+    name: str
+    query: str
+
+class LocalProcessorNodeBase(BaseModel):
+    """
+    Common fields for creating and updating a local processor node.
+    """
+    name: Optional[str] = None
+    env_name: str = "/Users/usamabintariq/Documents/GitHub/woolmilk_streaming/test_env"
+    exit_host: Optional[str] = None
+    exit_port: Optional[int] = None
+    entry_endpoints: Optional[List[EntryEndpoint]] = [
+        {
+            "name": "local_entry_node",
+            "host": "127.0.0.1",
+            "port": 8815,
+            "query_name": "bids"
+        }
+    ]
+    queries: Optional[List[Query]] = [
+        {
+            "name": "bids",
+            "query": "SELECT * FROM bids;"
+        }
+    ]
+
+class LocalProcessorNodeCreate(LocalProcessorNodeBase):
+    """
+    Used for creating a new local processor node.
     """
     pass

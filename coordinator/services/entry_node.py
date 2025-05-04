@@ -12,6 +12,44 @@ from schemas.entry_node import EntryNodeCreate
 # Timeout for SSH connections
 SSH_TIMEOUT = 5
 
+def create_entry_node_without_deploy(db: Session, node_data: EntryNodeCreate, status="stopped", status_message="") -> EntryNode:
+    """
+    Create an entry node in the database without deploying it.
+    
+    Args:
+        db: Database session.
+        node_data: The data for the entry node.
+        status: The initial status of the node.
+        status_message: The initial status message.
+    
+    Returns:
+        The newly created EntryNode.
+    """
+    print(node_data)
+    db_node = EntryNode(
+        name=node_data.name,
+        ssh_host=node_data.ssh_host,
+        ssh_port=node_data.ssh_port,
+        ssh_user=node_data.ssh_user,
+        ssh_password=node_data.ssh_password,
+        serving_host=node_data.serving_host,
+        serving_port=node_data.serving_port,
+        parquet_files=node_data.parquet_files or {},
+        env_name=node_data.env_name,  # New field
+        status=status,
+        status_message=status_message,
+        bit_rate=node_data.bit_rate  # New field
+    )
+    db.add(db_node)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Node with the same name already exists.")
+
+    db.refresh(db_node)
+    return db_node
+
 def create_entry_node(db: Session, node_data: EntryNodeCreate, node_files: Optional[List[UploadFile]] = None) -> EntryNode:
     """
     Create an entry node in the database and attempt to deploy.

@@ -1,76 +1,44 @@
 from typing import List
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile, Depends
+from sqlalchemy.orm import Session
 from services.local_node_setup import (
     setup_local_entry,
     setup_local_processor,
 )
+from schemas.local_node import LocalEntryNodeCreate, LocalProcessorNodeCreate
+from database import get_db
 import time
 import uuid
 
 router = APIRouter()
 
 @router.post("/entry-node")
-async def create_entry_local(
-    name: str = Form(str(uuid.uuid4())),
-    node_files: List[UploadFile] = File(...),
-    parquet_files: str | None = Form(None),
-    env_path: str = Form(...),
-):
-    node_dir, parquet_map, log_path = setup_local_entry(
-        name=name,
-        uploads=node_files,
-        parquet_json=parquet_files,
-        env_path=env_path,
-    )
+async def create_entry_node_local(local_entry_node_data: LocalEntryNodeCreate, db: Session = Depends(get_db)):
+    if local_entry_node_data.name is None:
+        local_entry_node_data.name = str(uuid.uuid4())
+
+    parquet_map, log_path = setup_local_entry(db, local_entry_node_data)
     msg = (
-        f"Entry node '{name}' created at {node_dir}; "
+        f"Entry node '{local_entry_node_data.name}' created."
         f"parquet_files={parquet_map}.  "
         f"Logs: {log_path}" if log_path else ""
     )
     return {"message": msg}
 
 @router.post("/processor-node")
-async def create_processor_local(
-    name: str = Form(...),
-    env_path: str = Form(...),
-):
-    node_dir, log_path = setup_local_processor(
-        name=name,
-        env_path=env_path,
+async def create_processor_local(local_processor_node: LocalProcessorNodeCreate, db: Session = Depends(get_db)):
+    if local_processor_node.name is None:
+        local_processor_node.name = str(uuid.uuid4())
+
+    log_path = setup_local_processor(
+        db=db,
+        data=local_processor_node,
+        launch=True,
     )
+
     msg = (
-        f"Processor node '{name}' created at {node_dir}.  "
+        f"Processor node '{local_processor_node.name}' created.  "
         f"Logs: {log_path}" if log_path else ""
     )
-    return {"message": msg}
-
-
-@router.post("/full")
-async def create_full_local(
-    entry_name: str = Form(...),
-    node_files: List[UploadFile] = File(...),
-    parquet_files: str | None = Form(None),
-    processor_name: str = Form(...),
-    env_path: str = Form(...),
-):
-    entry_dir, parquet_map, entry_log = setup_local_entry(
-        name=entry_name,
-        uploads=node_files,
-        parquet_json=parquet_files,
-        env_path=env_path,
-    )
-
-    time.sleep(2)
-
-    proc_dir, proc_log = setup_local_processor(
-        name=processor_name,
-        env_path=env_path,
-    )
-
-    msg = (
-        f"Entry node '{entry_name}' created at {entry_dir}; "
-        f"parquet_files={parquet_map}.  Logs: {entry_log}\n"
-        f"Processor node '{processor_name}' created at {proc_dir}.  "
-        f"Logs: {proc_log}"
-    )
+    
     return {"message": msg}
