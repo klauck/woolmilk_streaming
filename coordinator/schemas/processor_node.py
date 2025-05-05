@@ -1,6 +1,16 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
+class EntryEndpoint(BaseModel):
+    name: str
+    host: str
+    port: str
+    query_name: str
+
+class Query(BaseModel):
+    name: str
+    query: str
+
 class ProcessorNodeBase(BaseModel):
     name: Optional[str] = None
     ssh_host: str
@@ -12,9 +22,9 @@ class ProcessorNodeBase(BaseModel):
 
     env_name: str
 
-    entry_endpoints: Optional[List[Dict[str, Any]]] = None
-
-    queries: Optional[List[Dict[str, Any]]] = None
+class ProcessorQueryDef(BaseModel):
+    entry_endpoints: Optional[List[EntryEndpoint]] = None
+    queries: Optional[List[Query]] = None
 
 class ProcessorNodeCreate(ProcessorNodeBase):
     pass

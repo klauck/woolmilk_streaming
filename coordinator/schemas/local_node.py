@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from typing import Optional, Dict, List
 import uuid
 
+from schemas.processor_node import EntryEndpoint, Query
+
 class LocalEntryNodeBase(BaseModel):
     """
     Common fields for creating and updating an local entry node.
@@ -21,15 +23,6 @@ class LocalEntryNodeCreate(LocalEntryNodeBase):
     """
     pass
 
-class EntryEndpoint(BaseModel):
-    name: str
-    host: str
-    port: str
-    query_name: str
-
-class Query(BaseModel):
-    name: str
-    query: str
 
 class LocalProcessorNodeBase(BaseModel):
     """
