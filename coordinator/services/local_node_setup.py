@@ -13,6 +13,7 @@ from services.processor_node import create_processor_node_without_deploy
 import tempfile
 import os
 from sqlalchemy.orm import Session
+import sys
 
 SERVICE_DIR = Path(__file__).resolve().parent
 ENTRY_SCRIPT_SRC = SERVICE_DIR / "entry-node-files" / "node-server.py"
@@ -26,15 +27,32 @@ def infer_parquet(files: List[str]) -> Dict[str, str]:
 
 def python_from_env(env_path: str) -> str:
     env = Path(env_path).expanduser()
-    bin_dir = env / "bin"
-    py = bin_dir / "python"
+     
+    if sys.platform == "win32":
+        candidates = [
+            env / "Scripts" / "python.exe",
+            env / "Scripts" / "python" 
+        ]
+    else:
+        candidates = [
+            env / "bin" / "python",
+            env / "bin" / "python3" 
+        ]
+    
+    for py in candidates:
+        if py.exists():
+            return str(py)
+    
+    # If none found, error out
+    searched = ", ".join(str(p) for p in candidates)
+    raise HTTPException(
+        status_code=400,
+        detail=(
+            f"env_path '{env_path}' does not contain a Python interpreter. "
+            f"Searched for: {searched}"
+        ),
+    )
 
-    if not py.exists():
-        raise HTTPException(
-            400,
-            f"env_path '{env_path}' does not contain a Python interpreter",
-        )
-    return str(py)
 
 
 def setup_local_entry(db: Session, data: LocalEntryNodeCreate) -> Tuple[Path, Dict[str, str], Path | None]:
@@ -65,9 +83,20 @@ def setup_local_entry(db: Session, data: LocalEntryNodeCreate) -> Tuple[Path, Di
     ]
 
     with log_path.open("a") as log:
-        subprocess.Popen(
-            cmd, stdout=log, stderr=subprocess.STDOUT, close_fds=True, preexec_fn=os.setsid
+        popen_kwargs = dict(
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            close_fds=True,
         )
+
+        if sys.platform == "win32":
+            # On Windows, use CREATE_NEW_PROCESS_GROUP
+            popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            # On Unix, use setsid() via preexec_fn
+            popen_kwargs["preexec_fn"] = os.setsid
+
+        subprocess.Popen(cmd, **popen_kwargs)
 
     node_data_dict = {
         "name": data.name,
