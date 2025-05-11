@@ -21,6 +21,7 @@ class QueryStatus(BaseModel):
     start_time: Optional[datetime]
     finished_time: Optional[datetime]
     time_taken: Optional[float]
+    stats: Optional[dict] = None
     status: str                 # mirrors Query.status
 
 class AddQueryRequest(BaseModel):

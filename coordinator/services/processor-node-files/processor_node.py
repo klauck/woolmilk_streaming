@@ -4,6 +4,7 @@ from typing import List
 import pyarrow.flight as fl
 from pyarrow._flight import Ticket
 from api_models import EntryEndpoint, Query
+import pyarrow as pa, pyarrow.ipc as pa_ipc
 
 class ProcessorNode:
     """
@@ -51,34 +52,68 @@ class ProcessorNode:
         writer.write_table(chunk_table)
         writer.close()
 
+    def table_size_bytes(self, tbl: pa.Table) -> int:
+        try:
+            return tbl.nbytes                         
+        except pa.ArrowTypeError:
+            pass                                      
+        except AttributeError:
+            pass
+
+        sink = pa.BufferOutputStream()
+        
+        with pa_ipc.new_stream(sink, tbl.schema) as writer:
+            writer.write_table(tbl)
+        return sink.getvalue().size
+
+
     def run_command(self, command: str, endpoint):
         client_states = self.initialize_client_states(command, endpoint)
-        total_rows = 0
-        data_mb = 0
-        start_time = time.time()
+
+        print(f"\n[{self.node_id}] Running command '{command}' on {client_states} entry nodes.")
+
+        stats = {}
 
         while True:
             completed = True
             for state in client_states:
                 if state["completed"]:
                     continue
+                
+                start_time = time.time()
+                current_stats = stats.get(state["id"], {
+                    "rows": 0,
+                    "data_mb": 0,
+                    "total_time": 0,
+                })
+
                 completed = False
                 chunk_table = self.read_next_batch(state)
                 if chunk_table.num_rows == 0:
                     state["completed"] = True
                 else:
-                    num_rows = chunk_table.num_rows
-                    total_rows += num_rows
-                    print(f"[{self.node_id}] Received {num_rows} rows from {state['id']}")
+                    current_stats["rows"] += chunk_table.num_rows
+                    current_stats["data_mb"] += self.table_size_bytes(chunk_table) / (1024 * 1024)
+                    print(f"[{self.node_id}] Received {chunk_table.num_rows} rows from {state['id']}")
+
+                current_stats["total_time"] = current_stats["total_time"] + (time.time() - start_time)
+                stats[state["id"]] = current_stats
+
             if completed:
                 break
 
-        end_time = time.time()
-        duration = end_time - start_time
-
         print(f"\n[{self.node_id}] Command '{command}' completed.")
-        print(f"  Total rows processed: {total_rows}")
-        print(f"  Total time: {duration:.2f} seconds")
+
+        for (key, value) in stats.items():
+            value["mbps"] = value["data_mb"] / value["total_time"]
+            print(f"==== ENTRY NODE: [{key}] ====")
+            print(f"Rows: {value['rows']}")
+            print(f"Data MB: {value['data_mb']:.2f}")
+            print(f"Time: {value['total_time']:.2f} seconds")
+            # print rate in mbps
+            print(f"Rate: {value['mbps']:.2f} MB/s")
+
+        return stats
 
     def run_query(self, query: Query):
         qn = query.name
@@ -94,4 +129,4 @@ class ProcessorNode:
             print(f"[{self.node_id}] No matching endpoint for query '{qn}'")
             return
         
-        self.run_command(query_str, matching_endpoints)
+        return self.run_command(query_str, matching_endpoints)

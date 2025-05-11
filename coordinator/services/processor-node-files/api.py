@@ -72,8 +72,9 @@ def _process_queue(entry_eps: List[EntryEndpoint],
 
         # run the single query through ProcessorNode
         proc = ProcessorNode(node_id, entry_eps, exit_host, exit_port)
-        proc.run_query(q)
+        stats = proc.run_query(q)
 
         qs.finished_time = datetime.utcnow()
         qs.time_taken = (qs.finished_time - qs.start_time).total_seconds()
         qs.status = "finished"
+        qs.stats = stats

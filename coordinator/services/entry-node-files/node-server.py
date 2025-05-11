@@ -5,9 +5,10 @@ import pyarrow as pa
 import pyarrow.flight as fl
 import argparse
 from datafusion import SessionContext
+import pyarrow.parquet as pq
 
 class BaseNodeFlightServer(fl.FlightServerBase):
-    def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, chunk_size=100000, **kwargs):
+    def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, read_type="disk", chunk_size=1000000, **kwargs):
         location = f"grpc://{host}:{port}"
         super().__init__(location, **kwargs)
 
@@ -16,8 +17,25 @@ class BaseNodeFlightServer(fl.FlightServerBase):
         self.CHUNK_SIZE = chunk_size
 
         self.ctx = SessionContext()
-        for table_name, parquet_path in parquet_registrations.items():
-            self.ctx.register_parquet(table_name, parquet_path)
+        self.read_type = read_type
+
+        if read_type not in ["memory", "disk"]:
+            raise ValueError("read_type must be either 'memory' or 'disk'")
+
+        if read_type == "disk":
+            for table_name, parquet_path in parquet_registrations.items():
+                self.ctx.register_parquet(table_name, parquet_path)
+
+        elif read_type == "memory":
+            for table_name, parquet_path in parquet_registrations.items():
+                arrow_table = pq.read_table(parquet_path)
+                # total size in bytes
+                total_size = arrow_table.nbytes
+                # print total size in MB
+                print(f"Total size of {table_name} in MB: {total_size / (1024 * 1024)}")
+                # print total number of rows
+                print(f"Total number of rows in {table_name}: {arrow_table.num_rows}")
+                self.ctx.from_arrow(arrow_table, name=table_name)
 
     def get_flight_info(self, context, descriptor):
         # Parse the JSON config passed in the descriptor.
@@ -48,8 +66,8 @@ class BaseNodeFlightServer(fl.FlightServerBase):
         )
 
 class GroupNodeFlightServer(BaseNodeFlightServer):
-    def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, chunk_size=100000, **kwargs):
-        super().__init__(parquet_registrations, host, port, chunk_size, **kwargs)
+    def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, read_type = "disk", chunk_size=100000, **kwargs):
+        super().__init__(parquet_registrations, host, port, read_type, chunk_size, **kwargs)
         # Keep track of rows sent for each command_str.
         self.group_rows_sent = {}  # { command_str: rows_sent }
 
@@ -98,6 +116,14 @@ def main():
     parser = argparse.ArgumentParser(description="Group Node Flight Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=8815, help="Port to bind to (default: 8815)")
+    # file read type in memory or disk
+    parser.add_argument(
+        "--read_type",
+        default="memory",
+        choices=["memory", "disk"],
+        help="Type of read for parquet files (default: memory)"
+    )
+    
     # const current file dir
     current_file_dir = os.path.dirname(os.path.abspath(__file__))
     parser.add_argument(
@@ -113,6 +139,8 @@ def main():
             "Example: 'bids=bid_1.parquet,auctions=auction.parquet,persons=person.parquet'"
         )
     )
+
+    # python3 node-server.py --host 0.0.0.0 --port 8815 --read_type memory --data_dir /Users/usamabintariq/Documents/GitHub/woolmilk_streaming/data --parquet_files bids=bids.parquet,auctions=auctions.parquet,persons=persons.parquet
 
     args = parser.parse_args()
 
@@ -133,7 +161,8 @@ def main():
     server = GroupNodeFlightServer(
         parquet_registrations=parquet_files,
         host=args.host,
-        port=args.port
+        port=args.port,
+        read_type=args.read_type,
     )
 
     print(f"Serving Flight on {args.host}:{args.port}")
