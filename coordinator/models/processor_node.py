@@ -18,17 +18,9 @@ class ProcessorNode(Base):
 
     env_name = Column(String)
 
-    entry_endpoints = Column(JSON, nullable=True)
-    queries = Column(JSON, nullable=True)
+    serving_host = Column(String)
+    serving_port = Column(Integer)
 
     status = Column(String, default="stopped")  # e.g. 'running', 'stopped', 'failed'
     status_message = Column(String, default="")
     
-class ProcessorQueryDef(Base):
-    __tablename__ = "processor_query_defs"
-
-    id = Column(Integer, primary_key=True, index=True)
-    processor_node_id = Column(Integer)  # Foreign key to ProcessorNode
-    entry_endpoints = Column(JSON, nullable=True)
-    queries = Column(JSON, nullable=True)
-    status = Column(String, default="stopped")  # e.g. 'running', 'stopped', 'failed' , 'completed'

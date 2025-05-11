@@ -3,9 +3,11 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple
+import uuid
 from schemas.local_node import LocalEntryNodeCreate, LocalProcessorNodeCreate
 from schemas.entry_node import EntryNodeCreate
 from fastapi import HTTPException
+from schemas.processor_node import ProcessorNodeCreate
 from services.entry_node import create_entry_node_without_deploy
 from services.processor_node import create_processor_node_without_deploy
 import tempfile
@@ -15,7 +17,7 @@ from sqlalchemy.orm import Session
 SERVICE_DIR = Path(__file__).resolve().parent
 ENTRY_SCRIPT_SRC = SERVICE_DIR / "entry-node-files" / "node-server.py"
 PROCESSOR_SCRIPT_SRC = (
-    SERVICE_DIR / "processor-node-files" / "processor-node.py"
+    SERVICE_DIR / "processor-node-files" / "main.py"
 )
 
 def infer_parquet(files: List[str]) -> Dict[str, str]:
@@ -64,7 +66,7 @@ def setup_local_entry(db: Session, data: LocalEntryNodeCreate) -> Tuple[Path, Di
 
     with log_path.open("a") as log:
         subprocess.Popen(
-            cmd, stdout=log, stderr=subprocess.STDOUT, close_fds=True
+            cmd, stdout=log, stderr=subprocess.STDOUT, close_fds=True, preexec_fn=os.setsid
         )
 
     node_data_dict = {
@@ -89,54 +91,43 @@ def setup_local_entry(db: Session, data: LocalEntryNodeCreate) -> Tuple[Path, Di
 
 
 def setup_local_processor(
-    db: Session, data: LocalProcessorNodeCreate, launch: bool = True
+    db: Session, data: LocalProcessorNodeCreate
 ) -> Tuple[Path, Path | None]:
-    
-    entry_endpoints_str = None
-    queries_str = None
-
-    if data.queries:
-        queries_str = ";".join(
-            f"{q.name}|{q.query}" for q in data.queries
-        )
-
-    if data.entry_endpoints:
-        entry_endpoints_str = ";".join(
-            f"{e.name}|{e.host}|{e.port}|{e.query_name}" for e in data.entry_endpoints
-        )
-    
     fd, log_path = tempfile.mkstemp(prefix='processor_', suffix='.log')
     os.close(fd)
 
     log_path = Path(log_path)
 
+    if data.name is None:
+        data.name = str(uuid.uuid4())
+
     with log_path.open("a") as log:
         log.write(f"processor node logs start\n")
 
-    if launch:
-        python_bin = python_from_env(data.env_name)
+    python_bin = python_from_env(data.env_name)
 
-        cmd = ["nohup", python_bin, str(PROCESSOR_SCRIPT_SRC)]
+    cmd = ["nohup", python_bin, str(PROCESSOR_SCRIPT_SRC)]
 
-        if data.exit_host:
-            cmd += ["--exit_host", data.exit_host]
-        
-        if data.exit_port:
-            cmd += ["--exit_port", str(data.exit_port)]
+    if data.exit_host:
+        cmd += ["--exit-host", data.exit_host]
+    
+    if data.exit_port:
+        cmd += ["--exit-port", str(data.exit_port)]
 
-        if entry_endpoints_str:
-            entry_endpoints = entry_endpoints_str
-            cmd += ["--entry_endpoints", entry_endpoints]
+    cmd += [
+        "--host",
+        data.serving_host,
+        "--port",
+        str(data.serving_port),
+        "--node-id",
+        data.name
+    ]
 
-        if queries_str:
-            queries = queries_str
-            cmd += ["--queries", queries]
-
-        with log_path.open("a") as log:
-            log.write(f"Command: {' '.join(cmd)}\n")
-            subprocess.Popen(
-                cmd, stdout=log, stderr=subprocess.STDOUT, close_fds=True
-            )
+    with log_path.open("a") as log:
+        log.write(f"Command: {' '.join(cmd)}\n")
+        subprocess.Popen(
+            cmd, stdout=log, stderr=subprocess.STDOUT, close_fds=True, preexec_fn=os.setsid
+        )
 
     node_data_dict = {
         "name": data.name,
@@ -146,14 +137,14 @@ def setup_local_processor(
         "ssh_password": "",
         "exit_host": data.exit_host,
         "exit_port": data.exit_port,
-        "entry_endpoints": data.entry_endpoints or [],
-        "queries": data.queries or [],
+        "serving_host": data.serving_host,
+        "serving_port": data.serving_port,
         "env_name": data.env_name,
     }
 
     print("Node data dict:", node_data_dict)
 
-    node_data = LocalProcessorNodeCreate(**node_data_dict)
+    node_data = ProcessorNodeCreate(**node_data_dict)
 
     create_processor_node_without_deploy(
         db=db,

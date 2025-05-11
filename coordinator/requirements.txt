@@ -6,3 +6,4 @@ python-dotenv
 paramiko
 sqlalchemy
 python-multipart
+requests

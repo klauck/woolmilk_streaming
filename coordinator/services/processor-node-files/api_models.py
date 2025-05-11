@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class EntryEndpoint(BaseModel):
     name: str
     host: str
-    port: str
+    port: int
     query_names: List[str]
 
 class Query(BaseModel):
@@ -27,7 +27,7 @@ class AddQueryRequest(BaseModel):
     entry_endpoints: List[EntryEndpoint] = [{
         "name": "endpoint_1",
         "host": "127.0.0.1",
-        "port": "8815",
+        "port": 8815,
         "query_names": ["query_1"]
     }]
     

@@ -26,11 +26,11 @@ def create_processor_node_without_deploy(
         ssh_password="",
         exit_host=node_data.exit_host,
         exit_port=node_data.exit_port,
-        entry_endpoints=[e.dict() for e in node_data.entry_endpoints] if node_data.entry_endpoints else [],
-        queries=[q.dict() for q in node_data.queries] if node_data.queries else [],
         status=status,
         status_message=status_message,
-        env_name=node_data.env_name
+        env_name=node_data.env_name,
+        serving_host=node_data.serving_host,
+        serving_port=node_data.serving_port,
     )
     db.add(db_node)
     try:

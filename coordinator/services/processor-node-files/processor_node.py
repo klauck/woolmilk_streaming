@@ -27,7 +27,7 @@ class ProcessorNode:
         """
         client_states = []
         for ep in endpoints:
-            location = f"grpc://{ep.host}:{ep.port}"
+            location = f"grpc://{ep.host}:{str(ep.port)}"
             client = fl.FlightClient(location)
             config_str = f'{{"node_id":"{self.node_id}","command_str":"{command}"}}'
             ticket = Ticket(config_str.encode("utf-8"))

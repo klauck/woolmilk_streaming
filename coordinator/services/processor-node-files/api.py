@@ -1,7 +1,5 @@
-import argparse
 from datetime import datetime
 from typing import List, Optional
-import uvicorn
 from fastapi import FastAPI, BackgroundTasks
 from processor_node import ProcessorNode
 from api_models import Query, QueryStatus, InfoResponse, QueryAddedResponse, AddQueryRequest, EntryEndpoint
@@ -20,6 +18,14 @@ def get_info():
         current_query=running,
         all_queries=history
     )
+
+# create api at info/{query_name}
+@app.get("/info/{query_name}")
+def get_query_info(query_name: str):
+    query = next((q for q in history if q.name == query_name), None)
+    if not query:
+        return {"message": "Query not found", "status": "error"}
+    return query
 
 @app.post("/add-query", response_model=QueryAddedResponse)
 def add_query(payload: AddQueryRequest, background_tasks: BackgroundTasks):
@@ -71,21 +77,3 @@ def _process_queue(entry_eps: List[EntryEndpoint],
         qs.finished_time = datetime.utcnow()
         qs.time_taken = (qs.finished_time - qs.start_time).total_seconds()
         qs.status = "finished"
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", required=True)
-    parser.add_argument("--port", type=int, required=True)
-    parser.add_argument("--node-id", required=True)
-    parser.add_argument("--exit-host")
-    parser.add_argument("--exit-port", type=int)
-    args = parser.parse_args()
-
-    app.state.node_id = args.node_id
-    app.state.exit_host = args.exit_host
-    app.state.exit_port = args.exit_port
-
-    uvicorn.run(app, host=args.host, port=args.port, reload=False)
-
-if __name__ == "__main__":
-    main()

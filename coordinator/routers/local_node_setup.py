@@ -32,8 +32,7 @@ async def create_processor_local(local_processor_node: LocalProcessorNodeCreate,
 
     log_path = setup_local_processor(
         db=db,
-        data=local_processor_node,
-        launch=True,
+        data=local_processor_node
     )
 
     msg = (
