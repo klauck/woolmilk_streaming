@@ -28,13 +28,8 @@ class BaseNodeFlightServer(fl.FlightServerBase):
 
         elif read_type == "memory":
             for table_name, parquet_path in parquet_registrations.items():
-                arrow_table = pq.read_table(parquet_path)
-                # total size in bytes
+                arrow_table = pq.read_table(parquet_path, read_dictionary=False).replace_schema_metadata(None)
                 total_size = arrow_table.nbytes
-                # print total size in MB
-                print(f"Total size of {table_name} in MB: {total_size / (1024 * 1024)}")
-                # print total number of rows
-                print(f"Total number of rows in {table_name}: {arrow_table.num_rows}")
                 self.ctx.from_arrow(arrow_table, name=table_name)
 
     def get_flight_info(self, context, descriptor):
