@@ -25,6 +25,10 @@ Sketch of data transfer from streaming sources to sink(s)
 
     https://www.usenix.org/system/files/login/articles/login_winter18_08_khurana.pdf
 
+  - Voltron Data: The Composable Codex
+    
+    https://voltrondata.com/codex
+
 
     #### DataFusion Streaming
 
