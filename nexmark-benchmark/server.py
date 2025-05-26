@@ -107,6 +107,43 @@ def parse_parquet_files(files_str):
         parquet_dict[key.strip()] = val.strip()
     return parquet_dict
 
+
+class IndividualNodeFlightServer(BaseNodeFlightServer):
+    def __init__(self, parquet_registrations, host="0.0.0.0", port=8815, read_type = "disk", chunk_size=100000, **kwargs):
+        super().__init__(parquet_registrations, host, port, read_type, chunk_size, **kwargs)
+        self.node_info = {}
+
+    def do_get(self, context, ticket):
+        config_str = ticket.ticket.decode("utf-8")
+        config = json.loads(config_str)
+        command = config["command"]
+        node_id = config["node_id"]
+
+        if node_id not in self.node_info:
+            self.node_info[node_id] = {}
+
+        base_sql = self.get_base_sql(command)
+        offset = self.node_info[node_id].get(command, 0)
+
+        chunk_query = f"""
+            SELECT *
+            FROM ({base_sql}) AS sub
+            LIMIT {self.CHUNK_SIZE}
+            OFFSET {offset}
+        """
+
+        chunk_table = self.ctx.sql(chunk_query).to_arrow_table()
+
+        if chunk_table.num_rows == 0:
+            empty_schema = self.ctx.sql(f"{base_sql} LIMIT 0").to_arrow_table().schema
+            empty_reader = pa.RecordBatchReader.from_batches(empty_schema, [])
+            return fl.RecordBatchStream(empty_reader)
+        else:
+            # Update the node-specific offset.
+            self.node_info[node_id][command] = offset + chunk_table.num_rows
+            return fl.RecordBatchStream(chunk_table.to_reader())
+
+
 def main():
     parser = argparse.ArgumentParser(description="Group Node Flight Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
@@ -123,12 +160,12 @@ def main():
     current_file_dir = os.path.dirname(os.path.abspath(__file__))
     parser.add_argument(
         "--data_dir",
-        default=None,
+        default=".",
         help="Base directory containing the Parquet files (default: ../../data)"
     )
     parser.add_argument(
         "--parquet_files",
-        default="bids=bid_1.parquet,auctions=auction.parquet,persons=person.parquet",
+        default="bid=bids.parquet",
         help=(
             "Comma-separated key=value pairs mapping dataset names to parquet filenames. "
             "Example: 'bids=bid_1.parquet,auctions=auction.parquet,persons=person.parquet'"
@@ -140,6 +177,13 @@ def main():
         type=int,
         default=1000000,
         help="Bitrate for the stream (default: 1000000)"
+    )
+
+    parser.add_argument(
+        "--server-type",
+        default="individual",
+        choices=["individual", "group"],
+        help="Type of server to run (default: individual)"
     )
 
     # python3 node-server.py --host 0.0.0.0 --port 8815 --read_type memory --data_dir /Users/usamabintariq/Documents/GitHub/woolmilk_streaming/data --parquet_files bids=bids.parquet,auctions=auctions.parquet,persons=persons.parquet
@@ -160,13 +204,24 @@ def main():
 
     print(parquet_files)
 
-    server = GroupNodeFlightServer(
-        parquet_registrations=parquet_files,
-        host=args.host,
-        port=args.port,
-        read_type=args.read_type,
-        chunk_size=args.bit_rate,
-    )
+    server: BaseNodeFlightServer = None
+
+    if args.server_type == "group":
+        GroupNodeFlightServer(
+            parquet_registrations=parquet_files,
+            host=args.host,
+            port=args.port,
+            read_type=args.read_type,
+            chunk_size=args.bit_rate,
+        )
+    else: 
+        server = IndividualNodeFlightServer(
+            parquet_registrations=parquet_files,
+            host=args.host,
+            port=args.port,
+            read_type=args.read_type,
+            chunk_size=args.bit_rate,
+        )
 
     print(f"Serving Flight on {args.host}:{args.port}")
     server.serve()

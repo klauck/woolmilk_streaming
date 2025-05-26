@@ -54,7 +54,7 @@ class ProcessorNode:
     def run_command(self, command: str):
         client = self.initialize_client_state(command)
 
-        # print(f"\n[{self.node_id}] Running command '{command}' on entry nodes.")
+        print(f"\n[{self.node_id}] Running command '{command}' on entry nodes.")
 
         stats = {
             "rows": 0,
@@ -72,7 +72,7 @@ class ProcessorNode:
             else:
                 stats["rows"] += chunk_table.num_rows
                 stats["data_mb"] += self.table_size_bytes(chunk_table) / (1024 * 1024)
-                # print(f"[{self.node_id}] Received {chunk_table.num_rows} rows from {client['id']}")
+                print(f"[{self.node_id}] Received {chunk_table.num_rows} rows from {client['id']}")
 
             stats["total_time"] = stats["total_time"] + (time.time() - start_time)
 
@@ -89,3 +89,17 @@ class ProcessorNode:
     def close(self):
         self.client["client"].close()
         print(f"[{self.node_id}] Connection closed.")
+
+def test():
+    entry_endpoint = {
+        "host": "127.0.0.1",
+        "port": 8815
+    }
+    node = ProcessorNode("node1", entry_endpoint)
+    command = "SELECT * FROM bids"
+    stats = node.run_command(command)
+    print(stats)
+    node.close()
+
+if __name__ == "__main__":
+    test()
