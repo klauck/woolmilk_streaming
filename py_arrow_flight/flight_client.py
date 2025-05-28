@@ -1,5 +1,6 @@
 import pyarrow as pa
 import time
+import pyarrow.flight
 import sys
 from nexmark_data_generator import NexmarkDataGenerator
 
@@ -8,7 +9,7 @@ NO_RECORDS = 1000000
 RECORDS_PER_CHUNK = 100000
 
 def send_data(server):
-    client = pa.flight.FlightClient(f"grpc://{server}:8815")
+    client = pa.flight.FlightClient(f"grpc://{server}")
     data_generator = NexmarkDataGenerator(chunk_size=RECORDS_PER_CHUNK, no_records=NO_RECORDS)
 
     category_schema, person_schema, auction_schema, bid_schema = data_generator.get_schemas()
@@ -38,8 +39,8 @@ def send_data(server):
     print(f"Sent {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"USAGE: python {sys.argv[0]} HOST")
-        exit(1)
-    server = sys.argv[1]
+    server = "localhost:8815"
+    if len(sys.argv) == 2:
+        server = sys.argv[1]
+
     send_data(server)
