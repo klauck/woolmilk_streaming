@@ -1,46 +1,36 @@
 import pyarrow as pa
-import time
 import pyarrow.flight
+import time
+import numpy as np
 import sys
-from nexmark_data_generator import NexmarkDataGenerator
 
-MAX_CHUNK_SIZE = 65536
-NO_RECORDS = 1000000
-RECORDS_PER_CHUNK = 100000
+def generate_table(num_rows=10**6):
+    array = pa.array(np.random.rand(num_rows), type=pa.float64())
+    table = pa.table([array], names=["column"])
+    return table
 
 def send_data(server):
-    client = pa.flight.FlightClient(f"grpc://{server}")
-    data_generator = NexmarkDataGenerator(chunk_size=RECORDS_PER_CHUNK, no_records=NO_RECORDS)
+    client = pa.flight.FlightClient(f"grpc://{server}:8815")
 
-    category_schema, person_schema, auction_schema, bid_schema = data_generator.get_schemas()
-
+    table = generate_table()
     writer, _ = client.do_put(
-        pa.flight.FlightDescriptor.for_path("nexmark_data"),
-        bid_schema
+        pa.flight.FlightDescriptor.for_path("bandwidth-test"),
+        table.schema
     )
-
-    time_history = []
-    total_bytes = 0
-
-    for person_tbl, auction_tbl, bid_tbl, category_tbl in data_generator.generate():
-        time_history.append(time.time())
-        total_bytes += bid_tbl.nbytes
-        for batch in bid_tbl.to_batches(max_chunksize=MAX_CHUNK_SIZE):
-            writer.write_batch(batch)
-        time_history.append(time.time())
-        print(f"Sent {bid_tbl.num_rows} rows, {bid_tbl.nbytes} bytes in {time_history[-1] - time_history[-2]:.2f} seconds")
-
+    start = time.time()
+    for batch in table.to_batches(max_chunksize=65536):
+        writer.write_batch(batch)
     writer.done_writing()
+    end = time.time()
 
-    duration = 0
-    for i in range(1, len(time_history)):
-        duration += time_history[i] - time_history[i - 1]
+    total_bytes = table.nbytes
+    duration = end - start
     mbps = (total_bytes * 8) / (duration * 1024 * 1024)
     print(f"Sent {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)")
 
 if __name__ == "__main__":
-    server = "localhost:8815"
-    if len(sys.argv) == 2:
-        server = sys.argv[1]
-
+    if len(sys.argv) != 2:
+        print(f"USAGE: python {sys.argv[0]} HOST")
+        exit(1)
+    server = sys.argv[1]
     send_data(server)
