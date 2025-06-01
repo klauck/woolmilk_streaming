@@ -3,3 +3,4 @@ data
 __pycache__
 venv
 local_node_setup
+target
