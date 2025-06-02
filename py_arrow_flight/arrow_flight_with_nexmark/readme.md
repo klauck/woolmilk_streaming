@@ -1,15 +1,15 @@
-# Pull Request: Implement Nexmark Data Generator and Flight Pipeline (Without DataFusion)
+# Nexmark Flight Pipeline (Without DataFusion)
 
-## Overview
+This project sets up a simple Arrow Flight pipeline in Python using a Nexmark data generator.
 
-This pull request introduces the following:
+---
+
+## Features
 
 - A **Nexmark data generator** using the `nexmark` Rust crate.
 - A **Flight pipeline** that passes data from:
   - **Entry node** → **Processor node** → **Exit node**.
 - This version does **not** include integration with DataFusion yet.
-
----
 
 ## Prerequisites
 
@@ -57,12 +57,3 @@ Before running the pipeline, ensure the following dependencies are installed:
 
 This sets up the full data flow pipeline:  
 **Entry Node → Processor Node → Exit Node**
-
----
-
-## Notes
-
-- This implementation sets up the basic streaming structure.
-- Future PRs will integrate query execution via DataFusion.
-
-Please review and test locally.
