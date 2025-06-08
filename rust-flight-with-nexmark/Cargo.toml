@@ -6,7 +6,11 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.98"
 arrow = "55.1.0"
+arrow-flight = "55.1.0"
 futures = "0.3.31"
 nexmark = "0.2.0"
 serde_json = "1"
-tokio = "1.45.1"
+tonic = "0.12.3"
+prost = "0.13.5"
+tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
+async-stream = "0.3.6"
