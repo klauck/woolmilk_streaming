@@ -1,8 +1,7 @@
 use std::time::Instant;
 use arrow::array::RecordBatch;
-use arrow_flight::utils::flight_data_to_batches;
-use futures::stream::BoxStream;
-use futures::StreamExt;
+use arrow_flight::{utils::flight_data_to_batches};
+use futures::stream::{BoxStream, StreamExt};
 use tonic::{Request, Response, Status, Streaming};
 
 use arrow_flight::{
@@ -12,7 +11,18 @@ use arrow_flight::{
 };
 
 #[derive(Clone)]
-pub struct ProcessorFlightServer {}
+pub struct ProcessorFlightServer {
+    exit_server_addr: String
+}
+
+// Define constructor in a separate impl block
+impl ProcessorFlightServer {
+    pub fn new(exit_server_addr: impl Into<String>) -> Self {
+        Self { 
+            exit_server_addr: exit_server_addr.into() 
+        }
+    }
+}
 
 #[tonic::async_trait]
 impl FlightService for ProcessorFlightServer {

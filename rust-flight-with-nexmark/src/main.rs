@@ -22,18 +22,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         }
     };
 
+    let exit_addr: SocketAddr = "[::1]:8816".parse()?;
+
     match mode.as_str(){
         "entry" => {
-            let entry_client = flights::EntryClient::new("localhost:8815", 100000, 5000000, flights::entry_client::DataGenerationMode::PreGenerated);
+            let entry_client = flights::EntryClient::new("localhost:8815", 10000, 50000, flights::entry_client::DataGenerationMode::PreGenerated);
             entry_client.run().await?;
         }
         "processor" => {
             let addr: SocketAddr = "[::1]:8815".parse()?;
             println!("Starting Processor Flight server on {}", addr);
 
-            let processor_server = ProcessorFlightServer {};
+            let processor_server = ProcessorFlightServer::new(exit_addr.to_string());
             Server::builder()
-                .max_frame_size(Some(16_777_215))
                 .add_service(
                     FlightServiceServer::new(processor_server)
                     .max_decoding_message_size(usize::MAX)
@@ -43,6 +44,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 .await?;
         }
 
+        "exit" => {
+            println!("Starting Exit Flight server on {}", exit_addr);
+
+            let exit_server = ExitFlightServer {};
+            Server::builder()
+                .add_service(
+                    FlightServiceServer::new(exit_server)
+                    .max_decoding_message_size(usize::MAX)
+                    .max_decoding_message_size(usize::MAX)
+                )
+                .serve(exit_addr)
+                .await?;
+        }
         other => {
             eprintln!("Unknown mode: {}. Expected 'processor'.", other);
             std::process::exit(1);
