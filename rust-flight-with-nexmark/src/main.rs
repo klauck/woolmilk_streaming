@@ -1,11 +1,10 @@
 mod nexmark;
 mod flights;
 use arrow_flight::flight_service_server::FlightServiceServer;
+use flights::entry_client::DataGenerationMode;
 use tonic::transport::Server;
 use std::env;
 use std::net::SocketAddr; 
-
-use nexmark::{NexmarkDataGenerator};
 use flights::ExitFlightServer;
 use flights::ProcessorFlightServer;
 
@@ -26,7 +25,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
     match mode.as_str(){
         "entry" => {
-            let entry_client = flights::EntryClient::new("localhost:8815", 10000, 50000, flights::entry_client::DataGenerationMode::PreGenerated);
+
+            // get next argument as real time or pre-generated
+            let generation_mode = match args.next() {
+                Some(mode) => mode,
+                None => {
+                    eprintln!("Usage: {} entry <real-time|pre-generated>", env::args().next().unwrap_or_default());
+                    std::process::exit(1);
+                }
+            };
+            let generation_mode = match generation_mode.as_str() {
+                "real-time" => DataGenerationMode::RealTime,
+                "pre-generated" => DataGenerationMode::PreGenerated,
+                _ => {
+                    eprintln!("Unknown generation mode: {}. Expected 'real-time' or 'pre-generated'.", generation_mode);
+                    std::process::exit(1);
+                }
+            };
+            
+            let entry_client = flights::EntryClient::new("localhost:8815", 10000, 50000, generation_mode);
             entry_client.run().await?;
         }
         "processor" => {
