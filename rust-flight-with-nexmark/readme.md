@@ -1,6 +1,6 @@
 # Arrow Flight Data Pipeline with Rust
 
-This project implements a distributed data streaming pipeline using Apache Arrow Flight. The system consists of three components that work together to process and transfer data in real-time.
+This rust project implements a distributed data streaming pipeline using Apache Arrow Flight. The system consists of three components that work together to process and transfer data in real-time.
 
 ## Architecture Overview
 
@@ -50,22 +50,10 @@ The system requires running three separate processes in order. Open three termin
 cargo run exit
 ```
 
-Expected output:
-
-```
-Starting Exit Flight server on [::1]:8816
-```
-
 ### Terminal 2: Start Processor Server
 
 ```bash
 cargo run processor
-```
-
-Expected output:
-
-```
-Starting Processor Flight server on [::1]:8815
 ```
 
 ### Terminal 3: Run Entry Client
