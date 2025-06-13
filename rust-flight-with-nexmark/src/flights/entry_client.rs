@@ -28,6 +28,8 @@ pub struct EntryClient {
     generation_mode: DataGenerationMode,
 }
 
+
+
 impl EntryClient {
     pub fn new(
         server_addr: impl Into<String>,

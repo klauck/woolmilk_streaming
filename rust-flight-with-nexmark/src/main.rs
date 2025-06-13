@@ -25,7 +25,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
     match mode.as_str(){
         "entry" => {
-
+            let records_per_chunk = 500000;
+            let no_records = 1000000;
             // get next argument as real time or pre-generated
             let generation_mode = match args.next() {
                 Some(mode) => mode,
@@ -43,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 }
             };
             
-            let entry_client = flights::EntryClient::new("localhost:8815", 10000, 50000, generation_mode);
+            let entry_client = flights::EntryClient::new("localhost:8815", records_per_chunk, no_records, generation_mode);
             entry_client.run().await?;
         }
         "processor" => {

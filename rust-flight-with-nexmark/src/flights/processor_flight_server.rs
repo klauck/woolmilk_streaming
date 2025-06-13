@@ -68,6 +68,8 @@ impl FlightService for ProcessorFlightServer {
         } else {
             println!("[Exit] No exit server address provided, skipping data transfer.");
         }
+
+        
         
         if let Some(ref mut client) = exit_client {
             // create a channel for sending data to exit server
@@ -114,6 +116,7 @@ impl FlightService for ProcessorFlightServer {
             exit_stream_sender = Some(tx);
         }
 
+        let start_time = Instant::now();
         while let Some(maybe_msg) = stream_pin.next().await {
             let data_msg = maybe_msg.map_err(|e| {
                 Status::internal(format!("Error reading FlightData stream: {}", e))
@@ -165,6 +168,8 @@ impl FlightService for ProcessorFlightServer {
             all_flight_data.push(data_msg);
         }
 
+        let elapsed_time = start_time.elapsed();
+
         // close the exit stream and wait for completion
         if let Some(sender) = exit_stream_sender {
             drop(sender); // closes the channel
@@ -173,8 +178,6 @@ impl FlightService for ProcessorFlightServer {
         if let Some(handle) = exit_request_handle {
             let _ = handle.await;
         }
-
-        let elapsed_time = Instant::now().elapsed();
 
         if all_flight_data.is_empty() {
             println!("do_put received no data");
