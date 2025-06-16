@@ -1,6 +1,6 @@
-use std::io::{self, Error, Write};
+use std::{io::{self, Error, Write}, sync::Arc};
 use arrow::array::RecordBatch;
-use datafusion::prelude::*;
+use datafusion::{catalog::MemTable, logical_expr::LogicalPlanBuilder, prelude::*, datasource::DefaultTableSource};
 use serde_json::to_string_pretty;
 use crate::nexmark::NexmarkDataGenerator;
 use datafusion_substrait::{logical_plan::{consumer::from_substrait_plan, producer::to_substrait_plan}};
@@ -22,19 +22,71 @@ pub async fn run_nexmark_query_2() -> Result<(),  Error> {
     // unwrap bids
     let bids = bids.ok_or_else(|| io::Error::new(io::ErrorKind::Other, "No bids data found"))?;
 
-    ctx.register_batch("bid", bids)?;
+    ctx.register_batch("bid", bids.clone())?;
 
     let df_q2_sql = run_query_2_sql(&ctx).await?;
     let df_q2_df_api = run_query_2_dataframe_api(&ctx).await?;
     let df_q2_substrait = run_query_2_substrait(&ctx, true).await?;
+    let df_q2_low_level = run_query_2_low_level(&ctx, &bids).await?;
 
-    df_q2_sql.show().await?;
-    df_q2_df_api.show().await?;
-    df_q2_substrait.show().await?;
+    // Compare only row counts
+    let sql_count = df_q2_sql.count().await?;
+    let df_api_count = df_q2_df_api.count().await?;
+    let substrait_count = df_q2_substrait.count().await?;
+    let low_level_count = df_q2_low_level.count().await?;
+
+    if sql_count == df_api_count && df_api_count == substrait_count && substrait_count == low_level_count {
+        println!("All same number of rows!");
+    } else {
+        println!("Row counts no same!");
+    }
 
     println!("Query 2 completed successfully.");
 
     Ok(())
+}
+
+async fn run_query_2_low_level(ctx: &SessionContext, bids: &RecordBatch) -> Result<DataFrame, Error> {
+    let schema = bids.schema();
+    let mem_table = MemTable::try_new(schema.clone(), vec![vec![bids.clone()]])
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("MemTable creation error: {}", e)))?;
+    
+    let table_source = Arc::new(DefaultTableSource::new(Arc::new(mem_table)));
+    
+    // create table scan
+    let table_scan = LogicalPlanBuilder::scan(
+        "bid",
+        table_source,
+        None
+    )
+    .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Table scan error: {}", e)))?;
+    
+    //build filter expression
+    let auction_col = col("auction");
+    let filter_expr = auction_col.clone().eq(lit(1007))
+        .or(auction_col.clone().eq(lit(1020)))
+        .or(auction_col.clone().eq(lit(2001)))
+        .or(auction_col.clone().eq(lit(2019)))
+        .or(auction_col.eq(lit(2087)));
+    
+    let filtered_plan = table_scan
+        .filter(filter_expr)
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Filter error: {}", e)))?;
+    
+    let projection_exprs = vec![
+        col("auction"),
+        col("price")
+    ];
+    
+    let final_plan = filtered_plan
+        .project(projection_exprs)
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Projection error: {}", e)))?
+        .build()
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Plan build error: {}", e)))?;
+    
+    let df = DataFrame::new(ctx.state(), final_plan);
+    
+    Ok(df)
 }
 
 async fn run_query_2_substrait(ctx: &SessionContext, save_and_load_from_json: bool) -> Result<DataFrame, Error> {
