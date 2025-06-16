@@ -24,6 +24,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
     let exit_addr: SocketAddr = "[::1]:8816".parse()?;
 
     match mode.as_str(){
+        "run-query-2"=>{
+            nexmark::queries::run_nexmark_query_2().await?;
+        }
         "entry" => {
             let records_per_chunk = 500000;
             let no_records = 1000000;
