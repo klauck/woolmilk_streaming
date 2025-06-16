@@ -68,7 +68,7 @@ impl FlightService for ExitFlightServer {
         let mut total_rows: usize = 0;
         let mut total_bytes: usize = 0;
         
-        for (i, batch) in record_batches.iter().enumerate() {
+        for (_, batch) in record_batches.iter().enumerate() {
             let rows = batch.num_rows();
             let bytes = batch.get_array_memory_size();
             total_rows += rows;
