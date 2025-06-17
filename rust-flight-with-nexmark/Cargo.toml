@@ -16,3 +16,8 @@ tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
 async-stream = "0.3.6"
 datafusion = "48.0.0"
 datafusion-substrait = "48.0.0"
+datafusion-common = "48.0.0"
+parking_lot = "0.12.4"
+datafusion-expr = "48.0.0"
+datafusion-execution = "48.0.0"
+datafusion-physical-expr = "48.0.0"

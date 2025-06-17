@@ -2,8 +2,8 @@ use std::{io::{self, Error, Write}, sync::Arc};
 use arrow::array::RecordBatch;
 use datafusion::{catalog::MemTable, logical_expr::LogicalPlanBuilder, prelude::*, datasource::DefaultTableSource};
 use serde_json::to_string_pretty;
-use crate::nexmark::NexmarkDataGenerator;
-use datafusion_substrait::{logical_plan::{consumer::from_substrait_plan, producer::to_substrait_plan}};
+use crate::nexmark::{queries_physical_operator::run_query_2_physical_operators_lowest_level, NexmarkDataGenerator};
+use datafusion_substrait::logical_plan::{consumer::from_substrait_plan, producer::to_substrait_plan};
 
 pub async fn run_nexmark_query_2() -> Result<(),  Error> {
     println!("Generating Nexmark data for query 2.");
@@ -34,11 +34,14 @@ pub async fn run_nexmark_query_2() -> Result<(),  Error> {
     let df_api_count = df_q2_df_api.count().await?;
     let substrait_count = df_q2_substrait.count().await?;
     let low_level_count = df_q2_low_level.count().await?;
+    let lowest_level = run_query_2_physical_operators_lowest_level(&bids)
+        .await?;
 
-    if sql_count == df_api_count && df_api_count == substrait_count && substrait_count == low_level_count {
-        println!("All same number of rows!");
+    if sql_count == df_api_count && df_api_count == substrait_count && substrait_count == low_level_count && low_level_count == lowest_level.len() {
+        println!("Row counts match across all query methods: {}", sql_count);
     } else {
         println!("Row counts no same!");
+        return Err(io::Error::new(io::ErrorKind::Other, "Row counts do not match across different query methods"));
     }
 
     println!("Query 2 completed successfully.");
@@ -118,15 +121,11 @@ async fn run_query_2_substrait(ctx: &SessionContext, save_and_load_from_json: bo
         file.write_all(json.as_bytes())
             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("File write error: {}", e)))?;
         
-        println!("Substrait plan saved to query2_substrait_plan.json");
-        
         let file = std::fs::File::open("query2_substrait_plan.json")
             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("File open error: {}", e)))?;
         
         let loaded_plan: datafusion_substrait::substrait::proto::Plan = serde_json::from_reader(file)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("JSON deserialization error: {}", e)))?;
-        
-        println!("Substrait plan loaded from query2_substrait_plan.json");
         
         let restored_plan = from_substrait_plan(&ctx.state(), &loaded_plan).await
             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Substrait restoration from JSON error: {}", e)))?;
