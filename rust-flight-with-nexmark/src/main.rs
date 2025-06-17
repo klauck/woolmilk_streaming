@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
     let mode = match args.next() {
         Some(m) => m,
         None => {
-            eprintln!("Usage: {} <entry|processor|exit>", env::args().next().unwrap_or_default());
+            eprintln!("Usage: {} <entry|processor|exit|run-query-2>", env::args().next().unwrap_or_default());
             std::process::exit(1);
         }
     };
