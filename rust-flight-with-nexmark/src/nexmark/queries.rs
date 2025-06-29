@@ -2,7 +2,7 @@ use std::{io::{self, Error, Write}, sync::Arc};
 use arrow::array::RecordBatch;
 use datafusion::{catalog::MemTable, logical_expr::LogicalPlanBuilder, prelude::*, datasource::DefaultTableSource};
 use serde_json::to_string_pretty;
-use crate::nexmark::{queries_physical_operator::run_query_2_physical_operators_lowest_level, NexmarkDataGenerator};
+use crate::nexmark::{physical_substrait_plan::save_physical_plan_to_json, queries_physical_operator::run_query_2_physical_operators_lowest_level, NexmarkDataGenerator};
 use datafusion_substrait::logical_plan::{consumer::from_substrait_plan, producer::to_substrait_plan};
 
 pub async fn run_nexmark_query_2() -> Result<(),  Error> {
@@ -23,6 +23,8 @@ pub async fn run_nexmark_query_2() -> Result<(),  Error> {
     let bids = bids.ok_or_else(|| io::Error::new(io::ErrorKind::Other, "No bids data found"))?;
 
     ctx.register_batch("bid", bids.clone())?;
+
+    save_physical_plan_to_json(&bids).await?;
 
     let df_q2_sql = run_query_2_sql(&ctx).await?;
     let df_q2_df_api = run_query_2_dataframe_api(&ctx).await?;
