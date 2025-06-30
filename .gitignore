@@ -4,3 +4,4 @@ __pycache__
 venv
 local_node_setup
 target
+rust-flight-with-nexmark/stats

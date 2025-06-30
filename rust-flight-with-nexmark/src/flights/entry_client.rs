@@ -12,7 +12,8 @@ use async_stream::stream;
 use prost::Message;
 use tonic::metadata::MetadataValue;
 use tonic::Request;
-
+use serde_json::json;
+use crate::flights::stats::{EntryStats, Stats};
 use crate::nexmark::{bid_schema, NexmarkDataGenerator};
 
 #[derive(Debug, Clone)]
@@ -27,8 +28,6 @@ pub struct EntryClient {
     no_records: usize,
     generation_mode: DataGenerationMode,
 }
-
-
 
 impl EntryClient {
     pub fn new(
@@ -46,16 +45,23 @@ impl EntryClient {
     }
 
     pub async fn run(&self) -> Result<(), Box<dyn Error>> {
+        let program_start = Instant::now();
+        
         let bids_descriptor = FlightDescriptor {
             r#type: DescriptorType::Path as i32,
             cmd: Default::default(),
             path: vec!["bids".to_string()],
         };
 
-        let batch_times: Arc<Mutex<Vec<f64>>> = Arc::new(Mutex::new(Vec::new()));
-        let bid_schema: Schema = bid_schema();
-        let batch_times_for_stream = batch_times.clone();
+        let mode_str = match self.generation_mode {
+            DataGenerationMode::PreGenerated => "PRE-GEN".to_string(),
+            DataGenerationMode::RealTime => "REAL-TIME".to_string(),
+        };
 
+        let stats = Arc::new(Mutex::new(EntryStats::new(mode_str.clone(), self.records_per_chunk)));
+        let stats_for_stream = stats.clone();
+
+        let bid_schema: Schema = bid_schema();
         let data_generator = NexmarkDataGenerator::new(self.records_per_chunk, self.no_records);
 
         let (all_batches, is_pregenerated) = match self.generation_mode {
@@ -73,6 +79,13 @@ impl EntryClient {
             DataGenerationMode::RealTime => {
                 (None, false)
             }
+        };
+
+        // for pre-generated mode, start timing after data generation
+        let streaming_start = if is_pregenerated {
+            Instant::now()
+        } else {
+            program_start
         };
 
         println!("Entry client: connecting to Flight server at {}", self.server_addr);
@@ -105,17 +118,20 @@ impl EntryClient {
                     }
 
                     let duration_secs = start.elapsed().as_secs_f64();
+                    let batch_size = bid_batch.get_array_memory_size() as u64;
+                    let row_count = bid_batch.num_rows();
+                    
                     {
-                        let mut lock = batch_times_for_stream.lock().unwrap();
-                        lock.push(duration_secs);
+                        let mut stats_lock = stats_for_stream.lock().unwrap();
+                        stats_lock.add_batch(batch_idx + 1, row_count, batch_size, duration_secs);
                     }
 
-                    let total_mb = bid_batch.get_array_memory_size() as f64 / 1_000_000.0;
+                    let total_mb = batch_size as f64 / 1_000_000.0;
 
                     println!(
                         "[PRE-GEN] Sent batch {}: {} rows (~{} MB) in {:.3} sec",
                         batch_idx + 1,
-                        bid_batch.num_rows(),
+                        row_count,
                         total_mb,
                         duration_secs
                     );
@@ -142,17 +158,20 @@ impl EntryClient {
                     }
 
                     let duration_secs = start.elapsed().as_secs_f64();
+                    let batch_size = bid_batch.get_array_memory_size() as u64;
+                    let row_count = bid_batch.num_rows();
+                    
                     {
-                        let mut lock = batch_times_for_stream.lock().unwrap();
-                        lock.push(duration_secs);
+                        let mut stats_lock = stats_for_stream.lock().unwrap();
+                        stats_lock.add_batch(batch_count, row_count, batch_size, duration_secs);
                     }
 
-                    let total_mb = bid_batch.get_array_memory_size() as f64 / 1_000_000.0;
+                    let total_mb = batch_size as f64 / 1_000_000.0;
 
                     println!(
                         "[REAL-TIME] Sent batch {}: {} rows (~{} MB) in {:.3} sec",
                         batch_count,
-                        bid_batch.num_rows(),
+                        row_count,
                         total_mb,
                         duration_secs
                     );
@@ -172,13 +191,28 @@ impl EntryClient {
         let mut put_results = response.into_inner();
         while let Some(_put_res) = put_results.next().await {}
 
-        let total_time: f64 = {
-            let lock = batch_times.lock().unwrap();
-            lock.iter().copied().sum()
+        let final_stats = {
+            let stats_lock = stats.lock().unwrap();
+            let streaming_duration = streaming_start.elapsed().as_secs_f64();
+            let program_duration = program_start.elapsed().as_secs_f64();
+            
+            let mut additional_stats = serde_json::Map::new();
+            if is_pregenerated {
+                additional_stats.insert("total_time_seconds".to_string(), json!(streaming_duration));
+            } else {
+                additional_stats.insert("total_time_seconds".to_string(), json!(program_duration));
+            }
+            
+            stats_lock.save_to_file(Some(additional_stats)).unwrap_or_else(|e| {
+                eprintln!("Failed to save stats: {}", e);
+                "failed".to_string()
+            });
+            
+            stats_lock.to_json()
         };
 
-        let mode = if is_pregenerated { "PRE-GEN" } else { "REAL-TIME" };
-        println!("[{}] Finished sending all batches in {:.3} sec total", mode, total_time);
+        println!("[{}] Finished sending all batches", mode_str);
+        println!("STATS_JSON: {}", final_stats);
         Ok(())
     }
 }

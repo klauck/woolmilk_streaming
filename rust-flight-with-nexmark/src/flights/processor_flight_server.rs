@@ -1,6 +1,7 @@
 use std::time::Instant;
+use std::sync::{Arc, Mutex};
 use arrow::array::RecordBatch;
-use arrow_flight::{flight_descriptor::DescriptorType, utils::flight_data_to_batches};
+use arrow_flight::{flight_descriptor::DescriptorType, utils::flight_data_to_batches, utils::batches_to_flight_data};
 use async_stream::stream;
 use futures::stream::{BoxStream, StreamExt};
 use tokio::{sync::mpsc::Sender, task::JoinHandle};
@@ -8,22 +9,27 @@ use tonic::{Request, Response, Status, Streaming};
 use arrow_flight::flight_service_client::FlightServiceClient;
 use prost::Message;
 use tonic::metadata::MetadataValue;
-
+use serde_json::json;
 use arrow_flight::{
     flight_service_server::FlightService, Action,
     ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo, HandshakeRequest,
     HandshakeResponse, PollInfo, PutResult, SchemaResult, Ticket,
 };
+use super::stats::{ProcessorStats, Stats};
+use crate::nexmark::queries_physical_operator::run_query_2_physical_operators_lowest_level;
 
 #[derive(Clone)]
 pub struct ProcessorFlightServer {
-    exit_server_addr: String
+    exit_server_addr: String,
+    stats: Arc<Mutex<ProcessorStats>>,
 }
 
 impl ProcessorFlightServer {
     pub fn new(exit_server_addr: impl Into<String>) -> Self {
+        let stats = Arc::new(Mutex::new(ProcessorStats::new(0)));
         Self { 
-            exit_server_addr: exit_server_addr.into() 
+            exit_server_addr: exit_server_addr.into(),
+            stats,
         }
     }
 }
@@ -68,8 +74,6 @@ impl FlightService for ProcessorFlightServer {
         } else {
             println!("[Exit] No exit server address provided, skipping data transfer.");
         }
-
-        
         
         if let Some(ref mut client) = exit_client {
             // create a channel for sending data to exit server
@@ -117,13 +121,18 @@ impl FlightService for ProcessorFlightServer {
         }
 
         let start_time = Instant::now();
+        let mut batch_count = 0;
+        
         while let Some(maybe_msg) = stream_pin.next().await {
             let data_msg = maybe_msg.map_err(|e| {
                 Status::internal(format!("Error reading FlightData stream: {}", e))
             })?;
             
             message_count += 1;
-            println!("Received {} messages so far...", message_count);
+
+            if message_count % 50 == 0 {
+                println!("Received {} messages so far...", message_count);
+            }
 
             // the first message is always the schema
             if message_count == 1 {
@@ -140,28 +149,112 @@ impl FlightService for ProcessorFlightServer {
                 continue;
             }
 
-            let mut current_data = vec![data_msg.clone()];
-            if let Some(ref schema) = schema_data {
-                current_data.insert(0, schema.clone());
-            }
+            // Only process data messages that have actual data
+            if !data_msg.data_body.is_empty() {
+                let batch_receive_start = Instant::now();
+                let mut current_data = vec![data_msg.clone()];
+                if let Some(ref schema) = schema_data {
+                    current_data.insert(0, schema.clone());
+                }
 
-            if let Ok(batches) = flight_data_to_batches(&current_data) {
-                if !batches.is_empty() {
-                    // send to exit server
-                    if let Some(ref sender) = exit_stream_sender {
-                        if let Err(_) = sender.send(data_msg.clone()).await {
-                            println!("[EXIT] Failed to send batch {} to exit server", message_count);
-                        } else {
-                            println!("[EXIT] Successfully sent batch {} to exit server", message_count);
+                if let Ok(batches) = flight_data_to_batches(&current_data) {
+                    if !batches.is_empty() {
+                        batch_count += 1;
+                        let receive_duration = batch_receive_start.elapsed().as_secs_f64();
+                        
+                        for batch in &batches {
+                            let input_rows = batch.num_rows();
+                            let input_bytes = batch.get_array_memory_size() as u64;
+                            
+                            {
+                                let mut stats_lock = self.stats.lock().unwrap();
+                                stats_lock.add_receive_batch(batch_count, input_rows, input_bytes, receive_duration);
+                            }
+
+                            let query_start = Instant::now();
+                            let processed_results = match run_query_2_physical_operators_lowest_level(batch).await {
+                                Ok(results) => results,
+                                Err(e) => {
+                                    println!("Query execution failed: {}", e);
+                                    continue;
+                                }
+                            };
+                            let query_duration = query_start.elapsed().as_secs_f64();
+
+                            let output_rows = processed_results.len();
+                            if batch_count % 10 == 0 {
+                                println!("Query 2 processed batch {}: {} input rows -> {} output rows in {:.4}s", 
+                                        batch_count, input_rows, output_rows, query_duration);
+                            }
+
+                            let processing_start = Instant::now();
+                            
+                            if output_rows > 0 {
+                                let mut auction_values = Vec::new();
+                                let mut price_values = Vec::new();
+                                
+                                for result in &processed_results {
+                                    if let Some(auction) = result.get("auction") {
+                                        if let Some(auction_num) = auction.as_i64() {
+                                            auction_values.push(Some(auction_num));
+                                        }
+                                    }
+                                    if let Some(price) = result.get("price") {
+                                        if let Some(price_num) = price.as_f64() {
+                                            price_values.push(Some(price_num));
+                                        }
+                                    }
+                                }
+
+                                let auction_array = arrow::array::Int64Array::from(auction_values);
+                                let price_array = arrow::array::Float64Array::from(price_values);
+                                
+                                let schema = arrow::datatypes::Schema::new(vec![
+                                    arrow::datatypes::Field::new("auction", arrow::datatypes::DataType::Int64, true),
+                                    arrow::datatypes::Field::new("price", arrow::datatypes::DataType::Float64, true),
+                                ]);
+                                
+                                let processed_batch = RecordBatch::try_new(
+                                    Arc::new(schema.clone()),
+                                    vec![Arc::new(auction_array), Arc::new(price_array)]
+                                ).map_err(|e| Status::internal(format!("Failed to create processed batch: {}", e)))?;
+
+                                let processed_schema = Arc::new(schema);
+                                let flight_data_vec = batches_to_flight_data(&processed_schema, vec![processed_batch.clone()])
+                                    .map_err(|e| Status::internal(format!("Failed to convert to flight data: {}", e)))?;
+
+                                let send_start = Instant::now();
+                                if let Some(ref sender) = exit_stream_sender {
+                                    for flight_data in flight_data_vec {
+                                        if let Err(_) = sender.send(flight_data).await {
+                                            println!("[EXIT] Failed to send processed batch {} to exit server", batch_count);
+                                        }
+                                    }
+                                    if batch_count % 10 == 0 {
+                                        println!("[EXIT] Successfully sent processed batch {} with {} rows to exit server", batch_count, output_rows);
+                                    }
+                                }
+                                let send_duration = send_start.elapsed().as_secs_f64();
+                                
+                                let output_bytes = processed_batch.get_array_memory_size() as u64;
+                                let processing_duration = processing_start.elapsed().as_secs_f64();
+                                
+                                {
+                                    let mut stats_lock = self.stats.lock().unwrap();
+                                    stats_lock.add_send_batch(batch_count, output_rows, output_bytes, send_duration);
+                                    stats_lock.add_processing_stats(batch_count, input_rows, output_rows, processing_duration, query_duration);
+                                }
+                            } else {
+                                let processing_duration = processing_start.elapsed().as_secs_f64();
+                                {
+                                    let mut stats_lock = self.stats.lock().unwrap();
+                                    stats_lock.add_processing_stats(batch_count, input_rows, 0, processing_duration, query_duration);
+                                }
+                            }
                         }
                     }
-
-                    for batch in &batches {
-                        let rows = batch.num_rows();
-                        let bytes = batch.get_array_memory_size();
-                        let mbs = bytes as f64 / 1_000_000.0;
-                        println!("Processed real-time batch: {} rows, {:.2} MB", rows, mbs);
-                    }
+                } else {
+                    println!("Failed to convert FlightData to batches for message {}", message_count);
                 }
             }
 
@@ -198,7 +291,7 @@ impl FlightService for ProcessorFlightServer {
         let mut total_rows: usize = 0;
         let mut total_bytes: usize = 0;
         
-        for (_, batch) in record_batches.iter().enumerate() {
+        for batch in record_batches.iter() {
             let rows = batch.num_rows();
             let bytes = batch.get_array_memory_size();
             total_rows += rows;
@@ -206,7 +299,6 @@ impl FlightService for ProcessorFlightServer {
         }
 
         let total_mbs = total_bytes as f64 / 1_000_000.0;
-
         let elapsed_secs = elapsed_time.as_millis() as f64 / 1000.0;
         let rate = if elapsed_secs > 0.0 {
             total_mbs / elapsed_secs
@@ -214,8 +306,21 @@ impl FlightService for ProcessorFlightServer {
             0.0
         };
 
+        let stats_lock = self.stats.lock().unwrap();
+        let mut additional_stats = serde_json::Map::new();
+        additional_stats.insert("total_time_seconds".to_string(), json!(elapsed_secs));
+        additional_stats.insert("total_input_rows".to_string(), json!(total_rows));
+        additional_stats.insert("total_input_bytes".to_string(), json!(total_bytes));
+        additional_stats.insert("total_input_mb".to_string(), json!(total_mbs));
+        additional_stats.insert("input_rate_mbps".to_string(), json!(rate));
+        
+        stats_lock.save_to_file(Some(additional_stats)).unwrap_or_else(|e| {
+            eprintln!("Failed to save processor stats: {}", e);
+            "failed".to_string()
+        });
+
         println!(
-            "Received {} batches with {} rows and {} total MBs in {:.2?} seconds with transfer rate {:.2} MB/s",
+            "Processed {} input batches with {} rows and {:.2} MB in {:.2?} seconds with input rate {:.2} MB/s",
             record_batches.len(), total_rows, total_mbs, elapsed_time, rate
         );
 

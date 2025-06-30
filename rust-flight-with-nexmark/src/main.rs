@@ -89,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             let addr: SocketAddr = bind_address.parse()?;
             println!("Starting Exit Flight server on {}", addr);
 
-            let exit_server = ExitFlightServer {};
+            let exit_server = ExitFlightServer::new();
             Server::builder()
                 .add_service(
                     FlightServiceServer::new(exit_server)

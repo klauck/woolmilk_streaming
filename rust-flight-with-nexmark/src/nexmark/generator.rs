@@ -33,9 +33,9 @@ impl NexmarkDataGenerator {
         NexmarkDataIterator {
             config: self.clone(),
             generator: EventGenerator::new(NexmarkConfig {
-                bid_proportion: 50,
-                person_proportion: 50,
-                auction_proportion: 50,
+                bid_proportion: 48,
+                person_proportion: 1,
+                auction_proportion: 1,
                 ..Default::default()
             }),
             people: Vec::with_capacity(self.chunk_size),

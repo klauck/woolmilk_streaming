@@ -58,19 +58,22 @@ pub async fn run_query_2_physical_operators_lowest_level(bids: &RecordBatch) -> 
     let lit_2001 = Arc::new(Literal::new(ScalarValue::Int64(Some(2001))));
     let lit_2019 = Arc::new(Literal::new(ScalarValue::Int64(Some(2019))));
     let lit_2087 = Arc::new(Literal::new(ScalarValue::Int64(Some(2087))));
+    let lit_0 = Arc::new(Literal::new(ScalarValue::Int64(Some(0))));
 
     let eq_1007 = Arc::new(BinaryExpr::new(auction_col.clone(), Operator::Eq, lit_1007));
     let eq_1020 = Arc::new(BinaryExpr::new(auction_col.clone(), Operator::Eq, lit_1020));
     let eq_2001 = Arc::new(BinaryExpr::new(auction_col.clone(), Operator::Eq, lit_2001));
     let eq_2019 = Arc::new(BinaryExpr::new(auction_col.clone(), Operator::Eq, lit_2019));
     let eq_2087 = Arc::new(BinaryExpr::new(auction_col.clone(), Operator::Eq, lit_2087));
+    let eq_0 = Arc::new(BinaryExpr::new(auction_col.clone(), Operator::GtEq, lit_0));
 
     let or_1 = Arc::new(BinaryExpr::new(eq_1007, Operator::Or, eq_1020));
     let or_2 = Arc::new(BinaryExpr::new(or_1, Operator::Or, eq_2001));
     let or_3 = Arc::new(BinaryExpr::new(or_2, Operator::Or, eq_2019));
+    let or_4 = Arc::new(BinaryExpr::new(or_3, Operator::Or, eq_0));
     
     //combining all conditions with OR
-    let filter_expr = Arc::new(BinaryExpr::new(or_3, Operator::Or, eq_2087));
+    let filter_expr = Arc::new(BinaryExpr::new(or_4, Operator::Or, eq_2087));
 
     // FilterExec evaluates a boolean predicate against all input batches to determine which rows to
     // include in the output.
