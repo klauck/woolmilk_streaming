@@ -40,6 +40,14 @@ Entry Client → Processor Server → Exit Server
 -  Rust
 -  Cargo package manager
 
+## Command Line Interface
+
+The application uses structured command line arguments. Use `--help` to see all available options:
+
+```bash
+cargo run --help
+```
+
 ## Running the System
 
 The system requires running three separate processes in order. Open three terminal windows:
@@ -47,13 +55,19 @@ The system requires running three separate processes in order. Open three termin
 ### Terminal 1: Start Exit Server
 
 ```bash
-cargo run exit
+cargo run exit #default bind to localhost:8816
+
+# custom bind address
+cargo run exit --bind-address "[::1]:8817"
 ```
 
 ### Terminal 2: Start Processor Server
 
 ```bash
-cargo run processor
+cargo run processor #default bind to [::1]:8815, default exit localhost:8816
+
+# custom bind address
+cargo run processor --bind-address "[::1]:8818" --exit-address "localhost:8817"
 ```
 
 ### Terminal 3: Run Entry Client
@@ -61,11 +75,25 @@ cargo run processor
 For real-time data generation:
 
 ```bash
-cargo run entry real-time
+cargo run entry real-time #connects to localhost:8815
+
+cargo run entry --records-per-chunk 100000 --no-records 2000000 --server-address "localhost:8815" real-time
 ```
 
 For pre-generated data:
 
 ```bash
 cargo run entry pre-generated
+
+cargo run entry --records-per-chunk 250000 --no-records 5000000 --server-address "localhost:8815" pre-generated
+```
+
+## Additional Features
+
+### Run Nexmark Query 2
+
+You can also run standalone Nexmark Query 2:
+
+```bash
+cargo run run-query2
 ```

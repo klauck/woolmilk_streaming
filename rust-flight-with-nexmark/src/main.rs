@@ -3,58 +3,79 @@ mod flights;
 use arrow_flight::flight_service_server::FlightServiceServer;
 use flights::entry_client::DataGenerationMode;
 use tonic::transport::Server;
-use std::env;
 use std::net::SocketAddr; 
 use flights::ExitFlightServer;
 use flights::ProcessorFlightServer;
 
+use clap::{Parser, Subcommand};
+
+#[derive(Parser)]
+#[command(name = "flight-with-nexmark")]
+#[command(about = "A Flight server with Nexmark data generation")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    RunQuery2,
+    Entry {
+        #[arg(long, default_value = "500000")]
+        records_per_chunk: usize,
+        #[arg(long, default_value = "1000000")]
+        no_records: usize,
+        /// processor server address to connect to
+        #[arg(long, default_value = "localhost:8815")]
+        server_address: String,
+        #[arg(value_enum)]
+        mode: GenerationMode,
+    },
+    Processor {
+        #[arg(long, default_value = "[::1]:8815")]
+        bind_address: String,
+        #[arg(long, default_value = "localhost:8816")]
+        exit_address: String,
+    },
+    Exit {
+        #[arg(long, default_value = "[::1]:8816")]
+        bind_address: String,
+    },
+}
+
+#[derive(clap::ValueEnum, Clone)]
+enum GenerationMode {
+    RealTime,
+    PreGenerated,
+}
+
+impl From<GenerationMode> for DataGenerationMode {
+    fn from(mode: GenerationMode) -> Self {
+        match mode {
+            GenerationMode::RealTime => DataGenerationMode::RealTime,
+            GenerationMode::PreGenerated => DataGenerationMode::PreGenerated,
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
-    let mut args = env::args();
-    // Skip program name
-    let _exe = args.next();
-    let mode = match args.next() {
-        Some(m) => m,
-        None => {
-            eprintln!("Usage: {} <entry|processor|exit|run-query-2>", env::args().next().unwrap_or_default());
-            std::process::exit(1);
-        }
-    };
+    let cli = Cli::parse();
 
-    let exit_addr: SocketAddr = "[::1]:8816".parse()?;
-
-    match mode.as_str(){
-        "run-query-2"=>{
+    match cli.command {
+        Commands::RunQuery2 => {
             nexmark::queries::run_nexmark_query_2().await?;
         }
-        "entry" => {
-            let records_per_chunk = 500000;
-            let no_records = 1000000;
-            // get next argument as real time or pre-generated
-            let generation_mode = match args.next() {
-                Some(mode) => mode,
-                None => {
-                    eprintln!("Usage: {} entry <real-time|pre-generated>", env::args().next().unwrap_or_default());
-                    std::process::exit(1);
-                }
-            };
-            let generation_mode = match generation_mode.as_str() {
-                "real-time" => DataGenerationMode::RealTime,
-                "pre-generated" => DataGenerationMode::PreGenerated,
-                _ => {
-                    eprintln!("Unknown generation mode: {}. Expected 'real-time' or 'pre-generated'.", generation_mode);
-                    std::process::exit(1);
-                }
-            };
-            
-            let entry_client = flights::EntryClient::new("localhost:8815", records_per_chunk, no_records, generation_mode);
+        Commands::Entry { records_per_chunk, no_records, server_address, mode } => {
+            let generation_mode = DataGenerationMode::from(mode);
+            let entry_client = flights::EntryClient::new(&server_address, records_per_chunk, no_records, generation_mode);
             entry_client.run().await?;
         }
-        "processor" => {
-            let addr: SocketAddr = "[::1]:8815".parse()?;
+        Commands::Processor { bind_address, exit_address } => {
+            let addr: SocketAddr = bind_address.parse()?;
             println!("Starting Processor Flight server on {}", addr);
 
-            let processor_server = ProcessorFlightServer::new(exit_addr.to_string());
+            let processor_server = ProcessorFlightServer::new(exit_address);
             Server::builder()
                 .add_service(
                     FlightServiceServer::new(processor_server)
@@ -64,9 +85,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 .serve(addr)
                 .await?;
         }
-
-        "exit" => {
-            println!("Starting Exit Flight server on {}", exit_addr);
+        Commands::Exit { bind_address } => {
+            let addr: SocketAddr = bind_address.parse()?;
+            println!("Starting Exit Flight server on {}", addr);
 
             let exit_server = ExitFlightServer {};
             Server::builder()
@@ -75,12 +96,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                     .max_decoding_message_size(usize::MAX)
                     .max_decoding_message_size(usize::MAX)
                 )
-                .serve(exit_addr)
+                .serve(addr)
                 .await?;
-        }
-        other => {
-            eprintln!("Unknown mode: {}. Expected 'processor'.", other);
-            std::process::exit(1);
         }
     }
 
