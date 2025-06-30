@@ -151,110 +151,119 @@ impl FlightService for ProcessorFlightServer {
 
             // Only process data messages that have actual data
             if !data_msg.data_body.is_empty() {
-                let batch_receive_start = Instant::now();
+                let batch_start_time = Instant::now(); // Total time starts here
+                
+                let receive_start = Instant::now();
                 let mut current_data = vec![data_msg.clone()];
                 if let Some(ref schema) = schema_data {
                     current_data.insert(0, schema.clone());
                 }
 
-                if let Ok(batches) = flight_data_to_batches(&current_data) {
-                    if !batches.is_empty() {
-                        batch_count += 1;
-                        let receive_duration = batch_receive_start.elapsed().as_secs_f64();
+                let batches = match flight_data_to_batches(&current_data) {
+                    Ok(batches) => batches,
+                    Err(e) => {
+                        println!("Failed to convert FlightData to batches for message {}: {}", message_count, e);
+                        all_flight_data.push(data_msg);
+                        continue;
+                    }
+                };
+                let receive_duration = receive_start.elapsed().as_secs_f64();
+
+                let actual_input_bytes = data_msg.data_body.len() as u64;
+                let total_batch_size: u64 = batches.iter().map(|b| b.get_array_memory_size() as u64).sum();
+                
+                if !batches.is_empty() {
+                    batch_count += 1;
+                    
+                    for batch in &batches {
+
+                        let query_start = Instant::now();
+                        let processed_results = match run_query_2_physical_operators_lowest_level(batch).await {
+                            Ok(results) => results,
+                            Err(e) => {
+                                println!("Query execution failed: {}", e);
+                                continue;
+                            }
+                        };
+                        let query_duration = query_start.elapsed().as_secs_f64();
+
+                        let output_rows = processed_results.len();
                         
-                        for batch in &batches {
-                            let input_rows = batch.num_rows();
-                            let input_bytes = batch.get_array_memory_size() as u64;
+                        // Phase 3: Send time
+                        let send_start = Instant::now();
+                        let mut output_bytes = 0u64;
+                        
+                        if output_rows > 0 {
+                            let mut auction_values = Vec::new();
+                            let mut price_values = Vec::new();
                             
-                            {
-                                let mut stats_lock = self.stats.lock().unwrap();
-                                stats_lock.add_receive_batch(batch_count, input_rows, input_bytes, receive_duration);
+                            for result in &processed_results {
+                                if let Some(auction) = result.get("auction") {
+                                    if let Some(auction_num) = auction.as_i64() {
+                                        auction_values.push(Some(auction_num));
+                                    }
+                                }
+                                if let Some(price) = result.get("price") {
+                                    if let Some(price_num) = price.as_f64() {
+                                        price_values.push(Some(price_num));
+                                    }
+                                }
                             }
 
-                            let query_start = Instant::now();
-                            let processed_results = match run_query_2_physical_operators_lowest_level(batch).await {
-                                Ok(results) => results,
-                                Err(e) => {
-                                    println!("Query execution failed: {}", e);
-                                    continue;
-                                }
-                            };
-                            let query_duration = query_start.elapsed().as_secs_f64();
-
-                            let output_rows = processed_results.len();
-                            if batch_count % 10 == 0 {
-                                println!("Query 2 processed batch {}: {} input rows -> {} output rows in {:.4}s", 
-                                        batch_count, input_rows, output_rows, query_duration);
-                            }
-
-                            let processing_start = Instant::now();
+                            let auction_array = arrow::array::Int64Array::from(auction_values);
+                            let price_array = arrow::array::Float64Array::from(price_values);
                             
-                            if output_rows > 0 {
-                                let mut auction_values = Vec::new();
-                                let mut price_values = Vec::new();
-                                
-                                for result in &processed_results {
-                                    if let Some(auction) = result.get("auction") {
-                                        if let Some(auction_num) = auction.as_i64() {
-                                            auction_values.push(Some(auction_num));
-                                        }
-                                    }
-                                    if let Some(price) = result.get("price") {
-                                        if let Some(price_num) = price.as_f64() {
-                                            price_values.push(Some(price_num));
-                                        }
+                            let schema = arrow::datatypes::Schema::new(vec![
+                                arrow::datatypes::Field::new("auction", arrow::datatypes::DataType::Int64, true),
+                                arrow::datatypes::Field::new("price", arrow::datatypes::DataType::Float64, true),
+                            ]);
+                            
+                            let processed_batch = RecordBatch::try_new(
+                                Arc::new(schema.clone()),
+                                vec![Arc::new(auction_array), Arc::new(price_array)]
+                            ).map_err(|e| Status::internal(format!("Failed to create processed batch: {}", e)))?;
+
+                            output_bytes = processed_batch.get_array_memory_size() as u64;
+
+                            let processed_schema = Arc::new(schema);
+                            let flight_data_vec = batches_to_flight_data(&processed_schema, vec![processed_batch.clone()])
+                                .map_err(|e| Status::internal(format!("Failed to convert to flight data: {}", e)))?;
+
+                            if let Some(ref sender) = exit_stream_sender {
+                                for flight_data in flight_data_vec {
+                                    if let Err(_) = sender.send(flight_data).await {
+                                        println!("[EXIT] Failed to send processed batch {} to exit server", batch_count);
                                     }
                                 }
-
-                                let auction_array = arrow::array::Int64Array::from(auction_values);
-                                let price_array = arrow::array::Float64Array::from(price_values);
-                                
-                                let schema = arrow::datatypes::Schema::new(vec![
-                                    arrow::datatypes::Field::new("auction", arrow::datatypes::DataType::Int64, true),
-                                    arrow::datatypes::Field::new("price", arrow::datatypes::DataType::Float64, true),
-                                ]);
-                                
-                                let processed_batch = RecordBatch::try_new(
-                                    Arc::new(schema.clone()),
-                                    vec![Arc::new(auction_array), Arc::new(price_array)]
-                                ).map_err(|e| Status::internal(format!("Failed to create processed batch: {}", e)))?;
-
-                                let processed_schema = Arc::new(schema);
-                                let flight_data_vec = batches_to_flight_data(&processed_schema, vec![processed_batch.clone()])
-                                    .map_err(|e| Status::internal(format!("Failed to convert to flight data: {}", e)))?;
-
-                                let send_start = Instant::now();
-                                if let Some(ref sender) = exit_stream_sender {
-                                    for flight_data in flight_data_vec {
-                                        if let Err(_) = sender.send(flight_data).await {
-                                            println!("[EXIT] Failed to send processed batch {} to exit server", batch_count);
-                                        }
-                                    }
-                                    if batch_count % 10 == 0 {
-                                        println!("[EXIT] Successfully sent processed batch {} with {} rows to exit server", batch_count, output_rows);
-                                    }
-                                }
-                                let send_duration = send_start.elapsed().as_secs_f64();
-                                
-                                let output_bytes = processed_batch.get_array_memory_size() as u64;
-                                let processing_duration = processing_start.elapsed().as_secs_f64();
-                                
-                                {
-                                    let mut stats_lock = self.stats.lock().unwrap();
-                                    stats_lock.add_send_batch(batch_count, output_rows, output_bytes, send_duration);
-                                    stats_lock.add_processing_stats(batch_count, input_rows, output_rows, processing_duration, query_duration);
-                                }
-                            } else {
-                                let processing_duration = processing_start.elapsed().as_secs_f64();
-                                {
-                                    let mut stats_lock = self.stats.lock().unwrap();
-                                    stats_lock.add_processing_stats(batch_count, input_rows, 0, processing_duration, query_duration);
+                                if batch_count % 10 == 0 {
+                                    println!("[EXIT] Successfully sent processed batch {} with {} rows to exit server", batch_count, output_rows);
                                 }
                             }
                         }
+                        let send_duration = send_start.elapsed().as_secs_f64();
+                        
+                        // Phase 4: Total time
+                        let total_batch_duration = batch_start_time.elapsed().as_secs_f64();
+                        
+                        {
+                            let mut stats_lock = self.stats.lock().unwrap();
+                            // Use original FlightData sizes, not Arrow memory sizes
+                            let per_batch_input_bytes = actual_input_bytes / batches.len() as u64;
+                            
+                            // For output, calculate the FlightData size that will be sent
+                            let output_flight_data_size = if output_rows > 0 {
+                                // Estimate: Arrow to FlightData compression ratio is similar
+                                (output_bytes as f64 * (actual_input_bytes as f64 / total_batch_size as f64)) as u64
+                            } else {
+                                0
+                            };
+                            
+                            stats_lock.add_receive_batch(batch_count, batch.num_rows(), per_batch_input_bytes, receive_duration);
+                            stats_lock.add_send_batch(batch_count, output_rows, output_flight_data_size, send_duration);
+                            stats_lock.add_processing_stats(batch_count, batch.num_rows(), output_rows, 
+                                total_batch_duration, query_duration);
+                        }
                     }
-                } else {
-                    println!("Failed to convert FlightData to batches for message {}", message_count);
                 }
             }
 
