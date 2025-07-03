@@ -170,7 +170,6 @@ impl FlightService for ProcessorFlightServer {
                 let receive_duration = receive_start.elapsed().as_secs_f64();
 
                 let actual_input_bytes = data_msg.data_body.len() as u64;
-                let total_batch_size: u64 = batches.iter().map(|b| b.get_array_memory_size() as u64).sum();
                 
                 if !batches.is_empty() {
                     batch_count += 1;
@@ -188,8 +187,7 @@ impl FlightService for ProcessorFlightServer {
                         let query_duration = query_start.elapsed().as_secs_f64();
 
                         let output_rows = processed_results.len();
-                        
-                        // Phase 3: Send time
+                    
                         let send_start = Instant::now();
                         let mut output_bytes = 0u64;
                         
@@ -223,11 +221,13 @@ impl FlightService for ProcessorFlightServer {
                                 vec![Arc::new(auction_array), Arc::new(price_array)]
                             ).map_err(|e| Status::internal(format!("Failed to create processed batch: {}", e)))?;
 
-                            output_bytes = processed_batch.get_array_memory_size() as u64;
-
                             let processed_schema = Arc::new(schema);
                             let flight_data_vec = batches_to_flight_data(&processed_schema, vec![processed_batch.clone()])
                                 .map_err(|e| Status::internal(format!("Failed to convert to flight data: {}", e)))?;
+
+                            for flight_data in &flight_data_vec {
+                                output_bytes += flight_data.data_body.len() as u64;
+                            }
 
                             if let Some(ref sender) = exit_stream_sender {
                                 for flight_data in flight_data_vec {
@@ -242,21 +242,13 @@ impl FlightService for ProcessorFlightServer {
                         }
                         let send_duration = send_start.elapsed().as_secs_f64();
                         
-                        // Phase 4: Total time
                         let total_batch_duration = batch_start_time.elapsed().as_secs_f64();
                         
                         {
                             let mut stats_lock = self.stats.lock().unwrap();
-                            // Use original FlightData sizes, not Arrow memory sizes
                             let per_batch_input_bytes = actual_input_bytes / batches.len() as u64;
                             
-                            // For output, calculate the FlightData size that will be sent
-                            let output_flight_data_size = if output_rows > 0 {
-                                // Estimate: Arrow to FlightData compression ratio is similar
-                                (output_bytes as f64 * (actual_input_bytes as f64 / total_batch_size as f64)) as u64
-                            } else {
-                                0
-                            };
+                            let output_flight_data_size = output_bytes;
                             
                             stats_lock.add_receive_batch(batch_count, batch.num_rows(), per_batch_input_bytes, receive_duration);
                             stats_lock.add_send_batch(batch_count, output_rows, output_flight_data_size, send_duration);
@@ -298,13 +290,17 @@ impl FlightService for ProcessorFlightServer {
             })?;
 
         let mut total_rows: usize = 0;
-        let mut total_bytes: usize = 0;
+        let mut total_bytes: u64 = 0;
         
+        for (i, flight_data) in all_flight_data.iter().enumerate() {
+            if i == 0 {
+                continue; 
+            }
+            total_bytes += flight_data.data_body.len() as u64;
+        }
+
         for batch in record_batches.iter() {
-            let rows = batch.num_rows();
-            let bytes = batch.get_array_memory_size();
-            total_rows += rows;
-            total_bytes += bytes;
+            total_rows += batch.num_rows();
         }
 
         let total_mbs = total_bytes as f64 / 1_000_000.0;

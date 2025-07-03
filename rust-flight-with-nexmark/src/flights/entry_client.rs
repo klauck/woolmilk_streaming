@@ -108,28 +108,29 @@ impl EntryClient {
                     let mut encoder = FlightDataEncoderBuilder::new().build(batch_stream);
 
                     let mut first = true;
+                    let mut total_flight_data_size = 0u64;
+                    let row_count = bid_batch.num_rows();
+                    
                     while let Some(Ok(flight_data_chunk)) = encoder.next().await {
-                        // Skip the first chunk which is the schema
                         if first {
                             first = false;
                             continue;
                         }
+                        total_flight_data_size += flight_data_chunk.data_body.len() as u64;
                         yield flight_data_chunk;
                     }
 
                     let duration_secs = start.elapsed().as_secs_f64();
-                    let batch_size = bid_batch.get_array_memory_size() as u64;
-                    let row_count = bid_batch.num_rows();
                     
                     {
                         let mut stats_lock = stats_for_stream.lock().unwrap();
-                        stats_lock.add_batch(batch_idx + 1, row_count, batch_size, duration_secs);
+                        stats_lock.add_batch(batch_idx + 1, row_count, total_flight_data_size, duration_secs);
                     }
 
-                    let total_mb = batch_size as f64 / 1_000_000.0;
+                    let total_mb = total_flight_data_size as f64 / 1_000_000.0;
 
                     println!(
-                        "[PRE-GEN] Sent batch {}: {} rows (~{} MB) in {:.3} sec",
+                        "[PRE-GEN] Sent batch {}: {} rows (~{:.1} MB actual) in {:.3} sec",
                         batch_idx + 1,
                         row_count,
                         total_mb,
@@ -148,28 +149,30 @@ impl EntryClient {
                     let mut encoder = FlightDataEncoderBuilder::new().build(batch_stream);
 
                     let mut first = true;
+                    let mut total_flight_data_size = 0u64;
+                    let row_count = bid_batch.num_rows();
+                    
                     while let Some(Ok(flight_data_chunk)) = encoder.next().await {
                         // Skip the first chunk which is the schema
                         if first {
                             first = false;
                             continue;
                         }
+                        total_flight_data_size += flight_data_chunk.data_body.len() as u64;
                         yield flight_data_chunk;
                     }
 
                     let duration_secs = start.elapsed().as_secs_f64();
-                    let batch_size = bid_batch.get_array_memory_size() as u64;
-                    let row_count = bid_batch.num_rows();
                     
                     {
                         let mut stats_lock = stats_for_stream.lock().unwrap();
-                        stats_lock.add_batch(batch_count, row_count, batch_size, duration_secs);
+                        stats_lock.add_batch(batch_count, row_count, total_flight_data_size, duration_secs);
                     }
 
-                    let total_mb = batch_size as f64 / 1_000_000.0;
+                    let total_mb = total_flight_data_size as f64 / 1_000_000.0;
 
                     println!(
-                        "[REAL-TIME] Sent batch {}: {} rows (~{} MB) in {:.3} sec",
+                        "[REAL-TIME] Sent batch {}: {} rows (~{:.1} MB actual) in {:.3} sec",
                         batch_count,
                         row_count,
                         total_mb,

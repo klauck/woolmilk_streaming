@@ -1,11 +1,8 @@
 use std::time::Instant;
 use std::sync::{Arc, Mutex};
-
-use arrow::array::RecordBatch;
 use futures::{stream::BoxStream, StreamExt};
 use tonic::{Request, Response, Status, Streaming};
 use serde_json::json;
-
 use arrow_flight::{
     flight_service_server::FlightService, utils::flight_data_to_batches, Action, ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo, HandshakeRequest, HandshakeResponse, PollInfo, PutResult, SchemaResult, Ticket
 };
@@ -60,14 +57,12 @@ impl FlightService for ExitFlightServer {
                 println!("Received {} messages so far...", message_count);
             }
 
-            // Check if this is a schema message (has schema but no data body)
             if !data_msg.data_header.is_empty() && data_msg.data_body.is_empty() {
                 current_schema = Some(data_msg.clone());
                 all_flight_data.push(data_msg);
                 continue;
             }
 
-            // Only process data messages that have actual data
             if !data_msg.data_body.is_empty() {
                 let batch_receive_start = Instant::now();
                 let mut current_data = vec![data_msg.clone()];
@@ -80,18 +75,20 @@ impl FlightService for ExitFlightServer {
                         batch_count += 1;
                         let receive_duration = batch_receive_start.elapsed().as_secs_f64();
                         
+                        let actual_bytes = data_msg.data_body.len() as u64;
+                        
                         for batch in &batches {
                             let rows = batch.num_rows();
-                            let bytes = batch.get_array_memory_size() as u64;
+                            let per_batch_bytes = actual_bytes / batches.len() as u64;
                             
                             {
                                 let mut stats_lock = self.stats.lock().unwrap();
-                                stats_lock.add_receive_batch(batch_count, rows, bytes, receive_duration);
+                                stats_lock.add_receive_batch(batch_count, rows, per_batch_bytes, receive_duration);
                             }
                             
                             if batch_count % 10 == 0 {
-                                let mbs = bytes as f64 / 1_000_000.0;
-                                println!("Received batch {}: {} rows, {:.2} MB", batch_count, rows, mbs);
+                                let mbs = per_batch_bytes as f64 / 1_000_000.0;
+                                println!("Received batch {}: {} rows, {:.2} MB actual", batch_count, rows, mbs);
                             }
                         }
                     }
@@ -105,7 +102,6 @@ impl FlightService for ExitFlightServer {
 
         println!("Finished receiving stream. Processing {} FlightData messages...", all_flight_data.len());
 
-        // Don't try to convert all data at once - just use stats from individual batches
         let mut total_rows: usize = 0;
         let mut total_bytes: u64 = 0;
         
