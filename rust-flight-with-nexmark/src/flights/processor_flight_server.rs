@@ -1,5 +1,5 @@
 use std::time::Instant;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use arrow::array::RecordBatch;
 use arrow_flight::{flight_descriptor::DescriptorType, utils::flight_data_to_batches, utils::batches_to_flight_data};
 use async_stream::stream;
@@ -9,27 +9,25 @@ use tonic::{Request, Response, Status, Streaming};
 use arrow_flight::flight_service_client::FlightServiceClient;
 use prost::Message;
 use tonic::metadata::MetadataValue;
-use serde_json::json;
 use arrow_flight::{
     flight_service_server::FlightService, Action,
     ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo, HandshakeRequest,
     HandshakeResponse, PollInfo, PutResult, SchemaResult, Ticket,
 };
-use super::stats::{ProcessorStats, Stats};
 use crate::nexmark::queries_physical_operator::run_query_2_physical_operators_lowest_level;
+use crate::flights::stats::{ProcessorStats, Stats};
 
 #[derive(Clone)]
 pub struct ProcessorFlightServer {
     exit_server_addr: String,
-    stats: Arc<Mutex<ProcessorStats>>,
+    label: String,
 }
 
 impl ProcessorFlightServer {
-    pub fn new(exit_server_addr: impl Into<String>) -> Self {
-        let stats = Arc::new(Mutex::new(ProcessorStats::new(0)));
+    pub fn new(exit_server_addr: impl Into<String>, label: impl Into<String>) -> Self {
         Self { 
             exit_server_addr: exit_server_addr.into(),
-            stats,
+            label: label.into(),
         }
     }
 }
@@ -49,19 +47,25 @@ impl FlightService for ProcessorFlightServer {
         request: Request<Streaming<FlightData>>,
     ) -> Result<Response<Self::DoPutStream>, Status> {
         let stream = request.into_inner();
-        // to store all received FlightData messages
         let mut all_flight_data: Vec<FlightData> = Vec::new();
 
-        println!("[Processor] Starting to receive FlightData stream...");
+        println!("[PROCESSOR] Starting to receive FlightData stream...");
 
-        let mut stream_pin = Box::pin(stream); // pin is used so that the memory location of the stream is fixed
-        let mut message_count = 0; // total number of messages received
-        let mut schema_data: Option<FlightData> = None; // store the first message which is expected to be the schema
+        let mut stream_pin = Box::pin(stream);
+        let mut message_count = 0;
+        let mut total_data_size = 0u64;
+        let mut batch_count = 0;
+        let mut total_rows = 0;
+        let mut schema_data: Option<FlightData> = None;
+
+        let start_time = Instant::now();
         
-        // create a connection to exit server at the start
+        // Initialize stats with the server's label
+        let mut stats = ProcessorStats::new(self.label.clone());
+        
+        // Setup exit server connection if needed
         let mut exit_stream_sender: Option<Sender<FlightData>> = None;
-        let mut exit_request_handle: Option<JoinHandle<()>> = None; // type of thread which we can use await to let it finish
-
+        let mut exit_request_handle: Option<JoinHandle<()>> = None;
         let transfer_to_exit = !self.exit_server_addr.is_empty();
         let mut exit_client: Option<FlightServiceClient<tonic::transport::Channel>> = None;
 
@@ -70,13 +74,12 @@ impl FlightService for ProcessorFlightServer {
                 .await
                 .map_err(|e| Status::internal(format!("Failed to connect to exit server: {}", e)))?;
             exit_client = Some(client);
-            println!("[Exit] Connected to exit server at {}", self.exit_server_addr);
+            println!("[EXIT] Connected to exit server at {}", self.exit_server_addr);
         } else {
-            println!("[Exit] No exit server address provided, skipping data transfer.");
+            println!("[EXIT] No exit server address provided, skipping data transfer.");
         }
         
         if let Some(ref mut client) = exit_client {
-            // create a channel for sending data to exit server
             let (tx, mut rx) = tokio::sync::mpsc::channel::<FlightData>(100);
             
             let flight_descriptor = FlightDescriptor {
@@ -85,7 +88,6 @@ impl FlightService for ProcessorFlightServer {
                 path: vec!["processed_bids_data".to_string()],
             };
 
-            // create the stream from the receiver
             let transfer_stream = stream! {
                 while let Some(data) = rx.recv().await {
                     yield data;
@@ -100,7 +102,6 @@ impl FlightService for ProcessorFlightServer {
                 .metadata_mut()
                 .insert_bin("grpc-metadata-flight-descriptor-bin", bin_val);
 
-            // start the persistent do_put request in a background task
             let mut client_clone = client.clone();
             exit_request_handle = Some(tokio::spawn(async move {
                 match client_clone.do_put(request).await {
@@ -119,9 +120,6 @@ impl FlightService for ProcessorFlightServer {
 
             exit_stream_sender = Some(tx);
         }
-
-        let start_time = Instant::now();
-        let mut batch_count = 0;
         
         while let Some(maybe_msg) = stream_pin.next().await {
             let data_msg = maybe_msg.map_err(|e| {
@@ -130,15 +128,12 @@ impl FlightService for ProcessorFlightServer {
             
             message_count += 1;
 
-            if message_count % 50 == 0 {
-                println!("Received {} messages so far...", message_count);
-            }
-
-            // the first message is always the schema
+            // First message is schema
             if message_count == 1 {
+                println!("[PROCESSOR] Received schema");
                 schema_data = Some(data_msg.clone());
                 
-                // send schema to exit server
+                // Send schema to exit server
                 if let Some(ref sender) = exit_stream_sender {
                     if let Err(_) = sender.send(data_msg.clone()).await {
                         println!("[EXIT] Failed to send schema to exit server");
@@ -149,11 +144,17 @@ impl FlightService for ProcessorFlightServer {
                 continue;
             }
 
-            // Only process data messages that have actual data
+            // Count data size for non-empty data messages
             if !data_msg.data_body.is_empty() {
-                let batch_start_time = Instant::now(); // Total time starts here
-                
+                let batch_start = Instant::now();
                 let receive_start = Instant::now();
+                batch_count += 1;
+                let data_size = data_msg.data_body.len() as u64;
+                total_data_size += data_size;
+                
+                let data_mb = data_size as f64 / 1_000_000.0;
+
+                // Process the data and send to exit server
                 let mut current_data = vec![data_msg.clone()];
                 if let Some(ref schema) = schema_data {
                     current_data.insert(0, schema.clone());
@@ -167,16 +168,16 @@ impl FlightService for ProcessorFlightServer {
                         continue;
                     }
                 };
-                let receive_duration = receive_start.elapsed().as_secs_f64();
 
-                let actual_input_bytes = data_msg.data_body.len() as u64;
+                let receive_elapsed = receive_start.elapsed().as_secs_f64();
+                let mut input_rows = 0;
+                let mut output_rows = 0;
                 
                 if !batches.is_empty() {
-                    batch_count += 1;
-                    
                     for batch in &batches {
-
+                        input_rows += batch.num_rows();
                         let query_start = Instant::now();
+                        
                         let processed_results = match run_query_2_physical_operators_lowest_level(batch).await {
                             Ok(results) => results,
                             Err(e) => {
@@ -184,14 +185,15 @@ impl FlightService for ProcessorFlightServer {
                                 continue;
                             }
                         };
-                        let query_duration = query_start.elapsed().as_secs_f64();
 
-                        let output_rows = processed_results.len();
-                    
-                        let send_start = Instant::now();
-                        let mut output_bytes = 0u64;
+                        let query_elapsed = query_start.elapsed().as_secs_f64();
+                        output_rows += processed_results.len();
+                        
+                        // Add query processing stats
+                        stats.add_query_processing(batch_count, input_rows, output_rows, query_elapsed);
                         
                         if output_rows > 0 {
+                            let send_start = Instant::now();
                             let mut auction_values = Vec::new();
                             let mut price_values = Vec::new();
                             
@@ -225,8 +227,10 @@ impl FlightService for ProcessorFlightServer {
                             let flight_data_vec = batches_to_flight_data(&processed_schema, vec![processed_batch.clone()])
                                 .map_err(|e| Status::internal(format!("Failed to convert to flight data: {}", e)))?;
 
+                            // Calculate actual size of data being sent
+                            let mut actual_send_size = 0u64;
                             for flight_data in &flight_data_vec {
-                                output_bytes += flight_data.data_body.len() as u64;
+                                actual_send_size += flight_data.data_body.len() as u64;
                             }
 
                             if let Some(ref sender) = exit_stream_sender {
@@ -235,99 +239,69 @@ impl FlightService for ProcessorFlightServer {
                                         println!("[EXIT] Failed to send processed batch {} to exit server", batch_count);
                                     }
                                 }
-                                if batch_count % 10 == 0 {
-                                    println!("[EXIT] Successfully sent processed batch {} with {} rows to exit server", batch_count, output_rows);
-                                }
                             }
-                        }
-                        let send_duration = send_start.elapsed().as_secs_f64();
-                        
-                        let total_batch_duration = batch_start_time.elapsed().as_secs_f64();
-                        
-                        {
-                            let mut stats_lock = self.stats.lock().unwrap();
-                            let per_batch_input_bytes = actual_input_bytes / batches.len() as u64;
                             
-                            let output_flight_data_size = output_bytes;
-                            
-                            stats_lock.add_receive_batch(batch_count, batch.num_rows(), per_batch_input_bytes, receive_duration);
-                            stats_lock.add_send_batch(batch_count, output_rows, output_flight_data_size, send_duration);
-                            stats_lock.add_processing_stats(batch_count, batch.num_rows(), output_rows, 
-                                total_batch_duration, query_duration);
+                            let send_elapsed = send_start.elapsed().as_secs_f64();
+                            // Add send stats with actual data size
+                            stats.add_send_batch(batch_count, send_elapsed, actual_send_size, output_rows);
                         }
                     }
                 }
+                
+                let batch_elapsed = batch_start.elapsed().as_secs_f64();
+                
+                // Add batch and receive stats
+                stats.add_batch(batch_count, batch_elapsed, data_size, input_rows);
+                stats.add_receive_batch(batch_count, receive_elapsed, data_size, input_rows);
+                
+                println!(
+                    "[PROCESSOR] Processed batch {}: {:.2} MB in {:.3} seconds",
+                    batch_count,
+                    data_mb,
+                    batch_elapsed
+                );
             }
 
             all_flight_data.push(data_msg);
         }
 
-        let elapsed_time = start_time.elapsed();
-
-        // close the exit stream and wait for completion
+        // Close the exit stream and wait for completion
         if let Some(sender) = exit_stream_sender {
-            drop(sender); // closes the channel
+            drop(sender);
         }
         
         if let Some(handle) = exit_request_handle {
             let _ = handle.await;
         }
 
-        if all_flight_data.is_empty() {
-            println!("do_put received no data");
-            let output_stream: BoxStream<'static, Result<PutResult, Status>> =
-                Box::pin(futures::stream::empty());
-            return Ok(Response::new(output_stream));
-        }
+        // Convert to record batches to count rows
+        if all_flight_data.len() > 1 {
+            let record_batches = flight_data_to_batches(&all_flight_data)
+                .map_err(|e| Status::internal(format!("Failed to convert FlightData to batches: {}", e)))?;
 
-        let record_batches: Vec<RecordBatch> = flight_data_to_batches(&all_flight_data)
-            .map_err(|e| {
-                println!("ERROR during conversion: {}", e);
-                Status::internal(format!(
-                    "Failed to convert FlightData → RecordBatch: {}",
-                    e
-                ))
-            })?;
-
-        let mut total_rows: usize = 0;
-        let mut total_bytes: u64 = 0;
-        
-        for (i, flight_data) in all_flight_data.iter().enumerate() {
-            if i == 0 {
-                continue; 
+            for batch in record_batches.iter() {
+                total_rows += batch.num_rows();
             }
-            total_bytes += flight_data.data_body.len() as u64;
         }
 
-        for batch in record_batches.iter() {
-            total_rows += batch.num_rows();
-        }
+        let elapsed = start_time.elapsed();
+        let total_mb = total_data_size as f64 / 1_000_000.0;
+        let rate = total_mb / elapsed.as_secs_f64();
 
-        let total_mbs = total_bytes as f64 / 1_000_000.0;
-        let elapsed_secs = elapsed_time.as_millis() as f64 / 1000.0;
-        let rate = if elapsed_secs > 0.0 {
-            total_mbs / elapsed_secs
-        } else {
-            0.0
-        };
-
-        let stats_lock = self.stats.lock().unwrap();
-        let mut additional_stats = serde_json::Map::new();
-        additional_stats.insert("total_time_seconds".to_string(), json!(elapsed_secs));
-        additional_stats.insert("total_input_rows".to_string(), json!(total_rows));
-        additional_stats.insert("total_input_bytes".to_string(), json!(total_bytes));
-        additional_stats.insert("total_input_mb".to_string(), json!(total_mbs));
-        additional_stats.insert("input_rate_mbps".to_string(), json!(rate));
+        // Set total time and save stats
+        stats.set_total_time(elapsed.as_secs_f64());
         
-        stats_lock.save_to_file(Some(additional_stats)).unwrap_or_else(|e| {
+        // Save stats to file
+        if let Err(e) = stats.save_to_file() {
             eprintln!("Failed to save processor stats: {}", e);
-            "failed".to_string()
-        });
+        }
 
-        println!(
-            "Processed {} input batches with {} rows and {:.2} MB in {:.2?} seconds with input rate {:.2} MB/s",
-            record_batches.len(), total_rows, total_mbs, elapsed_time, rate
-        );
+        println!("\n[PROCESSOR] Summary:");
+        println!("  Total batches: {}", batch_count);
+        println!("  Total rows: {}", total_rows);
+        println!("  Total data received: {:.2} MB", total_mb);
+        println!("  Time taken: {:.2} seconds", elapsed.as_secs_f64());
+        println!("  Rate: {:.2} MB/s", rate);
 
         let response_stream = stream! {
             yield Ok(PutResult { app_metadata: vec![].into() });

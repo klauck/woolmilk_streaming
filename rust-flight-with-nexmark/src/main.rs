@@ -36,15 +36,25 @@ enum Commands {
         bind_address: String,
         #[arg(long, default_value = "localhost:8816")]
         exit_address: String,
+        #[arg(value_enum, long, default_value = "real-time")]
+        label: LabelMode,
     },
     Exit {
         #[arg(long, default_value = "[::1]:8816")]
         bind_address: String,
-    },
+        #[arg(value_enum, long, default_value = "real-time")]
+        label: LabelMode,
+    }
 }
 
 #[derive(clap::ValueEnum, Clone)]
 enum GenerationMode {
+    RealTime,
+    PreGenerated,
+}
+
+#[derive(clap::ValueEnum, Clone)]
+enum LabelMode {
     RealTime,
     PreGenerated,
 }
@@ -54,6 +64,15 @@ impl From<GenerationMode> for DataGenerationMode {
         match mode {
             GenerationMode::RealTime => DataGenerationMode::RealTime,
             GenerationMode::PreGenerated => DataGenerationMode::PreGenerated,
+        }
+    }
+}
+
+impl From<LabelMode> for String {
+    fn from(mode: LabelMode) -> Self {
+        match mode {
+            LabelMode::RealTime => "REAL-TIME".to_string(),
+            LabelMode::PreGenerated => "PRE-GEN".to_string(),
         }
     }
 }
@@ -71,11 +90,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             let entry_client = flights::EntryClient::new(&server_address, records_per_chunk, no_records, generation_mode);
             entry_client.run().await?;
         }
-        Commands::Processor { bind_address, exit_address } => {
+        Commands::Processor { bind_address, exit_address, label } => {
             let addr: SocketAddr = bind_address.parse()?;
             println!("Starting Processor Flight server on {}", addr);
 
-            let processor_server = ProcessorFlightServer::new(exit_address);
+            let label_str = String::from(label);
+            let processor_server = ProcessorFlightServer::new(exit_address, label_str);
             Server::builder()
                 .add_service(
                     FlightServiceServer::new(processor_server)
@@ -85,11 +105,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 .serve(addr)
                 .await?;
         }
-        Commands::Exit { bind_address } => {
+        Commands::Exit { bind_address, label } => {
             let addr: SocketAddr = bind_address.parse()?;
             println!("Starting Exit Flight server on {}", addr);
 
-            let exit_server = ExitFlightServer::new();
+            let label_str = String::from(label);
+            let exit_server = ExitFlightServer::new(label_str);
             Server::builder()
                 .add_service(
                     FlightServiceServer::new(exit_server)

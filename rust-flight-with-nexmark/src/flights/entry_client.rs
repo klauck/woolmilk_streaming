@@ -1,6 +1,6 @@
 use std::error::Error;
-use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use std::sync::{Arc, Mutex};
 use arrow::datatypes::Schema;
 use arrow::ipc::writer::IpcWriteOptions;
 use arrow_flight::encode::FlightDataEncoderBuilder;
@@ -12,9 +12,8 @@ use async_stream::stream;
 use prost::Message;
 use tonic::metadata::MetadataValue;
 use tonic::Request;
-use serde_json::json;
-use crate::flights::stats::{EntryStats, Stats};
 use crate::nexmark::{bid_schema, NexmarkDataGenerator};
+use crate::flights::stats::{EntryStats, Stats};
 
 #[derive(Debug, Clone)]
 pub enum DataGenerationMode {
@@ -45,7 +44,7 @@ impl EntryClient {
     }
 
     pub async fn run(&self) -> Result<(), Box<dyn Error>> {
-        let program_start = Instant::now();
+        let start_time = Instant::now();
         
         let bids_descriptor = FlightDescriptor {
             r#type: DescriptorType::Path as i32,
@@ -58,7 +57,8 @@ impl EntryClient {
             DataGenerationMode::RealTime => "REAL-TIME".to_string(),
         };
 
-        let stats = Arc::new(Mutex::new(EntryStats::new(mode_str.clone(), self.records_per_chunk)));
+        // Use Arc<Mutex<>> to share stats between main thread and stream
+        let stats = Arc::new(Mutex::new(EntryStats::new(mode_str.clone())));
         let stats_for_stream = stats.clone();
 
         let bid_schema: Schema = bid_schema();
@@ -85,98 +85,142 @@ impl EntryClient {
         let streaming_start = if is_pregenerated {
             Instant::now()
         } else {
-            program_start
+            start_time
         };
 
         println!("Entry client: connecting to Flight server at {}", self.server_addr);
         let mut client = FlightServiceClient::connect(format!("http://{}", self.server_addr)).await?;
         println!("Connected to Flight server.");
-        
+
+        // Shared counters using Arc<Mutex<>>
+        let batch_count = Arc::new(Mutex::new(0));
+        let total_rows = Arc::new(Mutex::new(0));
+        let total_flight_data_size = Arc::new(Mutex::new(0u64));
+
+        let batch_count_stream = batch_count.clone();
+        let total_rows_stream = total_rows.clone();
+        let total_flight_data_size_stream = total_flight_data_size.clone();
+
         let outbound: BoxStream<'static, FlightData> = Box::pin(stream! {
-            // Send schema first
+            // First, add schema
             let schema_data = SchemaAsIpc::new(&bid_schema, &IpcWriteOptions::default())
                 .try_into()
                 .unwrap();
+
             yield schema_data;
 
             if let Some(pregenerated_batches) = all_batches {
-                // If we have pre-generated batches, send them
-                for (batch_idx, bid_batch) in pregenerated_batches.into_iter().enumerate() {
-                    let start = Instant::now();
+                // Process pre-generated batches
+                for bid_batch in pregenerated_batches {
+                    let batch_start_time = Instant::now();
+                    
+                    let current_batch_count = {
+                        let mut count = batch_count_stream.lock().unwrap();
+                        *count += 1;
+                        *count
+                    };
+                    
+                    {
+                        let mut rows = total_rows_stream.lock().unwrap();
+                        *rows += bid_batch.num_rows();
+                    }
                     
                     let batch_stream = stream::iter(vec![Ok(bid_batch.clone())]);
                     let mut encoder = FlightDataEncoderBuilder::new().build(batch_stream);
 
                     let mut first = true;
-                    let mut total_flight_data_size = 0u64;
-                    let row_count = bid_batch.num_rows();
+                    let mut batch_data_size = 0u64;
+                    let mut batch_flight_data_count = 0;
                     
                     while let Some(Ok(flight_data_chunk)) = encoder.next().await {
                         if first {
                             first = false;
-                            continue;
+                            continue; // Skip schema
                         }
-                        total_flight_data_size += flight_data_chunk.data_body.len() as u64;
+                        let chunk_size = flight_data_chunk.data_body.len() as u64;
+                        batch_data_size += chunk_size;
+                        
+                        {
+                            let mut total_size = total_flight_data_size_stream.lock().unwrap();
+                            *total_size += chunk_size;
+                        }
+                        
+                        batch_flight_data_count += 1;
                         yield flight_data_chunk;
                     }
 
-                    let duration_secs = start.elapsed().as_secs_f64();
+                    let batch_elapsed = batch_start_time.elapsed().as_secs_f64();
                     
+                    // Add batch to stats
                     {
                         let mut stats_lock = stats_for_stream.lock().unwrap();
-                        stats_lock.add_batch(batch_idx + 1, row_count, total_flight_data_size, duration_secs);
+                        stats_lock.add_batch(current_batch_count, batch_elapsed, batch_data_size, bid_batch.num_rows());
                     }
 
-                    let total_mb = total_flight_data_size as f64 / 1_000_000.0;
-
+                    let batch_mb = batch_data_size as f64 / 1_000_000.0;
                     println!(
-                        "[PRE-GEN] Sent batch {}: {} rows (~{:.1} MB actual) in {:.3} sec",
-                        batch_idx + 1,
-                        row_count,
-                        total_mb,
-                        duration_secs
+                        "[PRE-GEN] Prepared logical batch {}: {} rows, {:.2} MB actual ({} FlightData chunks)",
+                        current_batch_count,
+                        bid_batch.num_rows(),
+                        batch_mb,
+                        batch_flight_data_count
                     );
                 }
             } else {
-                let mut batch_count = 0;
-                
+                // Process real-time batches
                 for (_, _, bid_batch, _) in data_generator.iter_batches() {
-                    batch_count += 1;
-                    let start = Instant::now();
+                    let batch_start_time = Instant::now();
                     
-                    //create a stream for the current batch
+                    let current_batch_count = {
+                        let mut count = batch_count_stream.lock().unwrap();
+                        *count += 1;
+                        *count
+                    };
+                    
+                    {
+                        let mut rows = total_rows_stream.lock().unwrap();
+                        *rows += bid_batch.num_rows();
+                    }
+                    
                     let batch_stream = stream::iter(vec![Ok(bid_batch.clone())]);
                     let mut encoder = FlightDataEncoderBuilder::new().build(batch_stream);
 
                     let mut first = true;
-                    let mut total_flight_data_size = 0u64;
-                    let row_count = bid_batch.num_rows();
+                    let mut batch_data_size = 0u64;
+                    let mut batch_flight_data_count = 0;
                     
                     while let Some(Ok(flight_data_chunk)) = encoder.next().await {
-                        // Skip the first chunk which is the schema
                         if first {
                             first = false;
-                            continue;
+                            continue; // Skip schema
                         }
-                        total_flight_data_size += flight_data_chunk.data_body.len() as u64;
+                        let chunk_size = flight_data_chunk.data_body.len() as u64;
+                        batch_data_size += chunk_size;
+                        
+                        {
+                            let mut total_size = total_flight_data_size_stream.lock().unwrap();
+                            *total_size += chunk_size;
+                        }
+                        
+                        batch_flight_data_count += 1;
                         yield flight_data_chunk;
                     }
 
-                    let duration_secs = start.elapsed().as_secs_f64();
+                    let batch_elapsed = batch_start_time.elapsed().as_secs_f64();
                     
+                    // Add batch to stats
                     {
                         let mut stats_lock = stats_for_stream.lock().unwrap();
-                        stats_lock.add_batch(batch_count, row_count, total_flight_data_size, duration_secs);
+                        stats_lock.add_batch(current_batch_count, batch_elapsed, batch_data_size, bid_batch.num_rows());
                     }
 
-                    let total_mb = total_flight_data_size as f64 / 1_000_000.0;
-
+                    let batch_mb = batch_data_size as f64 / 1_000_000.0;
                     println!(
-                        "[REAL-TIME] Sent batch {}: {} rows (~{:.1} MB actual) in {:.3} sec",
-                        batch_count,
-                        row_count,
-                        total_mb,
-                        duration_secs
+                        "[REAL-TIME] Streaming logical batch {}: {} rows, {:.2} MB actual ({} FlightData chunks)",
+                        current_batch_count,
+                        bid_batch.num_rows(),
+                        batch_mb,
+                        batch_flight_data_count
                     );
                 }
             }
@@ -194,28 +238,35 @@ impl EntryClient {
         let mut put_results = response.into_inner();
         while let Some(_put_res) = put_results.next().await {}
 
-        let final_stats = {
-            let stats_lock = stats.lock().unwrap();
-            let streaming_duration = streaming_start.elapsed().as_secs_f64();
-            let program_duration = program_start.elapsed().as_secs_f64();
-            
-            let mut additional_stats = serde_json::Map::new();
-            if is_pregenerated {
-                additional_stats.insert("total_time_seconds".to_string(), json!(streaming_duration));
-            } else {
-                additional_stats.insert("total_time_seconds".to_string(), json!(program_duration));
-            }
-            
-            stats_lock.save_to_file(Some(additional_stats)).unwrap_or_else(|e| {
-                eprintln!("Failed to save stats: {}", e);
-                "failed".to_string()
-            });
-            
-            stats_lock.to_json()
-        };
+        let elapsed = streaming_start.elapsed();
+        
+        // Get final values from shared variables
+        let final_batch_count = *batch_count.lock().unwrap();
+        let final_total_rows = *total_rows.lock().unwrap();
+        let final_total_flight_data_size = *total_flight_data_size.lock().unwrap();
+        
+        let total_mb = final_total_flight_data_size as f64 / 1_000_000.0;
+        let rate = total_mb / elapsed.as_secs_f64();
 
+        // Set total completion time and save stats
+        {
+            let mut stats_lock = stats.lock().unwrap();
+            stats_lock.set_total_completion_time(elapsed.as_secs_f64());
+            
+            // Save stats to file
+            if let Err(e) = stats_lock.save_to_file() {
+                eprintln!("Failed to save entry stats: {}", e);
+            }
+        }
+
+        println!("\n[{}] Summary:", mode_str);
+        println!("  Total logical batches: {}", final_batch_count);
+        println!("  Total rows: {}", final_total_rows);
+        println!("  Total data sent: {:.2} MB", total_mb);
+        println!("  Time taken: {:.2} seconds", elapsed.as_secs_f64());
+        println!("  Rate: {:.2} MB/s", rate);
+        
         println!("[{}] Finished sending all batches", mode_str);
-        println!("STATS_JSON: {}", final_stats);
         Ok(())
     }
 }

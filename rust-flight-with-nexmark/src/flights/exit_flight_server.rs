@@ -2,7 +2,6 @@ use std::time::Instant;
 use std::sync::{Arc, Mutex};
 use futures::{stream::BoxStream, StreamExt};
 use tonic::{Request, Response, Status, Streaming};
-use serde_json::json;
 use arrow_flight::{
     flight_service_server::FlightService, utils::flight_data_to_batches, Action, ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo, HandshakeRequest, HandshakeResponse, PollInfo, PutResult, SchemaResult, Ticket
 };
@@ -14,8 +13,8 @@ pub struct ExitFlightServer {
 }
 
 impl ExitFlightServer {
-    pub fn new() -> Self {
-        let stats = Arc::new(Mutex::new(ExitStats::new(0)));
+    pub fn new(label: impl Into<String>) -> Self {
+        let stats = Arc::new(Mutex::new(ExitStats::new(label.into())));
         Self { stats }
     }
 }
@@ -83,7 +82,7 @@ impl FlightService for ExitFlightServer {
                             
                             {
                                 let mut stats_lock = self.stats.lock().unwrap();
-                                stats_lock.add_receive_batch(batch_count, rows, per_batch_bytes, receive_duration);
+                                stats_lock.add_batch(batch_count, receive_duration, per_batch_bytes, rows);
                             }
                             
                             if batch_count % 10 == 0 {
@@ -104,32 +103,30 @@ impl FlightService for ExitFlightServer {
 
         let mut total_rows: usize = 0;
         let mut total_bytes: u64 = 0;
+        let elapsed_secs = elapsed_time.as_millis() as f64 / 1000.0;
         
         {
-            let stats_lock = self.stats.lock().unwrap();
-            for batch_stat in &stats_lock.receive_batches {
+            let mut stats_lock = self.stats.lock().unwrap();
+            for batch_stat in &stats_lock.batches {
                 total_rows += batch_stat.rows;
                 total_bytes += batch_stat.bytes;
+            }
+            
+            // Set total completion time
+            stats_lock.set_total_completion_time(elapsed_secs);
+            
+            // Save stats to file
+            if let Err(e) = stats_lock.save_to_file() {
+                eprintln!("Failed to save exit stats: {}", e);
             }
         }
 
         let total_mbs = total_bytes as f64 / 1_000_000.0;
-        let elapsed_secs = elapsed_time.as_millis() as f64 / 1000.0;
         let rate = if elapsed_secs > 0.0 {
             total_mbs / elapsed_secs
         } else {
             0.0
         };
-
-        let stats_lock = self.stats.lock().unwrap();
-        let mut additional_stats = serde_json::Map::new();
-        additional_stats.insert("total_time_seconds".to_string(), json!(elapsed_secs));
-        additional_stats.insert("receiving_rate_mbps".to_string(), json!(rate));
-        
-        stats_lock.save_to_file(Some(additional_stats)).unwrap_or_else(|e| {
-            eprintln!("Failed to save exit stats: {}", e);
-            "failed".to_string()
-        });
 
         println!(
             "Received {} batches with {} rows and {:.2} MB in {:.2?} seconds with transfer rate {:.2} MB/s",

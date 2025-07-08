@@ -89,14 +89,21 @@ fi
 echo "✅ Successfully deployed to $SSH_HOST"
 
 
+# ssh -i ~/.ssh/id_ed25519 duck-2.dima.tu-berlin.de
 # scp ./flight-with-nexmark picocluster@192.168.2.42:~/
 # scp ./flight-with-nexmark picocluster@192.168.2.43:~/
 
 # ssh picocluster@192.168.2.42
 # ssh picocluster@192.168.2.43
 
-#  ./flight-with-nexmark exit --bind-address "[::]:8816"
-# ./flight-with-nexmark processor --bind-address "[::]:8815" --exit-address "192.168.2.42:8816"
-# ./flight-with-nexmark entry --records-per-chunk 100000 --no-records 10000000 --server-address "192.168.2.43:8815" pre-generated
+#  ./flight-with-nexmark exit --bind-address "[::]:8816" --label pre-generated
+# ./flight-with-nexmark processor --bind-address "[::]:8815" --exit-address "192.168.2.42:8816" --label pre-generated
+# ./flight-with-nexmark entry --records-per-chunk 1000000 --no-records 10000000 --server-address "192.168.2.43:8815" pre-generated
 
 # processo node: ./flight-with-nexmark 
+
+# scp picocluster@192.168.2.43:~/usama/stats/*.json ./stats/
+# scp picocluster@192.168.2.42:~/usama/stats/*.json ./stats/
+
+
+# scp -r usamabintariq@duck-2.dima.tu-berlin.de:/home/usamabintariq/stats/ ./pi-stats/

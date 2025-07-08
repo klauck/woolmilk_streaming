@@ -4,5 +4,3 @@ __pycache__
 venv
 local_node_setup
 target
-rust-flight-with-nexmark/scripts/pi-stats
-rust-flight-with-nexmark/scripts/*.png
