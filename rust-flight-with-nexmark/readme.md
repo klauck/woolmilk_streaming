@@ -119,7 +119,7 @@ This project implements a distributed streaming data pipeline using Apache Arrow
 
 #### Entry Component Analysis
 
-![Entry Pre-Generated Performance](visuals/pre-gen/entry.png)
+![Entry Pre-Generated Performance](scripts/visuals/pre-gen/entry.png)
 
 **📊 Key Metrics:**
 
@@ -132,7 +132,7 @@ This project implements a distributed streaming data pipeline using Apache Arrow
 
 #### Processor Component Analysis
 
-![Processor Pre-Generated Performance](visuals/pre-gen/processor.png)
+![Processor Pre-Generated Performance](scripts/visuals/pre-gen/processor.png)
 
 **📊 Key Metrics:**
 
@@ -145,7 +145,7 @@ This project implements a distributed streaming data pipeline using Apache Arrow
 
 #### Exit Component Analysis
 
-![Exit Pre-Generated Performance](visuals/pre-gen/exit.png)
+![Exit Pre-Generated Performance](scripts/visuals/pre-gen/exit.png)
 
 **📊 Key Metrics:**
 
@@ -162,7 +162,7 @@ This project implements a distributed streaming data pipeline using Apache Arrow
 
 #### Entry Component Analysis
 
-![Entry Real-Time Performance](visuals/real-time/entry.png)
+![Entry Real-Time Performance](scripts/visuals/real-time/entry.png)
 
 **📊 Key Metrics:**
 
@@ -175,7 +175,7 @@ This project implements a distributed streaming data pipeline using Apache Arrow
 
 #### Processor Component Analysis
 
-![Processor Real-Time Performance](visuals/real-time/processor.png)
+![Processor Real-Time Performance](scripts/visuals/real-time/processor.png)
 
 **📊 Key Metrics:**
 
@@ -188,7 +188,7 @@ This project implements a distributed streaming data pipeline using Apache Arrow
 
 #### Exit Component Analysis
 
-![Exit Real-Time Performance](visuals/real-time/exit.png)
+![Exit Real-Time Performance](scripts/visuals/real-time/exit.png)
 
 **📊 Key Metrics:**
 
