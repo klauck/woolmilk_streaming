@@ -28,6 +28,13 @@ pub async fn run_nexmark_query_2() -> Result<(),  Error> {
     let df_q2_df_api = run_query_2_dataframe_api(&ctx).await?;
     let df_q2_substrait = run_query_2_substrait(&ctx, true).await?;
     let df_q2_low_level = run_query_2_low_level(&ctx, &bids).await?;
+    let df_q2_sql_explain = run_query_2_sql_explain(&ctx).await?;
+
+    // select all from df_q2_sql_explain and show in the console
+    let explain_result = df_q2_sql_explain.collect().await?;
+    for batch in explain_result {
+        println!("Explain Result: {:?}", batch);
+    }
 
     // Compare only row counts
     let sql_count = df_q2_sql.count().await?;
@@ -156,6 +163,29 @@ async fn run_query_2_dataframe_api(ctx: &SessionContext)->Result<DataFrame, Erro
         .select(vec![col("auction"), col("price")])?;
 
     Ok(df)
+}
+
+async fn run_query_2_sql_explain(ctx: &SessionContext) ->  Result<DataFrame, Error> {
+    let plan = ctx
+        .sql(
+            r#"
+            EXPLAIN FORMAT INDENT
+            SELECT 
+                auction, 
+                price
+            FROM 
+                Bid
+            WHERE 
+                auction = 1007 
+                OR auction = 1020 
+                OR auction = 2001 
+                OR auction = 2019 
+                OR auction = 2087;
+            "#,
+        )
+        .await?;
+
+    Ok(plan)
 }
 
 async fn run_query_2_sql(ctx: &SessionContext) -> Result<DataFrame, Error> {
