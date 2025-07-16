@@ -1,3 +1,5 @@
+.DS_Store
+.idea/
 streaming-example/target
 data
 __pycache__
