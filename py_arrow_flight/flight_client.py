@@ -10,7 +10,7 @@ def generate_table(num_rows=10**6):
     return table
 
 def send_data(server):
-    client = pa.flight.FlightClient(f"grpc://{server}:8815")
+    client = pa.flight.FlightClient(f"grpc://{server}")
 
     table = generate_table()
     writer, _ = client.do_put(
@@ -30,7 +30,7 @@ def send_data(server):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print(f"USAGE: python {sys.argv[0]} HOST")
+        print(f"USAGE: python {sys.argv[0]} SERVER")
         exit(1)
     server = sys.argv[1]
     send_data(server)
