@@ -167,36 +167,34 @@ def generate_processor_graph(data, output_path, title_suffix=""):
     # Extract and organize all data by batch ID
     batch_data = {}
     
-    # Process batches (processing times)
-    for batch in data['batches']:
-        if 'id' in batch:
-            batch_id = batch['id']
-            if batch_id not in batch_data:
-                batch_data[batch_id] = {'process_time': 0, 'receive_time': 0, 'send_time': 0, 
-                                      'receive_bytes': 0, 'send_bytes': 0}
-            batch_data[batch_id]['process_time'] = batch['time']
+    # Process batches (processing times) - main data available
+    for i, batch in enumerate(data['batches']):
+        batch_id = i + 1  # Use index-based ID since no 'id' field in new schema
+        batch_data[batch_id] = {
+            'process_time': batch['time'],
+            'send_time': 0,  # Will be filled from send data if available
+            'send_bytes': 0
+        }
     
-    # Process receive data
-    for item in data['receive']:
-        if 'id' in item:
-            batch_id = item['id']
-            if batch_id not in batch_data:
-                batch_data[batch_id] = {'process_time': 0, 'receive_time': 0, 'send_time': 0, 
-                                      'receive_bytes': 0, 'send_bytes': 0}
-            batch_data[batch_id]['receive_time'] = item['time']
-            if 'bytes' in item:
-                batch_data[batch_id]['receive_bytes'] = item['bytes']
+    # Process query_processing data if available
+    if 'query_processing' in data:
+        for item in data['query_processing']:
+            if 'id' in item:
+                batch_id = item['id']
+                if batch_id in batch_data:
+                    # Add query processing details if needed
+                    if 'time' in item:
+                        batch_data[batch_id]['query_time'] = item['time']
     
-    # Process send data
-    for item in data['send']:
-        if 'id' in item:
-            batch_id = item['id']
-            if batch_id not in batch_data:
-                batch_data[batch_id] = {'process_time': 0, 'receive_time': 0, 'send_time': 0, 
-                                      'receive_bytes': 0, 'send_bytes': 0}
-            batch_data[batch_id]['send_time'] = item['time']
-            if 'bytes' in item:
-                batch_data[batch_id]['send_bytes'] = item['bytes']
+    # Process send data if available
+    if 'send' in data:
+        for item in data['send']:
+            if 'id' in item:
+                batch_id = item['id']
+                if batch_id in batch_data:
+                    batch_data[batch_id]['send_time'] = item.get('time', 0)
+                    if 'bytes' in item:
+                        batch_data[batch_id]['send_bytes'] = item['bytes']
     
     # Calculate data for visualization
     batch_ids = sorted(batch_data.keys())
@@ -204,17 +202,25 @@ def generate_processor_graph(data, output_path, title_suffix=""):
     
     # Extract individual times in milliseconds
     process_times_ms = [batch_data[bid]['process_time'] * 1000 for bid in batch_ids]
-    receive_times_ms = [batch_data[bid]['receive_time'] * 1000 for bid in batch_ids]
     send_times_ms = [batch_data[bid]['send_time'] * 1000 for bid in batch_ids]
     
-    # Calculate throughput for each batch
+    # Calculate throughput for each batch (using total bytes from JSON if available)
+    total_bytes_received = data.get('total_bytes_received', 0)
+    total_bytes_sent = data.get('total_bytes_sent', 0)
+    
     for batch_id in batch_ids:
         data_point = batch_data[batch_id]
-        total_time = data_point['process_time'] + data_point['receive_time'] + data_point['send_time']
-        total_bytes = data_point['receive_bytes'] + data_point['send_bytes']
+        total_time = data_point['process_time'] + data_point['send_time']
         
-        if total_time > 0 and total_bytes > 0:
-            throughput = bytes_to_mb(total_bytes) / total_time
+        # Estimate bytes per batch if not available per batch
+        if data_point['send_bytes'] > 0:
+            batch_bytes = data_point['send_bytes']
+        else:
+            # Estimate based on total data divided by number of batches
+            batch_bytes = (total_bytes_received + total_bytes_sent) / len(batch_ids)
+        
+        if total_time > 0 and batch_bytes > 0:
+            throughput = bytes_to_mb(batch_bytes) / total_time
             batch_throughputs.append(throughput)
         else:
             batch_throughputs.append(0)
@@ -228,11 +234,11 @@ def generate_processor_graph(data, output_path, title_suffix=""):
     else:
         label_interval = max(1, num_batches // 6)   # Show ~6 labels for large datasets
     
-    # TOP LEFT: Receive Times
-    bars1 = ax1.bar(batch_ids, receive_times_ms, alpha=0.8, color='green', width=0.8)
+    # TOP LEFT: Processing Times (main data we have)
+    bars1 = ax1.bar(batch_ids, process_times_ms, alpha=0.8, color='steelblue', width=0.8)
     ax1.set_xlabel('Batch ID', fontsize=12, fontweight='bold')
-    ax1.set_ylabel('Receive Time (ms)', fontsize=12, fontweight='bold')
-    ax1.set_title('Receive Times by Batch', fontsize=14, fontweight='bold')
+    ax1.set_ylabel('Processing Time (ms)', fontsize=12, fontweight='bold')
+    ax1.set_title('Processing Times by Batch', fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.3, axis='y')
     
     # Smart x-axis ticks for large datasets
@@ -242,78 +248,56 @@ def generate_processor_graph(data, output_path, title_suffix=""):
         ax1.tick_params(axis='x', rotation=45)
     
     # Add strategic value labels
-    max_receive = max(receive_times_ms) if receive_times_ms else 1
-    for i, (bar, value) in enumerate(zip(bars1, receive_times_ms)):
-        if i % label_interval == 0 and value > max_receive * 0.7:  # Only label high values
+    max_process = max(process_times_ms) if process_times_ms else 1
+    for i, (bar, value) in enumerate(zip(bars1, process_times_ms)):
+        if i % label_interval == 0 and value > max_process * 0.7:  # Only label high values
             height = bar.get_height()
-            ax1.text(bar.get_x() + bar.get_width()/2., height + max_receive*0.02,
+            ax1.text(bar.get_x() + bar.get_width()/2., height + max_process*0.02,
                     f'{value:.1f}', ha='center', va='bottom', fontsize=8, fontweight='bold',
                     bbox=dict(boxstyle="round,pad=0.1", facecolor="white", alpha=0.8, edgecolor='none'))
     
-    # TOP RIGHT: Processing Times
-    bars2 = ax2.bar(batch_ids, process_times_ms, alpha=0.8, color='steelblue', width=0.8)
+    # TOP RIGHT: Send Times (if available)
+    bars2 = ax2.bar(batch_ids, send_times_ms, alpha=0.8, color='orange', width=0.8)
     ax2.set_xlabel('Batch ID', fontsize=12, fontweight='bold')
-    ax2.set_ylabel('Processing Time (ms)', fontsize=12, fontweight='bold')
-    ax2.set_title('Processing Times by Batch', fontsize=14, fontweight='bold')
+    ax2.set_ylabel('Send Time (ms)', fontsize=12, fontweight='bold')
+    ax2.set_title('Send Times by Batch', fontsize=14, fontweight='bold')
     ax2.grid(True, alpha=0.3, axis='y')
     
     if num_batches > 100:
         ax2.set_xticks(tick_positions)
         ax2.tick_params(axis='x', rotation=45)
     
-    max_process = max(process_times_ms) if process_times_ms else 1
-    for i, (bar, value) in enumerate(zip(bars2, process_times_ms)):
-        if i % label_interval == 0 and value > max_process * 0.7:
+    max_send = max(send_times_ms) if send_times_ms and any(t > 0 for t in send_times_ms) else 1
+    for i, (bar, value) in enumerate(zip(bars2, send_times_ms)):
+        if i % label_interval == 0 and value > max_send * 0.7:
             height = bar.get_height()
-            ax2.text(bar.get_x() + bar.get_width()/2., height + max_process*0.02,
+            ax2.text(bar.get_x() + bar.get_width()/2., height + max_send*0.02,
                     f'{value:.1f}', ha='center', va='bottom', fontsize=8, fontweight='bold',
                     bbox=dict(boxstyle="round,pad=0.1", facecolor="white", alpha=0.8, edgecolor='none'))
     
-    # BOTTOM LEFT: Send Times
-    bars3 = ax3.bar(batch_ids, send_times_ms, alpha=0.8, color='orange', width=0.8)
+    # BOTTOM LEFT: Throughput (Line Chart with reduced density)
+    line_width = 2 if num_batches > 500 else 3
+    marker_size = 3 if num_batches > 500 else 6
+    
+    line = ax3.plot(batch_ids, batch_throughputs, color='red', marker='o', 
+                   linewidth=line_width, markersize=marker_size, markerfacecolor='darkred', 
+                   markeredgecolor='red', label='Batch Throughput (MB/s)', alpha=0.8)
+    
     ax3.set_xlabel('Batch ID', fontsize=12, fontweight='bold')
-    ax3.set_ylabel('Send Time (ms)', fontsize=12, fontweight='bold')
-    ax3.set_title('Send Times by Batch', fontsize=14, fontweight='bold')
-    ax3.grid(True, alpha=0.3, axis='y')
+    ax3.set_ylabel('Throughput (MB/s)', fontsize=12, fontweight='bold')
+    ax3.set_title('Throughput by Batch', fontsize=14, fontweight='bold')
+    ax3.grid(True, alpha=0.3)
     
     if num_batches > 100:
         ax3.set_xticks(tick_positions)
         ax3.tick_params(axis='x', rotation=45)
     
-    max_send = max(send_times_ms) if send_times_ms else 1
-    for i, (bar, value) in enumerate(zip(bars3, send_times_ms)):
-        if i % label_interval == 0 and value > max_send * 0.7:
-            height = bar.get_height()
-            ax3.text(bar.get_x() + bar.get_width()/2., height + max_send*0.02,
-                    f'{value:.1f}', ha='center', va='bottom', fontsize=8, fontweight='bold',
-                    bbox=dict(boxstyle="round,pad=0.1", facecolor="white", alpha=0.8, edgecolor='none'))
-    
-    # BOTTOM RIGHT: Throughput (Line Chart with reduced density)
-    # For large datasets, use a thinner line and smaller markers
-    line_width = 2 if num_batches > 500 else 3
-    marker_size = 3 if num_batches > 500 else 6
-    
-    line = ax4.plot(batch_ids, batch_throughputs, color='red', marker='o', 
-                   linewidth=line_width, markersize=marker_size, markerfacecolor='darkred', 
-                   markeredgecolor='red', label='Batch Throughput (MB/s)', alpha=0.8)
-    
-    ax4.set_xlabel('Batch ID', fontsize=12, fontweight='bold')
-    ax4.set_ylabel('Throughput (MB/s)', fontsize=12, fontweight='bold')
-    ax4.set_title('Throughput by Batch', fontsize=14, fontweight='bold')
-    ax4.grid(True, alpha=0.3)
-    
-    if num_batches > 100:
-        ax4.set_xticks(tick_positions)
-        ax4.tick_params(axis='x', rotation=45)
-    
     # Add overall throughput line
-    overall_total_time = sum(batch_data[bid]['process_time'] + batch_data[bid]['receive_time'] + 
-                           batch_data[bid]['send_time'] for bid in batch_ids)
-    overall_total_bytes = sum(batch_data[bid]['receive_bytes'] + batch_data[bid]['send_bytes'] 
-                            for bid in batch_ids)
+    overall_total_time = sum(batch_data[bid]['process_time'] + batch_data[bid]['send_time'] for bid in batch_ids)
+    overall_total_bytes = total_bytes_received + total_bytes_sent
     overall_throughput = bytes_to_mb(overall_total_bytes) / overall_total_time if overall_total_time > 0 else 0
     
-    ax4.axhline(y=overall_throughput, color='darkred', linestyle='--', linewidth=2, 
+    ax3.axhline(y=overall_throughput, color='darkred', linestyle='--', linewidth=2, 
                 label=f'Overall Throughput ({overall_throughput:.1f} MB/s)', alpha=0.8)
     
     # Strategic throughput labels (only show outliers and key points)
@@ -324,25 +308,27 @@ def generate_processor_graph(data, output_path, title_suffix=""):
         
         for i, (x, y) in enumerate(zip(batch_ids, batch_throughputs)):
             if i % (label_interval * 2) == 0 or y > threshold:  # Show every 2nd interval or outliers
-                ax4.annotate(f'{y:.1f}', (x, y), textcoords="offset points", 
+                ax3.annotate(f'{y:.1f}', (x, y), textcoords="offset points", 
                             xytext=(0,8), ha='center', fontsize=8, fontweight='bold',
                             bbox=dict(boxstyle="round,pad=0.2", facecolor="red", alpha=0.7, edgecolor='none'))
     
-    ax4.legend(fontsize=10)
+    ax3.legend(fontsize=10)
+    
+    # BOTTOM RIGHT: Summary
+    ax4.axis('off')  # Hide the axis for the summary
     
     # Calculate summary statistics
-    total_bytes_received_mb = bytes_to_mb(sum(batch_data[bid]['receive_bytes'] for bid in batch_ids))
-    total_bytes_sent_mb = bytes_to_mb(sum(batch_data[bid]['send_bytes'] for bid in batch_ids))
+    total_bytes_received_mb = bytes_to_mb(total_bytes_received)
+    total_bytes_sent_mb = bytes_to_mb(total_bytes_sent)
     total_processing_time = sum(batch_data[bid]['process_time'] for bid in batch_ids)
-    total_receive_time = sum(batch_data[bid]['receive_time'] for bid in batch_ids)
     total_send_time = sum(batch_data[bid]['send_time'] for bid in batch_ids)
+    total_time = data.get('total_time', 0)
     
     avg_batch_throughput = np.mean(batch_throughputs) if batch_throughputs else 0
     avg_process_time = np.mean(process_times_ms) if process_times_ms else 0
-    avg_receive_time = np.mean(receive_times_ms) if receive_times_ms else 0
     avg_send_time = np.mean(send_times_ms) if send_times_ms else 0
     
-    # Add summary text box spanning across the figure
+    # Add summary text box
     summary_text = f"""PROCESSOR SUMMARY
 {'='*25}
 Total Bytes Received: {total_bytes_received_mb:.1f} MB
@@ -351,15 +337,16 @@ Overall Throughput: {overall_throughput:.1f} MB/s
 
 Average Times:
 Processing: {avg_process_time:.1f} ms
-Receive: {avg_receive_time:.1f} ms
 Send: {avg_send_time:.1f} ms
 
 Total Batches: {len(batch_ids)}
-Mode: {data['mode']}"""
+Mode: {data['mode']}
+"""
     
-    # Position summary box in the center-right area
-    fig.text(0.75, 0.5, summary_text, fontsize=10, verticalalignment='center',
-             bbox=dict(boxstyle="round,pad=0.8", facecolor="lightgray", alpha=0.9),
+    # Position summary box in the center of the bottom-right subplot
+    ax4.text(0.5, 0.5, summary_text, transform=ax4.transAxes,
+             fontsize=10, verticalalignment='center', horizontalalignment='center',
+             bbox=dict(boxstyle="round,pad=0.8", facecolor="lightblue", alpha=0.9),
              fontweight='bold')
     
     # Set main title

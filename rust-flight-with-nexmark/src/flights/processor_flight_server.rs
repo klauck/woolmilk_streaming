@@ -147,7 +147,6 @@ impl FlightService for ProcessorFlightServer {
             // Count data size for non-empty data messages
             if !data_msg.data_body.is_empty() {
                 let batch_start = Instant::now();
-                let receive_start = Instant::now();
                 batch_count += 1;
                 let data_size = data_msg.data_body.len() as u64;
                 total_data_size += data_size;
@@ -169,7 +168,6 @@ impl FlightService for ProcessorFlightServer {
                     }
                 };
 
-                let receive_elapsed = receive_start.elapsed().as_secs_f64();
                 let mut input_rows = 0;
                 let mut output_rows = 0;
                 
@@ -252,7 +250,6 @@ impl FlightService for ProcessorFlightServer {
                 
                 // Add batch and receive stats
                 stats.add_batch(batch_count, batch_elapsed, data_size, input_rows);
-                stats.add_receive_batch(batch_count, receive_elapsed, data_size, input_rows);
                 
                 println!(
                     "[PROCESSOR] Processed batch {}: {:.2} MB in {:.3} seconds",

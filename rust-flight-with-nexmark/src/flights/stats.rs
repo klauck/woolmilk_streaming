@@ -99,11 +99,11 @@ impl Stats for EntryStats {
     }
 }
 
+#[derive(Clone)]
 pub struct ProcessorStats {
     mode: String,
     pub batches: Vec<BatchStats>,
     pub query_processing: Vec<QueryProcessingStats>,
-    pub receive: Vec<BatchStats>,
     pub send: Vec<BatchStats>,
     total_time: f64,
     total_bytes_received: u64,
@@ -116,7 +116,6 @@ impl ProcessorStats {
             mode,
             batches: Vec::new(),
             query_processing: Vec::new(),
-            receive: Vec::new(),
             send: Vec::new(),
             total_time: 0.0,
             total_bytes_received: 0,
@@ -133,16 +132,6 @@ impl ProcessorStats {
         };
         self.batches.push(batch_stats);
         self.total_bytes_received += bytes;
-    }
-
-    pub fn add_receive_batch(&mut self, id: usize, time: f64, bytes: u64, rows: usize) {
-        let batch_stats = BatchStats {
-            id,
-            time,
-            bytes,
-            rows,
-        };
-        self.receive.push(batch_stats);
     }
 
     pub fn add_send_batch(&mut self, id: usize, time: f64, bytes: u64, rows: usize) {
@@ -197,14 +186,6 @@ impl Stats for ProcessorStats {
                     "input_rows": query.input_rows,
                     "output_rows": query.output_rows,
                     "processing_time": query.processing_time
-                })
-            }).collect::<Vec<_>>(),
-            "receive": self.receive.iter().map(|batch| {
-                json!({
-                    "id": batch.id,
-                    "time": batch.time,
-                    "bytes": batch.bytes,
-                    "rows": batch.rows
                 })
             }).collect::<Vec<_>>(),
             "send": self.send.iter().map(|batch| {

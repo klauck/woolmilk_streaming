@@ -6,6 +6,7 @@ use tonic::transport::Server;
 use std::net::SocketAddr; 
 use flights::ExitFlightServer;
 use flights::ProcessorFlightServer;
+use flights::ProcessorFlightServerMultiThreaded;
 
 use clap::{Parser, Subcommand};
 
@@ -38,6 +39,9 @@ enum Commands {
         exit_address: String,
         #[arg(value_enum, long, default_value = "real-time")]
         label: LabelMode,
+        /// Use multi-threaded processing approach
+        #[arg(long, default_value = "false")]
+        multi_threaded: bool,
     },
     Exit {
         #[arg(long, default_value = "[::1]:8816")]
@@ -90,20 +94,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             let entry_client = flights::EntryClient::new(&server_address, records_per_chunk, no_records, generation_mode);
             entry_client.run().await?;
         }
-        Commands::Processor { bind_address, exit_address, label } => {
+        Commands::Processor { bind_address, exit_address, label, multi_threaded } => {
             let addr: SocketAddr = bind_address.parse()?;
-            println!("Starting Processor Flight server on {}", addr);
-
             let label_str = String::from(label);
-            let processor_server = ProcessorFlightServer::new(exit_address, label_str);
-            Server::builder()
-                .add_service(
-                    FlightServiceServer::new(processor_server)
-                    .max_decoding_message_size(usize::MAX)
-                    .max_decoding_message_size(usize::MAX)
-                )
-                .serve(addr)
-                .await?;
+            
+            if multi_threaded {
+                println!("Starting Multi-Threaded Processor Flight server on {}", addr);
+                let processor_server = ProcessorFlightServerMultiThreaded::new(exit_address, label_str);
+                Server::builder()
+                    .add_service(
+                        FlightServiceServer::new(processor_server)
+                        .max_decoding_message_size(usize::MAX)
+                        .max_decoding_message_size(usize::MAX)
+                    )
+                    .serve(addr)
+                    .await?;
+            } else {
+                println!("Starting Standard Processor Flight server on {}", addr);
+                let processor_server = ProcessorFlightServer::new(exit_address, label_str);
+                Server::builder()
+                    .add_service(
+                        FlightServiceServer::new(processor_server)
+                        .max_decoding_message_size(usize::MAX)
+                        .max_decoding_message_size(usize::MAX)
+                    )
+                    .serve(addr)
+                    .await?;
+            }
         }
         Commands::Exit { bind_address, label } => {
             let addr: SocketAddr = bind_address.parse()?;
