@@ -36,7 +36,7 @@ if __name__ == "__main__":
     server = sys.argv[1]
 
     threads = []
-    for thread_id in range(5):
+    for thread_id in range(1):
         t = threading.Thread(target=send_data, args=(thread_id, server))
         threads.append(t)
         t.start()

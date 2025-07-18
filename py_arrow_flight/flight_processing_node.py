@@ -1,3 +1,4 @@
+from datafusion import column, literal, SessionContext
 import pyarrow as pa
 import pyarrow.flight
 import sys
@@ -6,7 +7,9 @@ import time
 class BandwidthTestServer(pa.flight.FlightServerBase):
     def __init__(self, location, exit_node):
         super().__init__(location)
+        self.ctx = SessionContext()
         self.client = pa.flight.FlightClient(f"grpc://{exit_node}")
+        # self.state = {}
 
     def do_put(self, context, descriptor, reader, writer):
         writer, _ = self.client.do_put(
@@ -18,9 +21,22 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
         start = time.time()
         for chunk in reader:
             batch = chunk.data
-            # execute and forward data here
-            writer.write_batch(batch)
-            total_bytes += batch.nbytes
+
+            # Option 1: Dataframe API
+            df = self.ctx.create_dataframe([[batch]])
+            df.filter(column("column") < literal(0.5))
+
+            # Option 2: SQL
+            # currently recreate context as we cannot re-register record batch with the same name
+            # self.ctx = SessionContext()
+            # self.ctx.register_record_batches("values", [[batch]])
+            # df = self.ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
+
+            df.show()
+
+            for batch in df.collect():
+                writer.write_batch(batch)
+                total_bytes += batch.nbytes
         writer.done_writing()
         end = time.time()
 
