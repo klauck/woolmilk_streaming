@@ -23,14 +23,13 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
             batch = chunk.data
 
             # Option 1: Dataframe API
-            df = self.ctx.create_dataframe([[batch]])
-            df.filter(column("column") < literal(0.5))
+            # df = self.ctx.create_dataframe([[batch]])
+            # df.filter(column("column") < literal(0.5))
 
             # Option 2: SQL
-            # currently recreate context as we cannot re-register record batch with the same name
-            # self.ctx = SessionContext()
-            # self.ctx.register_record_batches("values", [[batch]])
-            # df = self.ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
+            self.ctx.deregister_table("values")
+            self.ctx.register_record_batches("values", [[batch]])
+            df = self.ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
 
             df.show()
 
