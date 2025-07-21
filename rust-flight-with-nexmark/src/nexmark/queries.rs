@@ -184,6 +184,8 @@ async fn run_query_2_sql_explain(ctx: &SessionContext) ->  Result<DataFrame, Err
             "#,
         )
         .await?;
+       
+    plan.create_physical_plan().await?.clone().execute(0, ctx);
 
     Ok(plan)
 }

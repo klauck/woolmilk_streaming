@@ -6,3 +6,4 @@ local_node_setup
 target
 rust-flight-with-nexmark/stats
 rust-flight-with-nexmark/scripts/comparisons/
+datafusion-physical-plan-python/*.pb
