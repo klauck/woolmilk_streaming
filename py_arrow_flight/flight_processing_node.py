@@ -3,41 +3,57 @@ import pyarrow as pa
 import pyarrow.flight
 import sys
 import time
+import argparse
 
 class BandwidthTestServer(pa.flight.FlightServerBase):
-    def __init__(self, location, exit_node):
+    def __init__(self, location, exit_node, sql_query):
         super().__init__(location)
         self.ctx = SessionContext()
         self.client = pa.flight.FlightClient(f"grpc://{exit_node}")
-        # self.state = {}
+        self.query = sql_query
+        self.default_table_name = "nexmark_data"
 
     def do_put(self, context, descriptor, reader, writer):
-        writer, _ = self.client.do_put(
-            pa.flight.FlightDescriptor.for_path("bandwidth-test"),
-            schema=pa.schema([('column', pa.float64())])
-        )
-
         total_bytes = 0
         start = time.time()
+
+        first_chunk = next(reader)
+        batch = first_chunk.data
+
+        # register table
+        self.ctx.register_record_batches(self.default_table_name, [[batch]])
+        if self.query:
+            result_df = self.ctx.sql(self.query)
+        else:
+            result_df = df
+
+        schema = result_df.schema()
+        exit_writer, _ = self.client.do_put(
+            pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
+            schema
+        )
+
+        for out_batch in result_df.collect():
+            exit_writer.write_batch(out_batch)
+            total_bytes += out_batch.nbytes
+
+        # deregister table
+        self.ctx.deregister_table(self.default_table_name)
+
         for chunk in reader:
             batch = chunk.data
+            self.ctx.register_record_batches(self.default_table_name, [[batch]])
+            df = self.ctx.table(self.default_table_name)
+            if self.query:
+                result_df = self.ctx.sql(self.query)
+            else:
+                result_df = df
+            for out_batch in result_df.collect():
+                exit_writer.write_batch(out_batch)
+                total_bytes += out_batch.nbytes
+            self.ctx.deregister_table(self.default_table_name)
 
-            # Option 1: Dataframe API
-            df = self.ctx.create_dataframe([[batch]])
-            df.filter(column("column") < literal(0.5))
-
-            # Option 2: SQL
-            # currently recreate context as we cannot re-register record batch with the same name
-            # self.ctx = SessionContext()
-            # self.ctx.register_record_batches("values", [[batch]])
-            # df = self.ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
-
-            df.show()
-
-            for batch in df.collect():
-                writer.write_batch(batch)
-                total_bytes += batch.nbytes
-        writer.done_writing()
+        exit_writer.done_writing()
         end = time.time()
 
         duration = end - start
@@ -46,11 +62,31 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print(f"USAGE: python {sys.argv[0]} PORT EXIT_NODE")
-        exit(1)
-    port = sys.argv[1]
-    exit_node = sys.argv[2]
-    server = BandwidthTestServer(f"grpc://0.0.0.0:{port}", exit_node)
+    parser = argparse.ArgumentParser(description="Arrow Flight Processing Node")
+    parser.add_argument(
+        "port",
+        type=str,
+        help="Port to run the Flight processing node on"
+    )
+    parser.add_argument(
+        "exit_node",
+        type=str,
+        help="Address of the exit Flight node (host:port)"
+    )
+    parser.add_argument(
+        "--query",
+        type=str,
+        default=None,
+        help="Optional SQL query to run on incoming batches"
+    )
+    args = parser.parse_args()
+
+    port = args.port
+    exit_node = args.exit_node
+    sql_query = args.query
+
+    print(f"Flight processing node running on port {port}")
+
+    server = BandwidthTestServer(f"grpc://0.0.0.0:{port}", exit_node, sql_query)
     print(f"Flight processing node running on port {port}")
     server.serve()
