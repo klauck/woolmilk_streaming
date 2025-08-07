@@ -17,34 +17,45 @@ class FlightClient():
         self.server_addresses = servers
         self.stream_provider = stream_providor
         self.thread_id = thread_id
+
+    def send_data_to_client(self, client, tbl_name, tbl, address):
+        if tbl is not None and tbl.num_rows > 0:
+            writer, _ = client.do_put(
+                pa.flight.FlightDescriptor.for_path(f"{tbl_name}-stream"),
+                tbl.schema
+            )
+            start = time.time()
+            for batch in tbl.to_batches(max_chunksize=65536):
+                writer.write_batch(batch)
+            writer.done_writing()
+            end = time.time()
+            total_bytes = tbl.nbytes
+            duration = end - start
+            mbps = (total_bytes * 8) / (duration * 1024 * 1024)
+            print(
+                f"THREAD:[{self.thread_id}]:{tbl_name}@{address}: Sent {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)"
+            )
+            
     
     def start(self):
         """Start the client to send data streams."""
         print(f"Starting client for thread {self.thread_id} with server(s) {self.server_addresses}")
-        # For each server, send the stream data
-        # TODO: instead of looping over servers, loop over streams and send data.
-        for server in self.server_addresses:
-            client = pa.flight.FlightClient(f"grpc://{server[0]}:{server[1]}")
-            stream = self.stream_provider.get_stream()
-            # stream yields (person_tbl, auction_tbl, bid_tbl, category_tbl)
-            for person_tbl, auction_tbl, bid_tbl, category_tbl in stream:
-                for tbl, name in [(person_tbl, "person"), (auction_tbl, "auction"), (bid_tbl, "bid"), (category_tbl, "category"),]:
-                    if tbl is not None and tbl.num_rows > 0:
-                        writer, _ = client.do_put(
-                            pa.flight.FlightDescriptor.for_path(f"{name}-stream"),
-                            tbl.schema
-                        )
-                        start = time.time()
-                        for batch in tbl.to_batches(max_chunksize=65536):
-                            writer.write_batch(batch)
-                        writer.done_writing()
-                        end = time.time()
-                        total_bytes = tbl.nbytes
-                        duration = end - start
-                        mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-                        print(
-                            f"{self.thread_id}:{name}: Sent {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)"
-                        )
+        stream = self.stream_provider.get_stream()
+        server_count = len(self.server_addresses)
+        set_idx = 0
+        # stream yields (person_tbl, auction_tbl, bid_tbl, category_tbl)
+        for person_tbl, auction_tbl, bid_tbl, category_tbl in stream:
+            # Pick server in round-robin fashion
+            server = self.server_addresses[set_idx % server_count]
+            set_idx += 1
+            address = f"{server[0]}:{server[1]}"
+            client = pa.flight.FlightClient(f"grpc://{address}")
+            
+            self.send_data_to_client(client, "person", person_tbl, address)
+            self.send_data_to_client(client, "auction", auction_tbl, address)
+            self.send_data_to_client(client, "bid", bid_tbl, address)
+            self.send_data_to_client(client, "category", category_tbl, address)
+                
 
     
 class StreamProvider():
@@ -126,13 +137,13 @@ if __name__ == "__main__":
         help="Total number of records needs to be sent."
     )
     parser.add_argument(
-        "--servers",
+        "--processing-servers",
         help="Flight server address (host:port,host:port)",
         type=str,
         default="localhost:8815"
     )
     parser.add_argument(
-        "--thread-count",
+        "--thread-count",#thread count is used to send data to same server but multiple threads, this is for testing purpose.
         type=int,
         help="Number of threads to use for sending data",
         default=1,
@@ -142,14 +153,14 @@ if __name__ == "__main__":
     print("\n" + "="*40)
     print(" Arrow Flight Nexmark Client Parameters")
     print("="*40)
-    print(f" Stream Type    : {args.stream}")
-    print(f" Tuple Rate     : {args.tuple_rate}")
-    print(f" Records Count  : {args.records_count}")
-    print(f" Servers        : {args.servers}")
-    print(f" Thread Count   : {args.thread_count}")
+    print(f" Stream Type                : {args.stream}")
+    print(f" Tuple Rate                 : {args.tuple_rate}")
+    print(f" Records Count              : {args.records_count}")
+    print(f" Processing Servers         : {args.processing_servers}")
+    print(f" Thread Count               : {args.thread_count}")
     print("="*40 + "\n")
 
-    server_addresses = parse_server_addresses(args.servers)
+    server_addresses = parse_server_addresses(args.processing_servers)
     if len(server_addresses) == 0:
         print("No server addresses provided. Exiting.")
         sys.exit(1)

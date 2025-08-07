@@ -6,3 +6,4 @@ __pycache__
 venv
 local_node_setup
 datafusion-physical-plan-python/*.pb
+logs

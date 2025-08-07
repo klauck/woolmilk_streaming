@@ -1,0 +1,37 @@
+{
+   "sinkNodes": [
+      {
+         "serverAddress": "192.168.0.106:8820"
+      },
+      {
+         "serverAddress": "192.168.0.106:8821"
+      }
+   ],
+   "processingNodes": [
+      {
+         "serverAddress": "192.168.0.106:8815",
+         "query": "SELECT * FROM nexmark_data WHERE price > 100",
+         "sinkNodes": ["192.168.0.106:8820"]
+      },
+      {
+         "serverAddress": "192.168.0.106:8816",
+         "query": "SELECT * FROM nexmark_data WHERE price > 100",
+         "sinkNodes": ["192.168.0.106:8821"]
+      }
+   ],
+   "clientNodes": [
+      {
+         "processingNodes": [
+            {
+               "address": "192.168.0.106:8815"
+            },
+            {
+               "address": "192.168.0.106:8816"
+            }
+         ],
+         "stream": "nexmark.bid",
+         "records_count": 100000,
+         "tuple_rate": 10000
+      }
+   ]
+}

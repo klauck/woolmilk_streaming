@@ -8,12 +8,12 @@ import argparse
 class BandwidthTestServer(pa.flight.FlightServerBase):
     def __init__(self, location, exit_node, sql_query):
         super().__init__(location)
-        self.ctx = SessionContext()
         self.client = pa.flight.FlightClient(f"grpc://{exit_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
 
     def do_put(self, context, descriptor, reader, writer):
+        ctx = SessionContext()
         total_bytes = 0
         start = time.time()
 
@@ -21,9 +21,9 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
         batch = first_chunk.data
 
         # register table
-        self.ctx.register_record_batches(self.default_table_name, [[batch]])
+        ctx.register_record_batches(self.default_table_name, [[batch]])
         if self.query:
-            result_df = self.ctx.sql(self.query)
+            result_df = ctx.sql(self.query)
         else:
             result_df = df
 
@@ -38,20 +38,20 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
             total_bytes += out_batch.nbytes
 
         # deregister table
-        self.ctx.deregister_table(self.default_table_name)
+        ctx.deregister_table(self.default_table_name)
 
         for chunk in reader:
             batch = chunk.data
-            self.ctx.register_record_batches(self.default_table_name, [[batch]])
-            df = self.ctx.table(self.default_table_name)
+            ctx.register_record_batches(self.default_table_name, [[batch]])
+            df = ctx.table(self.default_table_name)
             if self.query:
-                result_df = self.ctx.sql(self.query)
+                result_df = ctx.sql(self.query)
             else:
                 result_df = df
             for out_batch in result_df.collect():
                 exit_writer.write_batch(out_batch)
                 total_bytes += out_batch.nbytes
-            self.ctx.deregister_table(self.default_table_name)
+            ctx.deregister_table(self.default_table_name)
 
         exit_writer.done_writing()
         end = time.time()
@@ -64,29 +64,37 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Arrow Flight Processing Node")
     parser.add_argument(
-        "port",
+        "--server-address",
         type=str,
-        help="Port to run the Flight processing node on"
+        default="localhost:8815",
+        help="Address to run the Flight processing node on (host:port)"
     )
     parser.add_argument(
-        "exit_node",
+        "--exit_node",
         type=str,
+        default="localhost:8820",
         help="Address of the exit Flight node (host:port)"
     )
     parser.add_argument(
         "--query",
         type=str,
-        default=None,
+        default="SELECT * FROM nexmark_data",
         help="Optional SQL query to run on incoming batches"
     )
     args = parser.parse_args()
 
-    port = args.port
+    print("\n" + "="*40)
+    print(" Arrow Flight Processing Node Parameters")
+    print("="*40)       
+    print(f" Address        : {args.server_address}")
+    print(f" Exit Node      : {args.exit_node}")
+    print(f" SQL Query      : {args.query}")
+    print("="*40 + "\n")
+
+    address = args.server_address
     exit_node = args.exit_node
     sql_query = args.query
 
-    print(f"Flight processing node running on port {port}")
-
-    server = BandwidthTestServer(f"grpc://0.0.0.0:{port}", exit_node, sql_query)
-    print(f"Flight processing node running on port {port}")
+    server = BandwidthTestServer(f"grpc://{address}", exit_node, sql_query)
+    print(f"Flight processing node running at {address}")
     server.serve()
