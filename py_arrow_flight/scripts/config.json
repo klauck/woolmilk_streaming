@@ -1,37 +1,44 @@
 {
+   "config": {
+      "servers": {
+         "192.168.2.42": {
+            "username": "picocluster",
+            "password": "picocluster",
+            "base_dir": "arrow-flight",
+            "python_env": "/home/picocluster/usama/woolmilk_env/bin/python3"
+         },
+         "192.168.2.43": {
+            "username": "picocluster",
+            "password": "picocluster",
+            "base_dir": "arrow-flight",
+            "python_env": "/home/picocluster/usama/woolmilk_env/bin/python3"
+         }
+      }
+   },
    "sinkNodes": [
       {
-         "serverAddress": "192.168.0.106:8820"
-      },
-      {
-         "serverAddress": "192.168.0.106:8821"
+         "serverAddress": "192.168.2.42:8820"
       }
    ],
    "processingNodes": [
       {
-         "serverAddress": "192.168.0.106:8815",
+         "serverAddress": "192.168.2.43:8815",
          "query": "SELECT * FROM nexmark_data WHERE price > 100",
-         "sinkNodes": ["192.168.0.106:8820"]
-      },
-      {
-         "serverAddress": "192.168.0.106:8816",
-         "query": "SELECT * FROM nexmark_data WHERE price > 100",
-         "sinkNodes": ["192.168.0.106:8821"]
+         "sinkNode": "192.168.2.42:8820"
       }
    ],
    "clientNodes": [
       {
          "processingNodes": [
             {
-               "address": "192.168.0.106:8815"
-            },
-            {
-               "address": "192.168.0.106:8816"
+               "address": "192.168.2.43:8815"
             }
          ],
          "stream": "nexmark.bid",
          "records_count": 100000,
-         "tuple_rate": 10000
+         "tuple_rate": 10000,
+         "thread_count": 1,
+         "deployment_server": "192.168.2.42"
       }
    ]
 }
