@@ -7,11 +7,11 @@ import time
 class BandwidthTestServer(pa.flight.FlightServerBase):
     def __init__(self, location, exit_node):
         super().__init__(location)
-        self.ctx = SessionContext()
         self.client = pa.flight.FlightClient(f"grpc://{exit_node}")
         # self.state = {}
 
     def do_put(self, context, descriptor, reader, writer):
+        ctx = SessionContext()
         writer, _ = self.client.do_put(
             pa.flight.FlightDescriptor.for_path("bandwidth-test"),
             schema=pa.schema([('column', pa.float64())])
@@ -23,19 +23,19 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
             batch = chunk.data
 
             # Option 1: Dataframe API
-            # df = self.ctx.create_dataframe([[batch]])
+            # df = ctx.create_dataframe([[batch]])
             # df.filter(column("column") < literal(0.5))
 
             # Option 2: SQL
-            self.ctx.deregister_table("values")
-            self.ctx.register_record_batches("values", [[batch]])
-            df = self.ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
+            ctx.register_record_batches("values", [[batch]])
+            df = ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
 
             df.show()
 
             for batch in df.collect():
                 writer.write_batch(batch)
                 total_bytes += batch.nbytes
+            ctx.deregister_table("values")
         writer.done_writing()
         end = time.time()
 
