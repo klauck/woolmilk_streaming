@@ -35,8 +35,8 @@
             }
          ],
          "stream": "nexmark.bid",
-         "records_count": 100000,
-         "tuple_rate": 10000,
+         "overall_tuples": 1000000,
+         "tuples_per_batch": 100000,
          "thread_count": 1,
          "deployment_server": "192.168.2.42"
       }

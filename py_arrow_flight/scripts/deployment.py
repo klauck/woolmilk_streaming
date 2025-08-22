@@ -35,8 +35,8 @@ class ClientProcessingNode:
 class ClientNode:
     processingNodes: List[ClientProcessingNode]
     stream: str
-    records_count: int
-    tuple_rate: int
+    overall_tuples: int
+    tuples_per_batch: int
     thread_count: int = 1
     deployment_server: str = None
 
@@ -66,8 +66,8 @@ def parse_config(json_path: str) -> Config:
         client_nodes.append(ClientNode(
             processingNodes=proc_nodes,
             stream=cn.get("stream"),
-            records_count=cn.get("records_count"),
-            tuple_rate=cn.get("tuple_rate"),
+            overall_tuples=cn.get("overall_tuples"),
+            tuples_per_batch=cn.get("tuples_per_batch"),
             thread_count=cn.get("thread_count", 1),
             deployment_server=cn.get("deployment_server")
         ))
@@ -321,8 +321,8 @@ class DeploymentRunner:
                     sys.executable, "-u",
                     os.path.join(self.src_dir, "flight_client.py"),
                     "--stream", client.stream,
-                    "--tuple-rate", str(client.tuple_rate),
-                    "--records-count", str(client.records_count),
+                    "--tuples-per-batch", str(client.tuples_per_batch),
+                    "--overall-tuples", str(client.overall_tuples),
                     "--processing-servers", server_addresses,
                     "--thread-count", str(client.thread_count)
                 ]
@@ -345,8 +345,8 @@ class DeploymentRunner:
                     server_config.python_env, "-u",
                     "flight_client.py",
                     "--stream", client.stream,
-                    "--tuple-rate", str(client.tuple_rate),
-                    "--records-count", str(client.records_count),
+                    "--tuples-per-batch", str(client.tuples_per_batch),
+                    "--overall-tuples", str(client.overall_tuples),
                     "--processing-servers", server_addresses,
                     "--thread-count", str(client.thread_count)
                 ]

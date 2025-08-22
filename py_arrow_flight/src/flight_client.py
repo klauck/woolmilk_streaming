@@ -67,7 +67,7 @@ class StreamProvider():
         pass
 
     @staticmethod
-    def GetStreamProvidor(event: str, tuple_rate, records_count):
+    def GetStreamProvidor(event: str, tuples_per_batch, overall_tuples):
         """Get the stream provider based on the event type."""
         splited_event = event.split(".")
         if len(splited_event) != 2:
@@ -78,7 +78,7 @@ class StreamProvider():
         if stream_providor != "nexmark":
             raise ValueError("Invalid stream provider. Expected 'nexmark'")
         
-        return NexmarkStreamProvider(stream_type, tuple_rate, records_count)
+        return NexmarkStreamProvider(stream_type, tuples_per_batch, overall_tuples)
         
 
 class NexmarkStreamProvider(StreamProvider):
@@ -86,15 +86,15 @@ class NexmarkStreamProvider(StreamProvider):
     Stream provider for Nexmark data.
     This class generates data for the specified Nexmark event type.
     """
-    def __init__(self, stream_type, tuple_rate, records_count):
+    def __init__(self, stream_type, tuples_per_batch, overall_tuples):
         super().__init__()
         self.stream_type = stream_type
-        self.tuple_rate = tuple_rate
-        self.records_count = records_count
+        self.tuples_per_batch = tuples_per_batch
+        self.overall_tuples = overall_tuples
         self.data_generator = NexmarkDataGenerator(
             event_type=stream_type,
-            chunk_size=tuple_rate,
-            no_records=records_count
+            chunk_size=tuples_per_batch,
+            no_records=overall_tuples
         )
     
     def get_stream(self):
@@ -109,9 +109,9 @@ def parse_server_addresses(server_addresses):
         servers.append((host, int(port)))
     return servers
 
-def send_data(thread_id, stream, tupple_rate, records_count, servers):
+def send_data(thread_id, stream, tuples_per_batch, overall_tuples, servers):
     """Function to send data in a separate thread."""
-    stream_provider = StreamProvider.GetStreamProvidor(stream, tupple_rate, records_count)
+    stream_provider = StreamProvider.GetStreamProvidor(stream, tuples_per_batch, overall_tuples)
     client = FlightClient(stream_provider, servers, thread_id)
     client.start()
     
@@ -125,13 +125,13 @@ if __name__ == "__main__":
         help="Stream type"
     )
     parser.add_argument(
-        "--tuple-rate",
+        "--tuples-per-batch",
         type=int,
         default=10000,
         help="Tuple rate (number)"
     )
     parser.add_argument(
-        "--records-count",
+        "--overall-tuples",
         type=int,
         default=1000000,
         help="Total number of records needs to be sent."
@@ -154,8 +154,8 @@ if __name__ == "__main__":
     print(" Arrow Flight Nexmark Client Parameters")
     print("="*40)
     print(f" Stream Type                : {args.stream}")
-    print(f" Tuple Rate                 : {args.tuple_rate}")
-    print(f" Records Count              : {args.records_count}")
+    print(f" Tuples Per Batch           : {args.tuples_per_batch}")
+    print(f" Overall Tuples             : {args.overall_tuples}")
     print(f" Processing Servers         : {args.processing_servers}")
     print(f" Thread Count               : {args.thread_count}")
     print("="*40 + "\n")
@@ -169,8 +169,8 @@ if __name__ == "__main__":
     for thread_id in range(args.thread_count):
         t = threading.Thread(target=send_data, 
                              args=(thread_id, args.stream, 
-                                    args.tuple_rate, 
-                                    args.records_count, 
+                                    args.tuples_per_batch, 
+                                    args.overall_tuples, 
                                     server_addresses))
         threads.append(t)
         t.start()
