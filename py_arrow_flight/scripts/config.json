@@ -15,6 +15,20 @@
          }
       }
    },
+   "schemas": [
+      {
+         "name": "nexmark_data",
+         "fields": [
+            { "name": "auction", "type": "int64" },
+            { "name": "bidder", "type": "int64" },
+            { "name": "price", "type": "int64" },
+            { "name": "channel", "type": "string" },
+            { "name": "url", "type": "string" },
+            { "name": "date_time", "type": "int64" },
+            { "name": "extra", "type": "string" }
+         ]
+      }
+   ],
    "sinkNodes": [
       {
          "serverAddress": "192.168.2.42:8820"
@@ -24,7 +38,8 @@
       {
          "serverAddress": "192.168.2.43:8815",
          "query": "SELECT * FROM nexmark_data WHERE price > 100",
-         "sinkNode": "192.168.2.42:8820"
+         "sinkNode": "192.168.2.42:8820",
+         "recieved_data_schema_ref": "nexmark_data"
       }
    ],
    "clientNodes": [

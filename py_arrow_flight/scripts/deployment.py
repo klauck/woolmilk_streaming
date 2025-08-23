@@ -11,6 +11,16 @@ import threading
 import paramiko
 
 @dataclass
+class SchemaField:
+    name: str
+    type: str
+
+@dataclass
+class Schema:
+    name: str
+    fields: List[SchemaField]
+
+@dataclass
 class ServerConfig:
     username: str
     password: str
@@ -25,6 +35,7 @@ class SinkNode:
 class ProcessingNode:
     serverAddress: str
     sinkNode: str
+    recieved_data_schema_ref: str
     query: Optional[str] = None
 
 @dataclass
@@ -45,6 +56,7 @@ class Config:
     sinkNodes: List[SinkNode]
     processingNodes: List[ProcessingNode]
     clientNodes: List[ClientNode]
+    schemas: List[Schema] = field(default_factory=list)
     servers: Dict[str, ServerConfig] = field(default_factory=dict)
 
 def parse_config(json_path: str) -> Config:
@@ -56,6 +68,13 @@ def parse_config(json_path: str) -> Config:
     if "config" in data and "servers" in data["config"]:
         for host, server_data in data["config"]["servers"].items():
             servers[host] = ServerConfig(**server_data)
+    
+    # Parse schemas
+    schemas = []
+    if "schemas" in data:
+        for schema_data in data["schemas"]:
+            fields = [SchemaField(**field) for field in schema_data.get("fields", [])]
+            schemas.append(Schema(name=schema_data["name"], fields=fields))
     
     sink_nodes = [SinkNode(**sn) for sn in data.get("sinkNodes", [])]
     processing_nodes = [ProcessingNode(**pn) for pn in data.get("processingNodes", [])]
@@ -76,6 +95,7 @@ def parse_config(json_path: str) -> Config:
         sinkNodes=sink_nodes,
         processingNodes=processing_nodes,
         clientNodes=client_nodes,
+        schemas=schemas,
         servers=servers
     )
 
@@ -107,6 +127,21 @@ class DeploymentRunner:
     def get_server_config(self, host: str) -> Optional[ServerConfig]:
         """Get server config for host"""
         return self.config.servers.get(host)
+    
+    def get_schema_by_name(self, schema_name: str) -> Optional[Schema]:
+        """Get schema by name"""
+        for schema in self.config.schemas:
+            if schema.name == schema_name:
+                return schema
+        return None
+    
+    def schema_to_json(self, schema: Schema) -> str:
+        """Convert schema to JSON string for command line argument"""
+        schema_dict = {
+            "name": schema.name,
+            "fields": [{"name": f.name, "type": f.type} for f in schema.fields]
+        }
+        return json.dumps(schema_dict)
     
     def get_ssh_connection(self, host: str, server_config: ServerConfig):
         """Get or create SSH connection"""
@@ -265,13 +300,24 @@ class DeploymentRunner:
             host = proc_node.serverAddress.split(':')[0]
             server_config = self.get_server_config(host)
             
+            # Schema is mandatory for processing nodes
+            if not proc_node.recieved_data_schema_ref:
+                raise ValueError(f"Processing node {proc_node.serverAddress} is missing required 'recieved_data_schema_ref' field")
+            
+            schema = self.get_schema_by_name(proc_node.recieved_data_schema_ref)
+            if not schema:
+                raise ValueError(f"Schema '{proc_node.recieved_data_schema_ref}' not found in configuration")
+            
+            schema_json = self.schema_to_json(schema)
+            
             if self.mode == "local" or server_config is None:
                 # Local execution
                 cmd = [
                     sys.executable, "-u",
                     os.path.join(self.src_dir, "flight_processing_node.py"),
                     "--server-address", proc_node.serverAddress,
-                    "--exit_node", proc_node.sinkNode
+                    "--exit_node", proc_node.sinkNode,
+                    "--schema", schema_json
                 ]
                 if proc_node.query:
                     cmd.extend(["--query", proc_node.query])
@@ -293,7 +339,8 @@ class DeploymentRunner:
                     server_config.python_env, "-u",
                     "flight_processing_node.py",
                     "--server-address", proc_node.serverAddress,
-                    "--exit_node", proc_node.sinkNode
+                    "--exit_node", proc_node.sinkNode,
+                    "--schema", schema_json
                 ]
                 if proc_node.query:
                     cmd.extend(["--query", proc_node.query])

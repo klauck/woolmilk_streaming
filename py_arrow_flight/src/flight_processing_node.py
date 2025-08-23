@@ -4,42 +4,56 @@ import pyarrow.flight
 import sys
 import time
 import argparse
+import json
 
 class BandwidthTestServer(pa.flight.FlightServerBase):
-    def __init__(self, location, exit_node, sql_query):
+    def __init__(self, location, exit_node, sql_query, schema_json):
         super().__init__(location)
         self.client = pa.flight.FlightClient(f"grpc://{exit_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
+        
+        if not schema_json:
+            raise ValueError("Schema is mandatory. Please provide a valid schema.")
+        
+        self.predefined_schema = self._parse_schema(schema_json)
+        if not self.predefined_schema:
+            raise ValueError("Failed to parse the provided schema.")
+    
+    def _parse_schema(self, schema_json):
+        try:
+            schema_dict = json.loads(schema_json)
+            fields = []
+            for field in schema_dict.get("fields", []):
+                field_name = field["name"]
+                field_type = field["type"]
+                
+                if field_type == "int64":
+                    pa_type = pa.int64()
+                elif field_type == "string":
+                    pa_type = pa.string()
+                elif field_type == "float64":
+                    pa_type = pa.float64()
+                else:
+                    pa_type = pa.string()
+                
+                fields.append(pa.field(field_name, pa_type))
+            
+            return pa.schema(fields)
+        except Exception as e:
+            print(f"Error parsing schema: {e}")
+            return None
 
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
         total_bytes = 0
         start = time.time()
 
-        first_chunk = next(reader)
-        batch = first_chunk.data
-
-        # register table
-        ctx.register_record_batches(self.default_table_name, [[batch]])
-        if self.query:
-            result_df = ctx.sql(self.query)
-        else:
-            result_df = df
-
-        schema = result_df.schema()
         exit_writer, _ = self.client.do_put(
             pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
-            schema
+            self.predefined_schema
         )
-
-        for out_batch in result_df.collect():
-            exit_writer.write_batch(out_batch)
-            total_bytes += out_batch.nbytes
-
-        # deregister table
-        ctx.deregister_table(self.default_table_name)
-
+        
         for chunk in reader:
             batch = chunk.data
             ctx.register_record_batches(self.default_table_name, [[batch]])
@@ -81,6 +95,12 @@ if __name__ == "__main__":
         default="SELECT * FROM nexmark_data",
         help="Optional SQL query to run on incoming batches"
     )
+    parser.add_argument(
+        "--schema",
+        type=str,
+        required=True,
+        help="JSON schema definition for the data (required)"
+    )
     args = parser.parse_args()
 
     print("\n" + "="*40)
@@ -89,12 +109,14 @@ if __name__ == "__main__":
     print(f" Address        : {args.server_address}")
     print(f" Exit Node      : {args.exit_node}")
     print(f" SQL Query      : {args.query}")
+    print(f" Schema         : Provided and parsed successfully")
     print("="*40 + "\n")
 
     address = args.server_address
     exit_node = args.exit_node
     sql_query = args.query
+    schema_json = args.schema
 
-    server = BandwidthTestServer(f"grpc://{address}", exit_node, sql_query)
+    server = BandwidthTestServer(f"grpc://{address}", exit_node, sql_query, schema_json)
     print(f"Flight processing node running at {address}")
     server.serve()
