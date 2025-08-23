@@ -408,25 +408,26 @@ class DeploymentRunner:
         try:
             # Kill existing processes on remote hosts
             if self.mode == "deploy":
-                all_ports = set()
-                hosts_to_clean = set()
+                host_ports = {}  # Dictionary to map each host to its specific ports
                 
                 for sink in self.config.sinkNodes:
                     host = sink.serverAddress.split(':')[0]
                     port = sink.serverAddress.split(':')[1]
-                    all_ports.add(port)
-                    hosts_to_clean.add(host)
+                    if host not in host_ports:
+                        host_ports[host] = set()
+                    host_ports[host].add(port)
                 
                 for proc_node in self.config.processingNodes:
                     host = proc_node.serverAddress.split(':')[0]
                     port = proc_node.serverAddress.split(':')[1]
-                    all_ports.add(port)
-                    hosts_to_clean.add(host)
+                    if host not in host_ports:
+                        host_ports[host] = set()
+                    host_ports[host].add(port)
                 
-                for host in hosts_to_clean:
+                for host, ports in host_ports.items():
                     server_config = self.get_server_config(host)
                     if server_config:
-                        self.kill_remote_processes(host, server_config, list(all_ports))
+                        self.kill_remote_processes(host, server_config, list(ports))
             
             self.run_sink_nodes()
             self.run_processing_nodes()
