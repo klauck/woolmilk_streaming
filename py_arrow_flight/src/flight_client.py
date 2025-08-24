@@ -13,10 +13,15 @@ class FlightClient():
     for different Nexmark events (bid, auction, person, etc.).
     It uses a stream provider to generate the data and sends it in batches.
     """
-    def __init__(self, stream_providor, servers, thread_id=0):
+    # TODO: Start a clock here for streaming timestamps
+    def __init__(self, stream_providor, tuple_rate, servers, thread_id=0):
         self.server_addresses = servers
         self.stream_provider = stream_providor
         self.thread_id = thread_id
+        self.tuple_rate = tuple_rate
+
+    def print(self, message):
+        print(f"THREAD:[{self.thread_id}]:{message}")
 
     def send_data_to_client(self, client, tbl_name, tbl, address):
         if tbl is not None and tbl.num_rows > 0:
@@ -24,17 +29,40 @@ class FlightClient():
                 pa.flight.FlightDescriptor.for_path(f"{tbl_name}-stream"),
                 tbl.schema
             )
-            start = time.time()
+            
+            start_time = time.time()
+            total_tuples_sent = 0
+            total_bytes = 0
+            
+            time_per_tuple = 1.0 / self.tuple_rate
+            self.print(f"{tbl_name}@{address}: Target: {self.tuple_rate} tuples/sec, time per tuple: {time_per_tuple:.6f}s")
+
             for batch in tbl.to_batches(max_chunksize=65536):
+                batch_start = time.time()
                 writer.write_batch(batch)
+                batch_end = time.time()
+                
+                total_tuples_sent += batch.num_rows
+                total_bytes += batch.nbytes
+
+                required_time = batch.num_rows * time_per_tuple
+                actual_send_time = batch_end - batch_start
+                
+                if required_time > actual_send_time:
+                    sleep_time = required_time - actual_send_time
+                    self.print(f"{tbl_name}@{address}: Sent {batch.num_rows} tuples in {actual_send_time:.4f}s, sleeping {sleep_time:.4f}s")
+                    time.sleep(sleep_time)
+                else:
+                    self.print(f"{tbl_name}@{address}: Sent {batch.num_rows} tuples in {actual_send_time:.4f}s, no sleep needed")
+        
             writer.done_writing()
-            end = time.time()
-            total_bytes = tbl.nbytes
-            duration = end - start
-            mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-            print(
-                f"THREAD:[{self.thread_id}]:{tbl_name}@{address}: Sent {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)"
-            )
+            end_time = time.time()
+            
+            total_duration = end_time - start_time
+            actual_rate = total_tuples_sent / total_duration if total_duration > 0 else 0
+            mbps = (total_bytes * 8) / (total_duration * 1024 * 1024) if total_duration > 0 else 0
+            
+            self.print(f"{tbl_name}@{address}: ====> {actual_rate:.0f} tuples/sec, {total_tuples_sent} tuples in {total_duration:.2f}s, {mbps:.2f} Mbps (Target: {self.tuple_rate})")
             
     
     def start(self):
@@ -55,8 +83,6 @@ class FlightClient():
             self.send_data_to_client(client, "auction", auction_tbl, address)
             self.send_data_to_client(client, "bid", bid_tbl, address)
             self.send_data_to_client(client, "category", category_tbl, address)
-                
-
     
 class StreamProvider():
     """
@@ -80,7 +106,6 @@ class StreamProvider():
         
         return NexmarkStreamProvider(stream_type, tuples_per_batch, overall_tuples)
         
-
 class NexmarkStreamProvider(StreamProvider):
     """
     Stream provider for Nexmark data.
@@ -109,13 +134,12 @@ def parse_server_addresses(server_addresses):
         servers.append((host, int(port)))
     return servers
 
-def send_data(thread_id, stream, tuples_per_batch, overall_tuples, servers):
+def send_data(thread_id, stream, tuples_per_batch, overall_tuples, tuple_rate, servers):
     """Function to send data in a separate thread."""
     stream_provider = StreamProvider.GetStreamProvidor(stream, tuples_per_batch, overall_tuples)
-    client = FlightClient(stream_provider, servers, thread_id)
+    client = FlightClient(stream_provider, tuple_rate, servers, thread_id)
     client.start()
     
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Arrow Flight Nexmark Client")
     parser.add_argument(
@@ -148,6 +172,12 @@ if __name__ == "__main__":
         help="Number of threads to use for sending data",
         default=1,
     )
+    parser.add_argument(
+        "--tuple-rate",
+        type=int,
+        help="Number of tuples to send per second",
+        default=10000
+    )
     args = parser.parse_args()
 
     print("\n" + "="*40)
@@ -158,6 +188,7 @@ if __name__ == "__main__":
     print(f" Overall Tuples             : {args.overall_tuples}")
     print(f" Processing Servers         : {args.processing_servers}")
     print(f" Thread Count               : {args.thread_count}")
+    print(f" Tuple Rate                 : {args.tuple_rate}")
     print("="*40 + "\n")
 
     server_addresses = parse_server_addresses(args.processing_servers)
@@ -171,6 +202,7 @@ if __name__ == "__main__":
                              args=(thread_id, args.stream, 
                                     args.tuples_per_batch, 
                                     args.overall_tuples, 
+                                    args.tuple_rate,
                                     server_addresses))
         threads.append(t)
         t.start()

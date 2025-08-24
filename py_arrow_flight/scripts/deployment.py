@@ -48,8 +48,10 @@ class ClientNode:
     stream: str
     overall_tuples: int
     tuples_per_batch: int
+    tuple_rate: int
     thread_count: int = 1
     deployment_server: str = None
+    tuple_rate: int
 
 @dataclass
 class Config:
@@ -88,7 +90,8 @@ def parse_config(json_path: str) -> Config:
             overall_tuples=cn.get("overall_tuples"),
             tuples_per_batch=cn.get("tuples_per_batch"),
             thread_count=cn.get("thread_count", 1),
-            deployment_server=cn.get("deployment_server")
+            deployment_server=cn.get("deployment_server"),
+            tuple_rate=cn.get("tuple_rate")
         ))
     
     return Config(
@@ -371,7 +374,8 @@ class DeploymentRunner:
                     "--tuples-per-batch", str(client.tuples_per_batch),
                     "--overall-tuples", str(client.overall_tuples),
                     "--processing-servers", server_addresses,
-                    "--thread-count", str(client.thread_count)
+                    "--thread-count", str(client.thread_count),
+                    "--tuple-rate", str(client.tuple_rate)
                 ]
                 
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
