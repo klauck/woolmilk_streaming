@@ -27,7 +27,7 @@
          "sinkNode": "192.168.2.42:8820"
       }
    ],
-   "clientNodes": [
+   "sourceNodes": [
       {
          "processingNodes": [
             {

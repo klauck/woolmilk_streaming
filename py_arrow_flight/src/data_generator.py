@@ -6,10 +6,11 @@ import pyarrow as pa
 
 class NexmarkDataGenerator:
     # event type could be 'all', 'auction', 'bid', 'person'
-    def __init__(self, chunk_size, no_records, event_type="all"):
+    def __init__(self, chunk_size, no_records, event_type="all", executable="nexmark"):
         self.chunk_size = chunk_size
         self.no_records = no_records
         self.event_type = event_type
+        self.executable = executable
 
     @staticmethod
     def random_text(max_length):
@@ -88,7 +89,7 @@ class NexmarkDataGenerator:
         return pa.Table.from_pylist(pylist)
 
     def generate(self):
-        cmd = ["/home/picocluster/.cargo/bin/nexmark", "-n", str(self.no_records), "--type", self.event_type, "--no-wait"]
+        cmd = ["nexmark", "-n", str(self.no_records), "--type", self.event_type, "--no-wait"]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
         buffer = []
         count = 0
