@@ -231,7 +231,7 @@ class DeploymentRunner:
                 # Local execution
                 cmd = [
                     sys.executable, "-u",
-                    os.path.join(self.src_dir, "flight_server.py"),
+                    os.path.join(self.src_dir, "sink_node.py"),
                     "--server-address", sink.serverAddress
                 ]
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
@@ -245,11 +245,11 @@ class DeploymentRunner:
                 self.log_threads.append(thread)
             else:
                 # Remote execution
-                self.setup_remote_files(host, server_config, ["flight_server.py"])
+                self.setup_remote_files(host, server_config, ["sink_node.py"])
                 
                 cmd = [
                     server_config.python_env, "-u",
-                    "flight_server.py",
+                    "sink_node.py",
                     "--server-address", sink.serverAddress
                 ]
                 

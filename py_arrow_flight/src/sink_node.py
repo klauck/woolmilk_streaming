@@ -4,7 +4,7 @@ import sys
 import time
 import argparse
 
-class BandwidthTestServer(pa.flight.FlightServerBase):
+class SinkNode(pa.flight.FlightServerBase):
     def __init__(self, location):
         super().__init__(location)
 
@@ -23,17 +23,21 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="PyArrow Flight Bandwidth Test Server")
-    parser.add_argument("--server-address", type=str, default="0.0.0.0:8820", help="Server address to bind to (default: 0.0.0.0:8820)")
+    parser = argparse.ArgumentParser(description="WoolMilk Sink Node")
+    parser.add_argument(
+        "--server-address",
+        type=str,
+        default="0.0.0.0:8820",
+        help="Address to run the WoolMilk sink node (host:port)")
     args = parser.parse_args()
 
     print("\n" + "="*40)
-    print(" PyArrow Flight Bandwidth Test Server Parameters")
+    print(" WoolMilk Sink Node Parameters")
     print("="*40)
     print(f" Address        : {args.server_address}")
     print("="*40 + "\n")
 
     location = f"grpc://{args.server_address}"
-    server = BandwidthTestServer(location)
-    print(f"Flight server running at {location}")
-    server.serve()
+    sink_node = SinkNode(location)
+    print(f"WoolMilk sink node running at {location}")
+    sink_node.serve()
