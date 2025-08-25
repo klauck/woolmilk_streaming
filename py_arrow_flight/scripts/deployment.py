@@ -24,7 +24,7 @@ class SinkNode:
 @dataclass
 class ProcessingNode:
     serverAddress: str
-    sinkNode: str
+    forwardNode: str
     query: Optional[str] = None
 
 @dataclass
@@ -269,12 +269,11 @@ class DeploymentRunner:
                 # Local execution
                 cmd = [
                     sys.executable, "-u",
-                    os.path.join(self.src_dir, "flight_processing_node.py"),
+                    os.path.join(self.src_dir, "processing_node.py"),
                     "--server-address", proc_node.serverAddress,
-                    "--exit_node", proc_node.sinkNode
+                    "--forward_node", proc_node.forwardNode,
+                    "--query", proc_node.query
                 ]
-                if proc_node.query:
-                    cmd.extend(["--query", proc_node.query])
                 
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
                 
@@ -287,16 +286,15 @@ class DeploymentRunner:
                 self.log_threads.append(thread)
             else:
                 # Remote execution
-                self.setup_remote_files(host, server_config, ["flight_processing_node.py"])
+                self.setup_remote_files(host, server_config, ["processing_node.py"])
                 
                 cmd = [
                     server_config.python_env, "-u",
-                    "flight_processing_node.py",
+                    "processing_node.py",
                     "--server-address", proc_node.serverAddress,
-                    "--exit_node", proc_node.sinkNode
+                    "--forward_node", proc_node.forwardNode,
+                    "--query", proc_node.query
                 ]
-                if proc_node.query:
-                    cmd.extend(["--query", proc_node.query])
                 
                 self.run_remote_command(host, server_config, cmd, log_file, "processing", proc_node.serverAddress)
         time.sleep(2)
