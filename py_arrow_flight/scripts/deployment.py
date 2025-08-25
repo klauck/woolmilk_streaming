@@ -342,11 +342,11 @@ class DeploymentRunner:
                 cmd = [
                     server_config.python_env, "-u",
                     "source_node.py",
-                    "--stream", client.stream,
-                    "--tuples-per-batch", str(client.tuples_per_batch),
-                    "--overall-tuples", str(client.overall_tuples),
+                    "--stream", source_node.stream,
+                    "--tuples-per-batch", str(source_node.tuples_per_batch),
+                    "--overall-tuples", str(source_node.overall_tuples),
                     "--processing-servers", server_addresses,
-                    "--thread-count", str(client.thread_count),
+                    "--thread-count", str(source_node.thread_count),
                     "--generator-executable", "/home/picocluster/.cargo/bin/nexmark"
                 ]
                 

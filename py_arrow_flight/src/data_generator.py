@@ -89,7 +89,7 @@ class NexmarkDataGenerator:
         return pa.Table.from_pylist(pylist)
 
     def generate(self):
-        cmd = ["nexmark", "-n", str(self.no_records), "--type", self.event_type, "--no-wait"]
+        cmd = [self.executable, "-n", str(self.no_records), "--type", self.event_type, "--no-wait"]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
         buffer = []
         count = 0
