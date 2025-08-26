@@ -28,11 +28,11 @@ class SourceNode:
                 pa.flight.FlightDescriptor.for_path(f"{tbl_name}-stream"),
                 tbl.schema
             )
-            
+
             start_time = time.time()
             total_tuples_sent = 0
             total_bytes = 0
-            
+
             time_per_tuple = 1.0 / self.tuples_per_second
             self.print(f"{tbl_name}@{address}: Target: {self.tuples_per_second} tuples/sec, time per tuple: {time_per_tuple:.6f}s")
 
