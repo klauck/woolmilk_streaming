@@ -4,7 +4,7 @@ import time
 import sys
 import threading
 import argparse
-from data_generator import NexmarkDataGenerator
+from sources import StreamProvider
 
 class SourceNode:
     """
@@ -94,65 +94,22 @@ class SourceNode:
         stream = self.stream_provider.get_stream()
         server_count = len(self.server_addresses)
         set_idx = 0
-        # stream yields (person_tbl, auction_tbl, bid_tbl, category_tbl)
-        for person_tbl, auction_tbl, bid_tbl, category_tbl in stream:
+        
+        for tables_dict in stream:
             # Pick server in round-robin fashion
             server = self.server_addresses[set_idx % server_count]
             set_idx += 1
             address = f"{server[0]}:{server[1]}"
             client = pa.flight.FlightClient(f"grpc://{address}")
             
-            self.send_data_to_node(client, "person", person_tbl, address)
-            self.send_data_to_node(client, "auction", auction_tbl, address)
-            self.send_data_to_node(client, "bid", bid_tbl, address)
-            self.send_data_to_node(client, "category", category_tbl, address)
-    
-class StreamProvider:
-    """
-    Base class for stream providers.
-    This class is responsible for providing the stream data based on the event type.
-    """
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def getStreamProvider(event: str, tuples_per_batch, overall_tuples, executable):
-        """Get the stream provider based on the event type."""
-        try:
-            stream_provider, stream_type = event.split(".")
-        except ValueError:
-            raise ValueError("Invalid event format. Expected 'nexmark.<stream_type>'")
-
-        if stream_provider != "nexmark":
-            raise ValueError("Invalid stream provider. Expected 'nexmark'")
-        
-        return NexmarkStreamProvider(stream_type, tuples_per_batch, overall_tuples, executable)
-        
-class NexmarkStreamProvider(StreamProvider):
-    """
-    Stream provider for Nexmark data.
-    This class generates data for the specified Nexmark event type.
-    """
-    def __init__(self, stream_type, tuples_per_batch, overall_tuples, executable):
-        super().__init__()
-        self.stream_type = stream_type
-        self.tuples_per_batch = tuples_per_batch
-        self.overall_tuples = overall_tuples
-        self.data_generator = NexmarkDataGenerator(
-            event_type=stream_type,
-            chunk_size=tuples_per_batch,
-            no_records=overall_tuples,
-            executable=executable
-        )
-    
-    def get_stream(self):
-        """Get the stream data."""
-        return self.data_generator.generate()
-
+            # Send only the tables that exist in the dictionary
+            for table_name, table in tables_dict.items():
+                if table is not None:
+                    self.send_data_to_node(client, table_name, table, address)
 
 def send_data(thread_id, stream, tuples_per_batch, overall_tuples, tuples_per_second, servers, generator_executable):
     """Function to send data in a separate thread."""
-    stream_provider = StreamProvider.getStreamProvider(stream, tuples_per_batch, overall_tuples, generator_executable)
+    stream_provider = StreamProvider.get_stream_provider(stream, tuples_per_batch, overall_tuples, generator_executable)
     source_node = SourceNode(stream_provider, tuples_per_second, servers, thread_id)
     source_node.start()
     
@@ -160,9 +117,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Source Node")
     parser.add_argument(
         "--stream",
-        choices=["nexmark.bid", "nexmark.auction", "nexmark.person"],
+        choices=["nexmark.bid", "nexmark.auction", "nexmark.person", "nexmark.category",
+                 "custom.random"],
         default="nexmark.bid",
-        help="Stream type"
+        help="Stream type (provider.stream_type). Providers: nexmark, custom"
     )
     parser.add_argument(
         "--generator-executable",
