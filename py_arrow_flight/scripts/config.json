@@ -39,11 +39,11 @@
       {
          "serverAddress": "192.168.2.43:8815",
          "query": "SELECT * FROM nexmark_data WHERE price > 100",
-         "sinkNode": "192.168.2.42:8820",
+         "forwardNode": "192.168.2.42:8820",
          "query_result_schema": "nexmark_data"
       }
    ],
-   "clientNodes": [
+   "sourceNodes": [
       {
          "processingNodes": [
             {

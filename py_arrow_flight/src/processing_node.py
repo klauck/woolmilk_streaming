@@ -6,10 +6,11 @@ import time
 import argparse
 import json
 
-class BandwidthTestServer(pa.flight.FlightServerBase):
+
+class ProcessingNode(pa.flight.FlightServerBase):
     def __init__(self, location, exit_node, sql_query, schema_json):
         super().__init__(location)
-        self.client = pa.flight.FlightClient(f"grpc://{exit_node}")
+        self.forwarding_client = pa.flight.FlightClient(f"grpc://{exit_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
         
@@ -49,11 +50,11 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
         total_bytes = 0
         start = time.time()
 
-        exit_writer, _ = self.client.do_put(
+        forward_writer, _ = self.forwarding_client.do_put(
             pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
             self.predefined_schema
         )
-        
+
         for chunk in reader:
             batch = chunk.data
             ctx.register_record_batches(self.default_table_name, [[batch]])
@@ -63,11 +64,11 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
             else:
                 result_df = df
             for out_batch in result_df.collect():
-                exit_writer.write_batch(out_batch)
+                forward_writer.write_batch(out_batch)
                 total_bytes += out_batch.nbytes
             ctx.deregister_table(self.default_table_name)
 
-        exit_writer.done_writing()
+        forward_writer.done_writing()
         end = time.time()
 
         duration = end - start
@@ -76,27 +77,27 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Arrow Flight Processing Node")
+    parser = argparse.ArgumentParser(description="WoolMilk Processing Node")
     parser.add_argument(
         "--server-address",
         type=str,
         default="localhost:8815",
-        help="Address to run the Flight processing node on (host:port)"
+        help="Address to run the WoolMilk processing node (host:port)"
     )
     parser.add_argument(
-        "--exit_node",
+        "--forward-node",
         type=str,
         default="localhost:8820",
-        help="Address of the exit Flight node (host:port)"
+        help="Address of the node to forward data to (host:port)"
     )
     parser.add_argument(
         "--query",
         type=str,
         default="SELECT * FROM nexmark_data",
-        help="Optional SQL query to run on incoming batches"
+        help="SQL query to run on incoming batches"
     )
     parser.add_argument(
-        "--query_result_schema",
+        "--query-result-schema",
         type=str,
         required=True,
         help="JSON schema definition for the data (required)"
@@ -104,19 +105,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("\n" + "="*40)
-    print(" Arrow Flight Processing Node Parameters")
+    print(" WoolMilk Processing Node Parameters")
     print("="*40)       
     print(f" Address        : {args.server_address}")
-    print(f" Exit Node      : {args.exit_node}")
+    print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
     print(f" Schema         : Provided and parsed successfully")
     print("="*40 + "\n")
 
     address = args.server_address
-    exit_node = args.exit_node
+    forward_node = args.forward_node
     sql_query = args.query
     schema_json = args.query_result_schema
 
-    server = BandwidthTestServer(f"grpc://{address}", exit_node, sql_query, schema_json)
-    print(f"Flight processing node running at {address}")
-    server.serve()
+    processing_node = ProcessingNode(f"grpc://{address}", forward_node, sql_query, schema_json)
+    print(f"WoolMilk processing node running at {address}")
+    processing_node.serve()

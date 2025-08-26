@@ -34,17 +34,17 @@ class SinkNode:
 @dataclass
 class ProcessingNode:
     serverAddress: str
-    sinkNode: str
     query_result_schema: str
+    forwardNode: str
     query: Optional[str] = None
 
 @dataclass
-class ClientProcessingNode:
+class SourceProcessingNode:
     address: str
 
 @dataclass
-class ClientNode:
-    processingNodes: List[ClientProcessingNode]
+class SourceNode:
+    processingNodes: List[SourceProcessingNode]
     stream: str
     overall_tuples: int
     tuples_per_batch: int
@@ -56,9 +56,9 @@ class ClientNode:
 class Config:
     sinkNodes: List[SinkNode]
     processingNodes: List[ProcessingNode]
-    clientNodes: List[ClientNode]
     schemas: List[Schema] = field(default_factory=list)
     servers: Dict[str, ServerConfig] = field(default_factory=dict)
+    sourceNodes: List[SourceNode] = field(default_factory=list)
 
 def parse_config(json_path: str) -> Config:
     with open(json_path, "r") as f:
@@ -80,24 +80,24 @@ def parse_config(json_path: str) -> Config:
     sink_nodes = [SinkNode(**sn) for sn in data.get("sinkNodes", [])]
     processing_nodes = [ProcessingNode(**pn) for pn in data.get("processingNodes", [])]
     
-    client_nodes = []
-    for cn in data.get("clientNodes", []):
-        proc_nodes = [ClientProcessingNode(**pn) for pn in cn.get("processingNodes", [])]
-        client_nodes.append(ClientNode(
+    source_nodes = []
+    for sn in data.get("sourceNodes", []):
+        proc_nodes = [SourceProcessingNode(**pn) for pn in sn.get("processingNodes", [])]
+        source_nodes.append(SourceNode(
             processingNodes=proc_nodes,
-            stream=cn.get("stream"),
-            overall_tuples=cn.get("overall_tuples"),
-            tuples_per_batch=cn.get("tuples_per_batch"),
-            thread_count=cn.get("thread_count", 1),
-            deployment_server=cn.get("deployment_server"),
-            tuples_per_second=cn.get("tuples_per_second")
+            stream=sn.get("stream"),
+            overall_tuples=sn.get("overall_tuples"),
+            tuples_per_batch=sn.get("tuples_per_batch"),
+            thread_count=sn.get("thread_count", 1),
+            deployment_server=sn.get("deployment_server"),
+            tuples_per_second=sn.get("tuples_per_second")
         ))
     
     return Config(
         sinkNodes=sink_nodes,
         processingNodes=processing_nodes,
-        clientNodes=client_nodes,
         schemas=schemas,
+        sourceNodes=source_nodes,
         servers=servers
     )
 
@@ -268,7 +268,7 @@ class DeploymentRunner:
                 # Local execution
                 cmd = [
                     sys.executable, "-u",
-                    os.path.join(self.src_dir, "flight_server.py"),
+                    os.path.join(self.src_dir, "sink_node.py"),
                     "--server-address", sink.serverAddress
                 ]
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
@@ -282,11 +282,11 @@ class DeploymentRunner:
                 self.log_threads.append(thread)
             else:
                 # Remote execution
-                self.setup_remote_files(host, server_config, ["flight_server.py"])
+                self.setup_remote_files(host, server_config, ["sink_node.py"])
                 
                 cmd = [
                     server_config.python_env, "-u",
-                    "flight_server.py",
+                    "sink_node.py",
                     "--server-address", sink.serverAddress
                 ]
                 
@@ -316,13 +316,12 @@ class DeploymentRunner:
                 # Local execution
                 cmd = [
                     sys.executable, "-u",
-                    os.path.join(self.src_dir, "flight_processing_node.py"),
+                    os.path.join(self.src_dir, "processing_node.py"),
                     "--server-address", proc_node.serverAddress,
-                    "--exit_node", proc_node.sinkNode,
-                    "--query_result_schema", schema_json
+                    "--query-result-schema", schema_json,
+                    "--forward-node", proc_node.forwardNode,
+                    "--query", proc_node.query
                 ]
-                if proc_node.query:
-                    cmd.extend(["--query", proc_node.query])
                 
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
                 
@@ -335,73 +334,73 @@ class DeploymentRunner:
                 self.log_threads.append(thread)
             else:
                 # Remote execution
-                self.setup_remote_files(host, server_config, ["flight_processing_node.py"])
+                self.setup_remote_files(host, server_config, ["processing_node.py"])
                 
                 cmd = [
                     server_config.python_env, "-u",
-                    "flight_processing_node.py",
+                    "processing_node.py",
                     "--server-address", proc_node.serverAddress,
-                    "--exit_node", proc_node.sinkNode,
-                    "--schema", schema_json
+                    "--query-result-schema", schema_json,
+                    "--forward-node", proc_node.forwardNode,
+                    "--query", proc_node.query
                 ]
-                if proc_node.query:
-                    cmd.extend(["--query", proc_node.query])
                 
                 self.run_remote_command(host, server_config, cmd, log_file, "processing", proc_node.serverAddress)
         time.sleep(2)
 
-    def run_client_nodes(self):
-        """Start all client nodes with live logging"""
-        print("Starting client nodes...")
-        for i, client in enumerate(self.config.clientNodes):
-            server_addresses = ",".join([pn.address for pn in client.processingNodes])
-            log_file = os.path.join(self.log_dir, f"{self.log_prefix}client_{client.stream.replace('.', '_')}_{i}.log")
+    def run_source_nodes(self):
+        """Start all source nodes with live logging"""
+        print("Starting source nodes...")
+        for i, source_node in enumerate(self.config.sourceNodes):
+            server_addresses = ",".join([pn.address for pn in source_node.processingNodes])
+            log_file = os.path.join(self.log_dir, f"{self.log_prefix}source_{source_node.stream.replace('.', '_')}_{i}.log")
             
-            # deployment_server is required for client nodes
-            if not client.deployment_server:
-                raise ValueError(f"Client node {i} missing required 'deployment_server' field")
+            # deployment_server is required for source nodes
+            if not source_node.deployment_server:
+                raise ValueError(f"Source node {i} missing required 'deployment_server' field")
             
-            host = client.deployment_server
+            host = source_node.deployment_server
             server_config = self.get_server_config(host)
             
             if self.mode == "local" or server_config is None:
                 # Local execution
                 cmd = [
                     sys.executable, "-u",
-                    os.path.join(self.src_dir, "flight_client.py"),
-                    "--stream", client.stream,
-                    "--tuples-per-batch", str(client.tuples_per_batch),
-                    "--overall-tuples", str(client.overall_tuples),
+                    os.path.join(self.src_dir, "source_node.py"),
+                    "--stream", source_node.stream,
+                    "--tuples-per-batch", str(source_node.tuples_per_batch),
+                    "--overall-tuples", str(source_node.overall_tuples),
                     "--processing-servers", server_addresses,
-                    "--thread-count", str(client.thread_count),
-                    "--tuples-per-second", str(client.tuples_per_second)
+                    "--thread-count", str(source_node.thread_count),
+                    "--tuples-per-second", str(source_node.tuples_per_second)
                 ]
                 
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
                 
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-                self.processes.append(("client", client.stream, proc))
+                self.processes.append(("source", source_node.stream, proc))
                 
-                thread = threading.Thread(target=log_reader, args=(proc, log_file, "client", client.stream))
+                thread = threading.Thread(target=log_reader, args=(proc, log_file, "source", source_node.stream))
                 thread.daemon = True
                 thread.start()
                 self.log_threads.append(thread)
             else:
                 # Remote execution - add delay to avoid too many concurrent SSH connections
                 time.sleep(1)
-                self.setup_remote_files(host, server_config, ["flight_client.py", "data_generator.py"])
+                self.setup_remote_files(host, server_config, ["source_node.py", "data_generator.py"])
                 
                 cmd = [
                     server_config.python_env, "-u",
-                    "flight_client.py",
-                    "--stream", client.stream,
-                    "--tuples-per-batch", str(client.tuples_per_batch),
-                    "--overall-tuples", str(client.overall_tuples),
+                    "source_node.py",
+                    "--stream", source_node.stream,
+                    "--tuples-per-batch", str(source_node.tuples_per_batch),
+                    "--overall-tuples", str(source_node.overall_tuples),
                     "--processing-servers", server_addresses,
-                    "--thread-count", str(client.thread_count)
+                    "--thread-count", str(source_node.thread_count),
+                    "--generator-executable", "/home/picocluster/.cargo/bin/nexmark"
                 ]
                 
-                self.run_remote_command(host, server_config, cmd, log_file, "client", client.stream)
+                self.run_remote_command(host, server_config, cmd, log_file, "source", source_node.stream)
 
     def monitor_processes(self):
         """Monitor processes and show live output"""
@@ -429,7 +428,8 @@ class DeploymentRunner:
 
     def cleanup(self):
         """Terminate all running processes and close SSH connections"""
-        for _, _, proc in self.processes:
+        for proc_type, identifier, proc in self.processes:
+            print(f"    terminate process .. ({proc_type}, {identifier},{proc})")
             try:
                 if hasattr(proc, 'terminate'):
                     proc.terminate()
@@ -481,7 +481,7 @@ class DeploymentRunner:
             
             self.run_sink_nodes()
             self.run_processing_nodes()
-            self.run_client_nodes()
+            self.run_source_nodes()
             self.monitor_processes()
         except Exception as e:
             print(f"Error during deployment: {e}")
