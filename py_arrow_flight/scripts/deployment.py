@@ -35,7 +35,7 @@ class SinkNode:
 class ProcessingNode:
     serverAddress: str
     sinkNode: str
-    recieved_data_schema_ref: str
+    query_result_schema: str
     query: Optional[str] = None
 
 @dataclass
@@ -304,13 +304,13 @@ class DeploymentRunner:
             server_config = self.get_server_config(host)
             
             # Schema is mandatory for processing nodes
-            if not proc_node.recieved_data_schema_ref:
-                raise ValueError(f"Processing node {proc_node.serverAddress} is missing required 'recieved_data_schema_ref' field")
+            if not proc_node.query_result_schema:
+                raise ValueError(f"Processing node {proc_node.serverAddress} is missing required 'query_result_schema' field")
             
-            schema = self.get_schema_by_name(proc_node.recieved_data_schema_ref)
+            schema = self.get_schema_by_name(proc_node.query_result_schema)
             if not schema:
-                raise ValueError(f"Schema '{proc_node.recieved_data_schema_ref}' not found in configuration")
-            
+                raise ValueError(f"Schema '{proc_node.query_result_schema}' not found in configuration")
+
             schema_json = self.schema_to_json(schema)
             
             if self.mode == "local" or server_config is None:
@@ -320,7 +320,7 @@ class DeploymentRunner:
                     os.path.join(self.src_dir, "flight_processing_node.py"),
                     "--server-address", proc_node.serverAddress,
                     "--exit_node", proc_node.sinkNode,
-                    "--schema", schema_json
+                    "--query_result_schema", schema_json
                 ]
                 if proc_node.query:
                     cmd.extend(["--query", proc_node.query])
