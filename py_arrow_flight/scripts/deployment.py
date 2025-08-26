@@ -35,7 +35,7 @@ class SinkNode:
 class ProcessingNode:
     serverAddress: str
     sinkNode: str
-    recieved_data_schema_ref: str
+    query_result_schema: str
     query: Optional[str] = None
 
 @dataclass
@@ -48,10 +48,9 @@ class ClientNode:
     stream: str
     overall_tuples: int
     tuples_per_batch: int
-    tuple_rate: int
+    tuples_per_second: int
     thread_count: int = 1
     deployment_server: str = None
-    tuple_rate: int
 
 @dataclass
 class Config:
@@ -91,7 +90,7 @@ def parse_config(json_path: str) -> Config:
             tuples_per_batch=cn.get("tuples_per_batch"),
             thread_count=cn.get("thread_count", 1),
             deployment_server=cn.get("deployment_server"),
-            tuple_rate=cn.get("tuple_rate")
+            tuples_per_second=cn.get("tuples_per_second")
         ))
     
     return Config(
@@ -304,13 +303,13 @@ class DeploymentRunner:
             server_config = self.get_server_config(host)
             
             # Schema is mandatory for processing nodes
-            if not proc_node.recieved_data_schema_ref:
-                raise ValueError(f"Processing node {proc_node.serverAddress} is missing required 'recieved_data_schema_ref' field")
+            if not proc_node.query_result_schema:
+                raise ValueError(f"Processing node {proc_node.serverAddress} is missing required 'query_result_schema' field")
             
-            schema = self.get_schema_by_name(proc_node.recieved_data_schema_ref)
+            schema = self.get_schema_by_name(proc_node.query_result_schema)
             if not schema:
-                raise ValueError(f"Schema '{proc_node.recieved_data_schema_ref}' not found in configuration")
-            
+                raise ValueError(f"Schema '{proc_node.query_result_schema}' not found in configuration")
+
             schema_json = self.schema_to_json(schema)
             
             if self.mode == "local" or server_config is None:
@@ -320,7 +319,7 @@ class DeploymentRunner:
                     os.path.join(self.src_dir, "flight_processing_node.py"),
                     "--server-address", proc_node.serverAddress,
                     "--exit_node", proc_node.sinkNode,
-                    "--schema", schema_json
+                    "--query_result_schema", schema_json
                 ]
                 if proc_node.query:
                     cmd.extend(["--query", proc_node.query])
@@ -375,7 +374,7 @@ class DeploymentRunner:
                     "--overall-tuples", str(client.overall_tuples),
                     "--processing-servers", server_addresses,
                     "--thread-count", str(client.thread_count),
-                    "--tuple-rate", str(client.tuple_rate)
+                    "--tuples-per-second", str(client.tuples_per_second)
                 ]
                 
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")

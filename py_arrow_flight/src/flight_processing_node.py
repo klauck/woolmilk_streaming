@@ -96,7 +96,7 @@ if __name__ == "__main__":
         help="Optional SQL query to run on incoming batches"
     )
     parser.add_argument(
-        "--schema",
+        "--query_result_schema",
         type=str,
         required=True,
         help="JSON schema definition for the data (required)"
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     address = args.server_address
     exit_node = args.exit_node
     sql_query = args.query
-    schema_json = args.schema
+    schema_json = args.query_result_schema
 
     server = BandwidthTestServer(f"grpc://{address}", exit_node, sql_query, schema_json)
     print(f"Flight processing node running at {address}")

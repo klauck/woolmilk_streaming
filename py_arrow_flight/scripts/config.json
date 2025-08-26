@@ -40,7 +40,7 @@
          "serverAddress": "192.168.2.43:8815",
          "query": "SELECT * FROM nexmark_data WHERE price > 100",
          "sinkNode": "192.168.2.42:8820",
-         "recieved_data_schema_ref": "nexmark_data"
+         "query_result_schema": "nexmark_data"
       }
    ],
    "clientNodes": [
@@ -55,7 +55,7 @@
          "tuples_per_batch": 100000,
          "thread_count": 1,
          "deployment_server": "192.168.2.42",
-         "tuple_rate": 10000
+         "tuples_per_second": 10000
       }
    ]
 }

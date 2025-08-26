@@ -14,11 +14,11 @@ class FlightClient():
     It uses a stream provider to generate the data and sends it in batches.
     """
     # TODO: Start a clock here for streaming timestamps
-    def __init__(self, stream_providor, tuple_rate, servers, thread_id=0):
+    def __init__(self, stream_providor, tuples_per_second, servers, thread_id=0):
         self.server_addresses = servers
         self.stream_provider = stream_providor
         self.thread_id = thread_id
-        self.tuple_rate = tuple_rate
+        self.tuples_per_second = tuples_per_second
         self.stream_number = 0  # Counter for each send_data_to_client call
 
     def print(self, message):
@@ -35,8 +35,8 @@ class FlightClient():
             total_tuples_sent = 0
             total_bytes = 0
             
-            time_per_tuple = 1.0 / self.tuple_rate
-            self.print(f"{tbl_name}@{address}: Target: {self.tuple_rate} tuples/sec, time per tuple: {time_per_tuple:.6f}s")
+            time_per_tuple = 1.0 / self.tuples_per_second
+            self.print(f"{tbl_name}@{address}: Target: {self.tuples_per_second} tuples/sec, time per tuple: {time_per_tuple:.6f}s")
 
             for batch in tbl.to_batches(max_chunksize=65536):
                 self.stream_number += 1
@@ -86,7 +86,7 @@ class FlightClient():
             actual_rate = total_tuples_sent / total_duration if total_duration > 0 else 0
             mbps = (total_bytes * 8) / (total_duration * 1024 * 1024) if total_duration > 0 else 0
             
-            self.print(f"{tbl_name}@{address}: ====> {actual_rate:.0f} tuples/sec, {total_tuples_sent} tuples in {total_duration:.2f}s, {mbps:.2f} Mbps (Target: {self.tuple_rate})")
+            self.print(f"{tbl_name}@{address}: ====> {actual_rate:.0f} tuples/sec, {total_tuples_sent} tuples in {total_duration:.2f}s, {mbps:.2f} Mbps (Target: {self.tuples_per_second})")
             
     
     def start(self):
@@ -158,10 +158,10 @@ def parse_server_addresses(server_addresses):
         servers.append((host, int(port)))
     return servers
 
-def send_data(thread_id, stream, tuples_per_batch, overall_tuples, tuple_rate, servers):
+def send_data(thread_id, stream, tuples_per_batch, overall_tuples, tuples_per_second, servers):
     """Function to send data in a separate thread."""
     stream_provider = StreamProvider.GetStreamProvidor(stream, tuples_per_batch, overall_tuples)
-    client = FlightClient(stream_provider, tuple_rate, servers, thread_id)
+    client = FlightClient(stream_provider, tuples_per_second, servers, thread_id)
     client.start()
     
 if __name__ == "__main__":
@@ -197,7 +197,7 @@ if __name__ == "__main__":
         default=1,
     )
     parser.add_argument(
-        "--tuple-rate",
+        "--tuples-per-second",
         type=int,
         help="Number of tuples to send per second",
         default=10000
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     print(f" Overall Tuples             : {args.overall_tuples}")
     print(f" Processing Servers         : {args.processing_servers}")
     print(f" Thread Count               : {args.thread_count}")
-    print(f" Tuple Rate                 : {args.tuple_rate}")
+    print(f" Tuples Per Second          : {args.tuples_per_second}")
     print("="*40 + "\n")
 
     server_addresses = parse_server_addresses(args.processing_servers)
@@ -226,7 +226,7 @@ if __name__ == "__main__":
                              args=(thread_id, args.stream, 
                                     args.tuples_per_batch, 
                                     args.overall_tuples, 
-                                    args.tuple_rate,
+                                    args.tuples_per_second,
                                     server_addresses))
         threads.append(t)
         t.start()
