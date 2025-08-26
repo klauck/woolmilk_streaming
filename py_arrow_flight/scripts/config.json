@@ -55,7 +55,7 @@
          "tuples_per_batch": 100000,
          "thread_count": 1,
          "deployment_server": "192.168.2.42",
-         "tuple_rate": 10000
+         "tuples_per_second": 10000
       }
    ]
 }
