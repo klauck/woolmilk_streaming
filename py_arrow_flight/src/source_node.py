@@ -33,7 +33,7 @@ class SourceNode:
             duration = end - start
             mbps = (total_bytes * 8) / (duration * 1024 * 1024)
             print(
-                f"THREAD:[{self.thread_id}]:{tbl_name}@{address}: Sent {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)"
+                f'WM_LOG= {{"THREAD": "{self.thread_id}:{tbl_name}@{address}", "send_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}'
             )
             
     
