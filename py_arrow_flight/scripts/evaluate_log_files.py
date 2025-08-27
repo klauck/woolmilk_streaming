@@ -39,7 +39,7 @@ def evaluate_bandwidth(log_prefix):
 
     send_bytes = sum([send_bytes for (_, _, send_bytes, _) in sources])
     start_time = min([start_time for (start_time, _, _, _) in sources])
-    end_time = min([end_time for (end_time, _, _, _) in sinks])
+    end_time = max([end_time for (end_time, _, _, _) in sinks])
     duration = end_time - start_time
 
     print(f"OVERALL_RESULTS:\n  start: {start_time}\n  duration: {duration}\n  send_bytes: {send_bytes / (1024*1024)} MiB\n  bandwidth:  {send_bytes / (duration * 1024 * 1024)} MiB/s")
