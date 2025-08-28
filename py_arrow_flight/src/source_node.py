@@ -18,15 +18,17 @@ class SourceNode:
         self.stream_provider = stream_provider
         self.thread_id = thread_id
         self.tuples_per_second = tuples_per_second
-        
+        self.timestamp = int(time.time() * 10**4)* 10**5
+
     def print(self, message):
         print(f"THREAD:[{self.thread_id}]:{message}")
 
     def send_data_to_node(self, client, tbl_name, tbl, address):
         if tbl is not None and tbl.num_rows > 0:
+            schema_with_timestamp = tbl.schema.append(pa.field("timestamp", pa.int64()))
             writer, _ = client.do_put(
                 pa.flight.FlightDescriptor.for_path(f"{tbl_name}-stream"),
-                tbl.schema
+                schema_with_timestamp
             )
 
             start_time = time.time()
@@ -37,8 +39,18 @@ class SourceNode:
             self.print(f"{tbl_name}@{address}: Target: {self.tuples_per_second} tuples/sec, time per tuple: {time_per_tuple:.6f}s")
 
             for batch in tbl.to_batches(max_chunksize=65536):
+                timestamp_values = []
+                for i in range(batch.num_rows):
+                    timestamp_values.append(self.timestamp)
+                    self.timestamp += 1
+                
+                timestamp_array = pa.array(timestamp_values, type=pa.int64())
+                columns = [batch.column(i) for i in range(batch.num_columns)]
+                columns.append(timestamp_array)
+                batch_with_timestamp = pa.record_batch(columns, schema=schema_with_timestamp)
+
                 batch_start = time.time()
-                writer.write_batch(batch)
+                writer.write_batch(batch_with_timestamp)
                 batch_end = time.time()
                 
                 total_tuples_sent += batch.num_rows

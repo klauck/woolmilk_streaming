@@ -25,7 +25,8 @@
             { "name": "channel", "type": "string" },
             { "name": "url", "type": "string" },
             { "name": "date_time", "type": "int64" },
-            { "name": "extra", "type": "string" }
+            { "name": "extra", "type": "string" },
+            { "name": "timestamp", "type": "int64" }
          ]
       }
    ],
