@@ -4,10 +4,10 @@ import pyarrow.flight
 import sys
 import time
 
-class BandwidthTestServer(pa.flight.FlightServerBase):
-    def __init__(self, location, exit_node):
+class ProcessingNode(pa.flight.FlightServerBase):
+    def __init__(self, location, forward_node):
         super().__init__(location)
-        self.client = pa.flight.FlightClient(f"grpc://{exit_node}")
+        self.client = pa.flight.FlightClient(f"grpc://{forward_node}")
         # self.state = {}
 
     def do_put(self, context, descriptor, reader, writer):
@@ -30,7 +30,7 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
             ctx.register_record_batches("values", [[batch]])
             df = ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
 
-            df.show()
+            # df.show()
 
             for batch in df.collect():
                 writer.write_batch(batch)
@@ -46,10 +46,10 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print(f"USAGE: python {sys.argv[0]} PORT EXIT_NODE")
+        print(f"USAGE: python {sys.argv[0]} PORT FORWARD_NODE")
         exit(1)
     port = sys.argv[1]
-    exit_node = sys.argv[2]
-    server = BandwidthTestServer(f"grpc://0.0.0.0:{port}", exit_node)
+    forward_node = sys.argv[2]
+    server = ProcessingNode(f"grpc://0.0.0.0:{port}", forward_node)
     print(f"Flight processing node running on port {port}")
     server.serve()

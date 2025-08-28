@@ -17,18 +17,18 @@ pip install numpy
 **1. Start the sink server**
 
 ```
-python flight_server.py 8017
+python sink_node.py 8017
 ```
 
 **2. Start the processing node**
    
 ```
-python flight_processing_node.py 8016 127.0.0.1:8017
+python processing_node.py 8016 127.0.0.1:8017
 ```
   
 **3. Start the source client**
 
 ```
-python flight_client.py 127.0.0.1:8016
+python source_node.py 127.0.0.1:8016
 ```
 

@@ -3,7 +3,7 @@ import pyarrow.flight
 import sys
 import time
 
-class BandwidthTestServer(pa.flight.FlightServerBase):
+class SourceNode(pa.flight.FlightServerBase):
     def __init__(self, location):
         super().__init__(location)
 
@@ -19,6 +19,7 @@ class BandwidthTestServer(pa.flight.FlightServerBase):
         duration = end - start
         mbps = (total_bytes * 8) / (duration * 1024 * 1024)
         print(f"Received {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)")
+        print(f"End: {end}")
 
 
 if __name__ == "__main__":
@@ -26,6 +27,6 @@ if __name__ == "__main__":
         print(f"USAGE: python {sys.argv[0]} PORT")
         exit(1)
     port = int(sys.argv[1])
-    server = BandwidthTestServer(f"grpc://0.0.0.0:{port}")
+    server = SourceNode(f"grpc://0.0.0.0:{port}")
     print(f"Flight server running on port {port}")
     server.serve()

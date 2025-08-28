@@ -27,6 +27,7 @@ def send_data(thread_id, server):
     total_bytes = table.nbytes
     duration = end - start
     mbps = (total_bytes * 8) / (duration * 1024 * 1024)
+    print(f"Start: {start}")
     print(f"{thread_id}: Sent {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)")
 
 if __name__ == "__main__":
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     server = sys.argv[1]
 
     threads = []
-    for thread_id in range(1):
+    for thread_id in range(2):
         t = threading.Thread(target=send_data, args=(thread_id, server))
         threads.append(t)
         t.start()
