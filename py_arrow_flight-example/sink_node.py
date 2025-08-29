@@ -9,19 +9,25 @@ class SourceNode(pa.flight.FlightServerBase):
 
     def do_put(self, context, descriptor, reader, writer):
         total_bytes = 0
-        start = time.time()
+        receive_times = []
+        start = receive_start = time.time()
         for chunk in reader:
             batch = chunk.data
             # execute and forward data here
             total_bytes += batch.nbytes
+            receive_end = time.time()
+            receive_times.append((receive_start, receive_end))
+            receive_start = receive_end
+
         end = time.time()
 
         duration = end - start
         gbps = (total_bytes * 8) / (duration * 1000 ** 3)
         mbps = total_bytes / (duration * 1000 ** 2)
 
-        print(f"Received {total_bytes} bytes in {duration:.2f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
+        print(f"Received {total_bytes / 1000**2} MB in {duration:.7f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
         print(f"End: {end}")
+        print('receive_times = ', receive_times)
 
 
 if __name__ == "__main__":
