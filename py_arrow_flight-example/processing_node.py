@@ -12,9 +12,21 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
+        
+        schema = pa.schema([
+            pa.field("id", pa.int64()),
+            pa.field("name", pa.string()),
+            pa.field("email_address", pa.string()),
+            pa.field("credit_card", pa.string()),
+            pa.field("city", pa.string()),
+            pa.field("state", pa.string()),
+            pa.field("date_time", pa.int64()),
+            pa.field("extra", pa.string())
+        ])
+        
         writer, _ = self.client.do_put(
             pa.flight.FlightDescriptor.for_path("bandwidth-test"),
-            schema=pa.schema([('column', pa.float64())])
+            schema=schema
         )
 
         total_bytes = 0
@@ -30,13 +42,11 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
             # Option 2: SQL
             ctx.register_record_batches("values", [[batch]])
-            df = ctx.sql("SELECT column FROM values WHERE column > 0.5")
-
-            # df.show()
-
-            for batch in df.collect():
-                writer.write_batch(batch)
-                total_bytes += batch.nbytes
+            df = ctx.sql("SELECT * FROM values")
+            
+            for batch_result in df.collect():
+                writer.write_batch(batch_result)
+                total_bytes += batch_result.nbytes
             ctx.deregister_table("values")
         writer.done_writing()
         end = time.time()

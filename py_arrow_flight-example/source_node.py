@@ -1,19 +1,34 @@
 import pyarrow as pa
 import pyarrow.flight
 import time
-import numpy as np
 import sys
 import threading
+import subprocess
+import json
 
-def generate_table(num_rows=10**6):
-    array = pa.array(np.random.rand(num_rows), type=pa.float64())
-    table = pa.table([array], names=["column"])
-    return table
+def generate_table(num_rows=10**6, event_type="person"):
+    cmd = ["nexmark", "-n", str(num_rows), "--type", event_type, "--no-wait"]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    records = []
+    
+    try:
+        for line in proc.stdout:
+            try:
+                record = json.loads(line)
+                records.append(record["Person"])
+            except json.JSONDecodeError:
+                continue
+    finally:
+        proc.stdout.close()
+        proc.kill()
+        proc.wait()
+    
+    return pa.Table.from_pylist(records)
 
 def send_data(thread_id, server):
     client = pa.flight.FlightClient(f"grpc://{server}")
 
-    table = generate_table()
+    table = generate_table(num_rows=1000, event_type="person")
     writer, _ = client.do_put(
         pa.flight.FlightDescriptor.for_path("bandwidth-test"),
         table.schema
