@@ -17,8 +17,10 @@ class SourceNode(pa.flight.FlightServerBase):
         end = time.time()
 
         duration = end - start
-        mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-        print(f"Received {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)")
+        gbps = (total_bytes * 8) / (duration * 1000 ** 3)
+        mbps = total_bytes / (duration * 1000 ** 2)
+
+        print(f"Received {total_bytes} bytes in {duration:.2f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
         print(f"End: {end}")
 
 

@@ -18,6 +18,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
         )
 
         total_bytes = 0
+
         start = time.time()
         for chunk in reader:
             batch = chunk.data
@@ -26,9 +27,10 @@ class ProcessingNode(pa.flight.FlightServerBase):
             # df = ctx.create_dataframe([[batch]])
             # df.filter(column("column") < literal(0.5))
 
+
             # Option 2: SQL
             ctx.register_record_batches("values", [[batch]])
-            df = ctx.sql("SELECT max(column) as column FROM values WHERE column < 0.5")
+            df = ctx.sql("SELECT column FROM values WHERE column > 0.5")
 
             # df.show()
 
@@ -40,8 +42,10 @@ class ProcessingNode(pa.flight.FlightServerBase):
         end = time.time()
 
         duration = end - start
-        mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-        print(f"Received {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)")
+        gbps = (total_bytes * 8) / (duration * 1000**3)
+        mbps = total_bytes / (duration * 1000**2)
+
+        print(f"Forwarded {total_bytes} bytes in {duration:.2f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
 
 
 if __name__ == "__main__":
