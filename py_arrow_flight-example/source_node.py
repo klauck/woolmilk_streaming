@@ -34,9 +34,14 @@ def send_data(thread_id, server):
         table.schema
     )
     start = time.time()
-    for batch in table.to_batches(max_chunksize=65536):
+    send_times = []
+    for batch in table.to_batches(max_chunksize=10000):
+        send_start = time.time()
         writer.write_batch(batch)
+        send_end = time.time()
+        send_times.append((send_start, send_end))
     writer.done_writing()
+
     end = time.time()
 
     total_bytes = table.nbytes
@@ -45,7 +50,8 @@ def send_data(thread_id, server):
     mbps = total_bytes / (duration * 1000 ** 2)
 
     print(f"Start: {start}")
-    print(f"{thread_id}: Sent {total_bytes} bytes in {duration:.2f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
+    print(f"{thread_id}: Sent {total_bytes / 1000**2} MB in {duration:.7f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
+    print('send_times = ', send_times)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
