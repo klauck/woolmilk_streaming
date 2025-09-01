@@ -1,7 +1,9 @@
-import pyarrow as pa
-import pyarrow.flight
 import sys
 import time
+
+import pyarrow as pa
+import pyarrow.flight
+
 
 class SourceNode(pa.flight.FlightServerBase):
     def __init__(self, location):
@@ -22,12 +24,15 @@ class SourceNode(pa.flight.FlightServerBase):
         end = time.time()
 
         duration = end - start
-        gbps = (total_bytes * 8) / (duration * 1000 ** 3)
-        mbps = total_bytes / (duration * 1000 ** 2)
+        gbps = (total_bytes * 8) / (duration * 1000**3)
+        mbps = total_bytes / (duration * 1000**2)
 
-        print(f"Received {total_bytes / 1000**2} MB in {duration:.7f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
+        print(
+            f"Received {total_bytes / 1000**2} MB in {duration:.7f} seconds; "
+            f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
+        )
         print(f"End: {end}")
-        print('receive_times = ', receive_times)
+        print("receive_times = ", receive_times)
 
 
 if __name__ == "__main__":

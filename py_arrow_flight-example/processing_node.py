@@ -1,8 +1,10 @@
-from datafusion import column, literal, SessionContext
-import pyarrow as pa
-import pyarrow.flight
 import sys
 import time
+
+import pyarrow as pa
+import pyarrow.flight
+from datafusion import SessionContext
+
 
 class ProcessingNode(pa.flight.FlightServerBase):
     def __init__(self, location, forward_node):
@@ -12,26 +14,27 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
-        
-        schema = pa.schema([
-            pa.field("id", pa.int64()),
-            pa.field("name", pa.string()),
-            pa.field("email_address", pa.string()),
-            pa.field("credit_card", pa.string()),
-            pa.field("city", pa.string()),
-            pa.field("state", pa.string()),
-            pa.field("date_time", pa.int64()),
-            pa.field("extra", pa.string())
-        ])
-        
+
+        schema = pa.schema(
+            [
+                pa.field("id", pa.int64()),
+                pa.field("name", pa.string()),
+                pa.field("email_address", pa.string()),
+                pa.field("credit_card", pa.string()),
+                pa.field("city", pa.string()),
+                pa.field("state", pa.string()),
+                pa.field("date_time", pa.int64()),
+                pa.field("extra", pa.string()),
+            ]
+        )
+
         writer, _ = self.client.do_put(
-            pa.flight.FlightDescriptor.for_path("bandwidth-test"),
-            schema=schema
+            pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema=schema
         )
 
         total_bytes = 0
         forwarding_times = []
-        cost_break_down = {'receiving': [], 'querying': [], 'sending': []}
+        cost_break_down = {"receiving": [], "querying": [], "sending": []}
         forward_start = start = time.time()
         for chunk in reader:
             batch = chunk.data
@@ -45,11 +48,11 @@ class ProcessingNode(pa.flight.FlightServerBase):
             ctx.register_record_batches("values", [[batch]])
 
             df = ctx.sql("SELECT * FROM values")
-            # df.show()        
-    
+            # df.show()
+
             result = df.collect()
             processing_end = time.time()
-    
+
             for result_batch in result:
                 writer.write_batch(result_batch)
                 total_bytes += result_batch.nbytes
@@ -72,11 +75,14 @@ class ProcessingNode(pa.flight.FlightServerBase):
         gbps = (total_bytes * 8) / (duration * 1000**3)
         mbps = total_bytes / (duration * 1000**2)
 
-        print(f"Forwarded {total_bytes} bytes in {duration:.7f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
-        print('  receiving: ', sum(cost_break_down["receiving"]))
-        print('  querying: ', sum(cost_break_down["querying"]))
-        print('  sending: ', sum(cost_break_down["sending"]))
-        print('forward_times = ', forwarding_times)
+        print(
+            f"Forwarded {total_bytes} bytes in {duration:.7f} seconds;"
+            f" {gbps:.4f} Gbps ({mbps:.2f} MBps)"
+        )
+        print("  receiving: ", sum(cost_break_down["receiving"]))
+        print("  querying: ", sum(cost_break_down["querying"]))
+        print("  sending: ", sum(cost_break_down["sending"]))
+        print("forward_times = ", forwarding_times)
 
 
 if __name__ == "__main__":
