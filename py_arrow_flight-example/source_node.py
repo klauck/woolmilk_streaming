@@ -1,16 +1,18 @@
-import pyarrow as pa
-import pyarrow.flight
-import time
+import json
+import subprocess
 import sys
 import threading
-import subprocess
-import json
+import time
+
+import pyarrow as pa
+import pyarrow.flight
+
 
 def generate_table(num_rows=10**6, event_type="person"):
     cmd = ["nexmark", "-n", str(num_rows), "--type", event_type, "--no-wait"]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     records = []
-    
+
     try:
         for line in proc.stdout:
             try:
@@ -22,16 +24,16 @@ def generate_table(num_rows=10**6, event_type="person"):
         proc.stdout.close()
         proc.kill()
         proc.wait()
-    
+
     return pa.Table.from_pylist(records)
+
 
 def send_data(thread_id, server):
     client = pa.flight.FlightClient(f"grpc://{server}")
 
     table = generate_table(num_rows=1000, event_type="person")
     writer, _ = client.do_put(
-        pa.flight.FlightDescriptor.for_path("bandwidth-test"),
-        table.schema
+        pa.flight.FlightDescriptor.for_path("bandwidth-test"), table.schema
     )
     start = time.time()
     send_times = []
@@ -46,12 +48,16 @@ def send_data(thread_id, server):
 
     total_bytes = table.nbytes
     duration = end - start
-    gbps = (total_bytes * 8) / (duration * 1000 ** 3)
-    mbps = total_bytes / (duration * 1000 ** 2)
+    gbps = (total_bytes * 8) / (duration * 1000**3)
+    mbps = total_bytes / (duration * 1000**2)
 
     print(f"Start: {start}")
-    print(f"{thread_id}: Sent {total_bytes / 1000**2} MB in {duration:.7f} seconds; {gbps:.4f} Gbps ({mbps:.2f} MBps)")
-    print('send_times = ', send_times)
+    print(
+        f"{thread_id}: Sent {total_bytes / 1000**2} MB in {duration:.7f} seconds; "
+        f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
+    )
+    print("send_times = ", send_times)
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
