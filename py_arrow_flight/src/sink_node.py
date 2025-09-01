@@ -1,8 +1,10 @@
-import pyarrow as pa
-import pyarrow.flight
+import argparse
 import sys
 import time
-import argparse
+
+import pyarrow as pa
+import pyarrow.flight
+
 
 class SinkNode(pa.flight.FlightServerBase):
     def __init__(self, location):
@@ -10,34 +12,43 @@ class SinkNode(pa.flight.FlightServerBase):
 
     def do_put(self, context, descriptor, reader, writer):
         total_bytes = 0
-        start = time.time()
+        receive_times = []
+        start = receive_start = time.time()
         for chunk in reader:
             batch = chunk.data
             # execute and forward data here
             total_bytes += batch.nbytes
+            receive_end = time.time()
+            receive_times.append((receive_start, receive_end))
+            receive_start = receive_end
         end = time.time()
 
         duration = end - start
-        mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-        print(f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}')
+        gbps = (total_bytes * 8) / (duration * 1000**3)
+        mbps = total_bytes / (duration * 1000**2)
+
+        print(
+            f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start},'
+            f' "duration": {duration}, "MBps": {mbps:.2f}, "Gbps": {gbps:.4f}}}'
+        )
+        print(f"End: {end}")
+        print("receive_times = ", receive_times)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Sink Node")
     parser.add_argument(
-        "--server-address",
-        type=str,
-        default="0.0.0.0:8820",
-        help="Address to run the WoolMilk sink node (host:port)")
+        "--port", type=int, default="8020", help="Port to run the WoolMilk sink node"
+    )
     args = parser.parse_args()
 
-    print("\n" + "="*40)
+    print("\n" + "=" * 40)
     print(" WoolMilk Sink Node Parameters")
-    print("="*40)
-    print(f" Address        : {args.server_address}")
-    print("="*40 + "\n")
+    print("=" * 40)
+    print(f" Port        : {args.port}")
+    print("=" * 40 + "\n")
 
-    location = f"grpc://{args.server_address}"
+    location = f"grpc://0.0.0.0:{args.port}"
     sink_node = SinkNode(location)
     print(f"WoolMilk sink node running at {location}")
     sink_node.serve()

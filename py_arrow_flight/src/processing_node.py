@@ -1,10 +1,11 @@
-from datafusion import column, literal, SessionContext
-import pyarrow as pa
-import pyarrow.flight
-import sys
-import time
 import argparse
 import json
+import sys
+import time
+
+import pyarrow as pa
+import pyarrow.flight
+from datafusion import SessionContext, column, literal
 
 
 class ProcessingNode(pa.flight.FlightServerBase):
@@ -13,14 +14,14 @@ class ProcessingNode(pa.flight.FlightServerBase):
         self.forwarding_client = pa.flight.FlightClient(f"grpc://{exit_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
-        
+
         if not schema_json:
             raise ValueError("Schema is mandatory. Please provide a valid schema.")
-        
+
         self.predefined_schema = self._parse_schema(schema_json)
         if not self.predefined_schema:
             raise ValueError("Failed to parse the provided schema.")
-    
+
     def _parse_schema(self, schema_json):
         schema_dict = json.loads(schema_json)
         fields = []
@@ -48,7 +49,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         forward_writer, _ = self.forwarding_client.do_put(
             pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
-            self.predefined_schema
+            self.predefined_schema,
         )
 
         for chunk in reader:
@@ -69,7 +70,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         duration = end - start
         mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-        print(f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}')
+        print(
+            f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}'
+        )
 
 
 if __name__ == "__main__":
@@ -78,42 +81,44 @@ if __name__ == "__main__":
         "--server-address",
         type=str,
         default="localhost:8815",
-        help="Address to run the WoolMilk processing node (host:port)"
+        help="Address to run the WoolMilk processing node (host:port)",
     )
     parser.add_argument(
         "--forward-node",
         type=str,
         default="localhost:8820",
-        help="Address of the node to forward data to (host:port)"
+        help="Address of the node to forward data to (host:port)",
     )
     parser.add_argument(
         "--query",
         type=str,
         default="SELECT * FROM nexmark_data",
-        help="SQL query to run on incoming batches"
+        help="SQL query to run on incoming batches",
     )
     parser.add_argument(
         "--query-result-schema",
         type=str,
         required=True,
-        help="JSON schema definition for the data (required)"
+        help="JSON schema definition for the data (required)",
     )
     args = parser.parse_args()
 
-    print("\n" + "="*40)
+    print("\n" + "=" * 40)
     print(" WoolMilk Processing Node Parameters")
-    print("="*40)       
+    print("=" * 40)
     print(f" Address        : {args.server_address}")
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
     print(f" Schema         : Provided and parsed successfully")
-    print("="*40 + "\n")
+    print("=" * 40 + "\n")
 
     address = args.server_address
     forward_node = args.forward_node
     sql_query = args.query
     schema_json = args.query_result_schema
 
-    processing_node = ProcessingNode(f"grpc://{address}", forward_node, sql_query, schema_json)
+    processing_node = ProcessingNode(
+        f"grpc://{address}", forward_node, sql_query, schema_json
+    )
     print(f"WoolMilk processing node running at {address}")
     processing_node.serve()
