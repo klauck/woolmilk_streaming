@@ -1,10 +1,12 @@
-import pyarrow as pa
-import pyarrow.flight
-import time
+import argparse
 import sys
 import threading
-import argparse
+import time
+
+import pyarrow as pa
+import pyarrow.flight
 from data_generator import NexmarkDataGenerator
+
 
 class SourceNode:
     """
@@ -13,6 +15,7 @@ class SourceNode:
     for different Nexmark events (bid, auction, person, etc.).
     It uses a stream provider to generate the data and sends it in batches.
     """
+
     def __init__(self, stream_provider, servers, thread_id=0):
         self.server_addresses = servers
         self.stream_provider = stream_provider
@@ -21,8 +24,7 @@ class SourceNode:
     def send_data_to_node(self, client, tbl_name, tbl, address):
         if tbl is not None and tbl.num_rows > 0:
             writer, _ = client.do_put(
-                pa.flight.FlightDescriptor.for_path(f"{tbl_name}-stream"),
-                tbl.schema
+                pa.flight.FlightDescriptor.for_path(f"{tbl_name}-stream"), tbl.schema
             )
             start = time.time()
             for batch in tbl.to_batches(max_chunksize=65536):
@@ -33,13 +35,17 @@ class SourceNode:
             duration = end - start
             mbps = (total_bytes * 8) / (duration * 1024 * 1024)
             print(
-                f'WM_LOG= {{"THREAD": "{self.thread_id}:{tbl_name}@{address}", "send_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}'
+                f'WM_LOG= {{"THREAD": "{self.thread_id}:{tbl_name}@{address}", '
+                f'"send_bytes": {total_bytes}, "start_time": {start}, '
+                f'"duration": {duration}, "Mbps": {mbps:.2f}}}'
             )
-            
-    
+
     def start(self):
         """Start the client to send data streams."""
-        print(f"Starting client for thread {self.thread_id} with server(s) {self.server_addresses}")
+        print(
+            f"Starting client for thread {self.thread_id}"
+            f" with server(s) {self.server_addresses}"
+        )
         stream = self.stream_provider.get_stream()
         server_count = len(self.server_addresses)
         set_idx = 0
@@ -50,19 +56,19 @@ class SourceNode:
             set_idx += 1
             address = f"{server[0]}:{server[1]}"
             client = pa.flight.FlightClient(f"grpc://{address}")
-            
+
             self.send_data_to_node(client, "person", person_tbl, address)
             self.send_data_to_node(client, "auction", auction_tbl, address)
             self.send_data_to_node(client, "bid", bid_tbl, address)
             self.send_data_to_node(client, "category", category_tbl, address)
-                
 
-    
+
 class StreamProvider:
     """
     Base class for stream providers.
     This class is responsible for providing the stream data based on the event type.
     """
+
     def __init__(self):
         pass
 
@@ -76,15 +82,18 @@ class StreamProvider:
 
         if stream_provider != "nexmark":
             raise ValueError("Invalid stream provider. Expected 'nexmark'")
-        
-        return NexmarkStreamProvider(stream_type, tuples_per_batch, overall_tuples, executable)
-        
+
+        return NexmarkStreamProvider(
+            stream_type, tuples_per_batch, overall_tuples, executable
+        )
+
 
 class NexmarkStreamProvider(StreamProvider):
     """
     Stream provider for Nexmark data.
     This class generates data for the specified Nexmark event type.
     """
+
     def __init__(self, stream_type, tuples_per_batch, overall_tuples, executable):
         super().__init__()
         self.stream_type = stream_type
@@ -94,20 +103,24 @@ class NexmarkStreamProvider(StreamProvider):
             event_type=stream_type,
             chunk_size=tuples_per_batch,
             no_records=overall_tuples,
-            executable=executable
+            executable=executable,
         )
-    
+
     def get_stream(self):
         """Get the stream data."""
         return self.data_generator.generate()
 
 
-def send_data(thread_id, stream, tuples_per_batch, overall_tuples, servers, generator_executable):
+def send_data(
+    thread_id, stream, tuples_per_batch, overall_tuples, servers, generator_executable
+):
     """Function to send data in a separate thread."""
-    stream_provider = StreamProvider.getStreamProvider(stream, tuples_per_batch, overall_tuples, generator_executable)
+    stream_provider = StreamProvider.getStreamProvider(
+        stream, tuples_per_batch, overall_tuples, generator_executable
+    )
     source_node = SourceNode(stream_provider, servers, thread_id)
     source_node.start()
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Source Node")
@@ -115,48 +128,44 @@ if __name__ == "__main__":
         "--stream",
         choices=["nexmark.bid", "nexmark.auction", "nexmark.person"],
         default="nexmark.bid",
-        help="Stream type"
+        help="Stream type",
     )
     parser.add_argument(
-        "--generator-executable",
-        default="nexmark",
-        help="Executable to generate data"
+        "--generator-executable", default="nexmark", help="Executable to generate data"
     )
     parser.add_argument(
-        "--tuples-per-batch",
-        type=int,
-        default=10000,
-        help="Tuple rate (number)"
+        "--tuples-per-batch", type=int, default=10000, help="Tuple rate (number)"
     )
     parser.add_argument(
         "--overall-tuples",
         type=int,
         default=1000000,
-        help="Total number of records needs to be sent."
+        help="Total number of records needs to be sent.",
     )
     parser.add_argument(
         "--processing-servers",
         help="Flight server address (host:port,host:port)",
         type=str,
-        default="localhost:8815"
+        default="localhost:8815",
     )
     parser.add_argument(
-        "--thread-count",#thread count is used to send data to same server but multiple threads, this is for testing purpose.
+        # thread count is used to send data to same server but multiple threads.
+        "--thread-count",
         type=int,
         help="Number of threads to use for sending data",
         default=1,
     )
     args = parser.parse_args()
 
-    print("\n" + "="*40)
+    print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
-    print("="*40)
+    print("=" * 40)
     print(f" Stream Type                : {args.stream}")
     print(f" Tuples Per Batch           : {args.tuples_per_batch}")
     print(f" Overall Tuples             : {args.overall_tuples}")
     print(f" Processing Servers         : {args.processing_servers}")
     print(f" Thread Count               : {args.thread_count}")
-    print("="*40 + "\n")
+    print("=" * 40 + "\n")
 
     server_addresses = []
     for address in args.processing_servers.split(","):
@@ -169,12 +178,17 @@ if __name__ == "__main__":
 
     threads = []
     for thread_id in range(args.thread_count):
-        t = threading.Thread(target=send_data, 
-                             args=(thread_id, args.stream, 
-                                    args.tuples_per_batch, 
-                                    args.overall_tuples, 
-                                    server_addresses,
-                                    args.generator_executable))
+        t = threading.Thread(
+            target=send_data,
+            args=(
+                thread_id,
+                args.stream,
+                args.tuples_per_batch,
+                args.overall_tuples,
+                server_addresses,
+                args.generator_executable,
+            ),
+        )
         threads.append(t)
         t.start()
 

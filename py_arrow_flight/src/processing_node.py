@@ -1,9 +1,10 @@
-from datafusion import column, literal, SessionContext
+import argparse
+import time
+
 import pyarrow as pa
 import pyarrow.flight
-import sys
-import time
-import argparse
+from datafusion import SessionContext
+
 
 class ProcessingNode(pa.flight.FlightServerBase):
     def __init__(self, location, exit_node, sql_query):
@@ -30,7 +31,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
         schema = result_df.schema()
         forward_writer, _ = self.forwarding_client.do_put(
             pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
-            schema
+            schema,
         )
 
         for out_batch in result_df.collect():
@@ -58,7 +59,10 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         duration = end - start
         mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-        print(f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}')
+        print(
+            f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start},'
+            f' "duration": {duration}, "Mbps": {mbps:.2f}}}'
+        )
 
 
 if __name__ == "__main__":
@@ -67,29 +71,29 @@ if __name__ == "__main__":
         "--server-address",
         type=str,
         default="localhost:8815",
-        help="Address to run the WoolMilk processing node (host:port)"
+        help="Address to run the WoolMilk processing node (host:port)",
     )
     parser.add_argument(
         "--forward_node",
         type=str,
         default="localhost:8820",
-        help="Address of the node to forward data to (host:port)"
+        help="Address of the node to forward data to (host:port)",
     )
     parser.add_argument(
         "--query",
         type=str,
         default="SELECT * FROM nexmark_data",
-        help="SQL query to run on incoming batches"
+        help="SQL query to run on incoming batches",
     )
     args = parser.parse_args()
 
-    print("\n" + "="*40)
+    print("\n" + "=" * 40)
     print(" WoolMilk Processing Node Parameters")
-    print("="*40)       
+    print("=" * 40)
     print(f" Address        : {args.server_address}")
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
-    print("="*40 + "\n")
+    print("=" * 40 + "\n")
 
     address = args.server_address
     forward_node = args.forward_node

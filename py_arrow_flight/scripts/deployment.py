@@ -1,15 +1,17 @@
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+import argparse
 import json
+import os
 import subprocess
 import sys
-import os
-import time
-import argparse
-from datetime import datetime
-import evaluate_log_files
 import threading
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import evaluate_log_files
 import paramiko
+
 
 @dataclass
 class ServerConfig:
@@ -18,9 +20,11 @@ class ServerConfig:
     base_dir: str
     python_env: str
 
+
 @dataclass
 class SinkNode:
     serverAddress: str
+
 
 @dataclass
 class ProcessingNode:
@@ -28,9 +32,11 @@ class ProcessingNode:
     forwardNode: str
     query: Optional[str] = None
 
+
 @dataclass
 class SourceProcessingNode:
     address: str
+
 
 @dataclass
 class SourceNode:
@@ -41,6 +47,7 @@ class SourceNode:
     thread_count: int = 1
     deployment_server: str = None
 
+
 @dataclass
 class Config:
     sinkNodes: List[SinkNode]
@@ -48,42 +55,46 @@ class Config:
     sourceNodes: List[SourceNode]
     servers: Dict[str, ServerConfig] = field(default_factory=dict)
 
+
 def parse_config(json_path: str) -> Config:
     with open(json_path, "r") as f:
         data = json.load(f)
-    
+
     # Parse servers config
     servers = {}
     if "config" in data and "servers" in data["config"]:
         for host, server_data in data["config"]["servers"].items():
             servers[host] = ServerConfig(**server_data)
-    
+
     sink_nodes = [SinkNode(**sn) for sn in data.get("sinkNodes", [])]
     processing_nodes = [ProcessingNode(**pn) for pn in data.get("processingNodes", [])]
-    
+
     source_nodes = []
     for sn in data.get("sourceNodes", []):
         proc_nodes = [SourceProcessingNode(**pn) for pn in sn.get("processingNodes", [])]
-        source_nodes.append(SourceNode(
-            processingNodes=proc_nodes,
-            stream=sn.get("stream"),
-            overall_tuples=sn.get("overall_tuples"),
-            tuples_per_batch=sn.get("tuples_per_batch"),
-            thread_count=sn.get("thread_count", 1),
-            deployment_server=sn.get("deployment_server")
-        ))
-    
+        source_nodes.append(
+            SourceNode(
+                processingNodes=proc_nodes,
+                stream=sn.get("stream"),
+                overall_tuples=sn.get("overall_tuples"),
+                tuples_per_batch=sn.get("tuples_per_batch"),
+                thread_count=sn.get("thread_count", 1),
+                deployment_server=sn.get("deployment_server"),
+            )
+        )
+
     return Config(
         sinkNodes=sink_nodes,
         processingNodes=processing_nodes,
         sourceNodes=source_nodes,
-        servers=servers
+        servers=servers,
     )
+
 
 def log_reader(proc, log_file, proc_type, identifier):
     """Read process output and write to log file in real-time"""
-    with open(log_file, 'w') as f:
-        for line in iter(proc.stdout.readline, ''):
+    with open(log_file, "w") as f:
+        for line in iter(proc.stdout.readline, ""):
             if line:
                 timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
                 log_line = f"[{timestamp}] {line}"
@@ -91,8 +102,15 @@ def log_reader(proc, log_file, proc_type, identifier):
                 f.flush()
                 print(f"[{proc_type.upper()}:{identifier}] {line.strip()}")
 
+
 class DeploymentRunner:
-    def __init__(self, config: Config, src_dir: str = "../src", log_dir: str = "logs", mode: str = "local"):
+    def __init__(
+        self,
+        config: Config,
+        src_dir: str = "../src",
+        log_dir: str = "logs",
+        mode: str = "local",
+    ):
         self.config = config
         self.src_dir = src_dir
         self.log_dir = log_dir
@@ -100,68 +118,82 @@ class DeploymentRunner:
         self.processes = []
         self.log_threads = []
         self.ssh_connections = {}
-        
+
         os.makedirs(log_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.log_prefix = f"{timestamp}_"
-    
+
     def get_server_config(self, host: str) -> Optional[ServerConfig]:
         """Get server config for host"""
         return self.config.servers.get(host)
-    
+
     def get_ssh_connection(self, host: str, server_config: ServerConfig):
         """Get or create SSH connection"""
         if host not in self.ssh_connections:
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(host, username=server_config.username, password=server_config.password)
+            ssh.connect(
+                host, username=server_config.username, password=server_config.password
+            )
             self.ssh_connections[host] = ssh
         return self.ssh_connections[host]
-    
-    def kill_remote_processes(self, host: str, server_config: ServerConfig, ports: List[str]):
+
+    def kill_remote_processes(
+        self, host: str, server_config: ServerConfig, ports: List[str]
+    ):
         """Kill processes on remote host using specified ports"""
         ssh = self.get_ssh_connection(host, server_config)
         for port in ports:
             print(f"Killing processes on {host}:{port}")
             ssh.exec_command(f"kill -9 $(lsof -t -i:{port}) 2>/dev/null || true")
-    
-    def setup_remote_files(self, host: str, server_config: ServerConfig, files: List[str]):
+
+    def setup_remote_files(
+        self, host: str, server_config: ServerConfig, files: List[str]
+    ):
         """Setup files on remote host"""
         ssh = self.get_ssh_connection(host, server_config)
-        
+
         # Create base directory
         ssh.exec_command(f"mkdir -p {server_config.base_dir}")
-        
+
         # Copy files by creating them with content
         for file_name in files:
             local_path = os.path.join(self.src_dir, file_name)
             remote_path = f"{server_config.base_dir}/{file_name}"
-            
-            with open(local_path, 'r') as f:
+
+            with open(local_path, "r") as f:
                 content = f.read()
-            
+
             # Create file on remote host
             ssh.exec_command(f'cat > {remote_path} << "EOF"\n{content}\nEOF')
             ssh.exec_command(f"chmod +x {remote_path}")
             print(f"Created {file_name} on {host}:{remote_path}")
-    
-    def run_remote_command(self, host: str, server_config: ServerConfig, cmd: List[str], log_file: str, proc_type: str, identifier: str):
+
+    def run_remote_command(
+        self,
+        host: str,
+        server_config: ServerConfig,
+        cmd: List[str],
+        log_file: str,
+        proc_type: str,
+        identifier: str,
+    ):
         """Run command on remote host and stream logs"""
         ssh = self.get_ssh_connection(host, server_config)
-        
+
         # Run command directly and stream output with error capture
         # Properly quote arguments that contain spaces
         quoted_cmd = []
         for arg in cmd:
-            if ' ' in arg:
+            if " " in arg:
                 quoted_cmd.append(f"'{arg}'")
             else:
                 quoted_cmd.append(arg)
         remote_cmd = f"cd {server_config.base_dir} && {' '.join(quoted_cmd)} 2>&1"
         print(f"Running on {host}: {remote_cmd}")
-        
+
         stdin, stdout, stderr = ssh.exec_command(remote_cmd, get_pty=True)
-        
+
         # Create a mock process object for consistency
         class RemoteProcess:
             def __init__(self, stdout, stderr, ssh_conn):
@@ -169,196 +201,273 @@ class DeploymentRunner:
                 self.stderr = stderr
                 self.returncode = None
                 self.ssh_conn = ssh_conn
-            
+
             def poll(self):
                 if self.stdout.channel.exit_status_ready():
                     self.returncode = self.stdout.channel.recv_exit_status()
                     return self.returncode
                 return None
-            
+
             def terminate(self):
                 try:
                     self.stdout.channel.close()
-                except:
+                except Exception:
                     pass
-            
+
             def kill(self):
                 self.terminate()
-            
+
             def wait(self, timeout=None):
                 return self.stdout.channel.recv_exit_status()
-        
+
         remote_proc = RemoteProcess(stdout, stderr, ssh)
         self.processes.append((proc_type, identifier, remote_proc))
-        
+
         # Start log reader thread
         def remote_log_reader():
-            with open(log_file, 'w') as f:
+            with open(log_file, "w") as f:
                 # Read both stdout and stderr
-                for line in iter(stdout.readline, ''):
+                for line in iter(stdout.readline, ""):
                     if line:
                         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
                         log_line = f"[{timestamp}] {line}"
                         f.write(log_line)
                         f.flush()
                         print(f"[{proc_type.upper()}:{identifier}] {line.strip()}")
-                
+
                 # Also capture stderr
-                for line in iter(stderr.readline, ''):
+                for line in iter(stderr.readline, ""):
                     if line:
                         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
                         log_line = f"[{timestamp}] ERROR: {line}"
                         f.write(log_line)
                         f.flush()
                         print(f"[{proc_type.upper()}:{identifier}] ERROR: {line.strip()}")
-        
+
         thread = threading.Thread(target=remote_log_reader)
         thread.daemon = True
         thread.start()
         self.log_threads.append(thread)
-        
+
         return stdin, stdout, stderr
 
     def run_sink_nodes(self):
         """Start all sink nodes with live logging"""
         print("Starting sink nodes...")
         for sink in self.config.sinkNodes:
-            log_file = os.path.join(self.log_dir, f"{self.log_prefix}sink_{sink.serverAddress.replace(':', '_')}.log")
-            
-            host = sink.serverAddress.split(':')[0]
+            log_file = os.path.join(
+                self.log_dir,
+                f"{self.log_prefix}sink_{sink.serverAddress.replace(':', '_')}.log",
+            )
+
+            host = sink.serverAddress.split(":")[0]
             server_config = self.get_server_config(host)
-            
+
             if self.mode == "local" or server_config is None:
                 # Local execution
                 cmd = [
-                    sys.executable, "-u",
+                    sys.executable,
+                    "-u",
                     os.path.join(self.src_dir, "sink_node.py"),
-                    "--server-address", sink.serverAddress
+                    "--server-address",
+                    sink.serverAddress,
                 ]
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
-                
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+                proc = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                )
                 self.processes.append(("sink", sink.serverAddress, proc))
-                
-                thread = threading.Thread(target=log_reader, args=(proc, log_file, "sink", sink.serverAddress))
+
+                thread = threading.Thread(
+                    target=log_reader, args=(proc, log_file, "sink", sink.serverAddress)
+                )
                 thread.daemon = True
                 thread.start()
                 self.log_threads.append(thread)
             else:
                 # Remote execution
                 self.setup_remote_files(host, server_config, ["sink_node.py"])
-                
+
                 cmd = [
-                    server_config.python_env, "-u",
+                    server_config.python_env,
+                    "-u",
                     "sink_node.py",
-                    "--server-address", sink.serverAddress
+                    "--server-address",
+                    sink.serverAddress,
                 ]
-                
-                self.run_remote_command(host, server_config, cmd, log_file, "sink", sink.serverAddress)
+
+                self.run_remote_command(
+                    host, server_config, cmd, log_file, "sink", sink.serverAddress
+                )
         time.sleep(2)
 
     def run_processing_nodes(self):
         """Start all processing nodes with live logging"""
         print("Starting processing nodes...")
         for proc_node in self.config.processingNodes:
-            log_file = os.path.join(self.log_dir, f"{self.log_prefix}processing_{proc_node.serverAddress.replace(':', '_')}.log")
-            
-            host = proc_node.serverAddress.split(':')[0]
+            log_file = os.path.join(
+                self.log_dir,
+                f"{self.log_prefix}processing"
+                f"_{proc_node.serverAddress.replace(':', '_')}.log",
+            )
+
+            host = proc_node.serverAddress.split(":")[0]
             server_config = self.get_server_config(host)
-            
+
             if self.mode == "local" or server_config is None:
                 # Local execution
                 cmd = [
-                    sys.executable, "-u",
+                    sys.executable,
+                    "-u",
                     os.path.join(self.src_dir, "processing_node.py"),
-                    "--server-address", proc_node.serverAddress,
-                    "--forward_node", proc_node.forwardNode,
-                    "--query", proc_node.query
+                    "--server-address",
+                    proc_node.serverAddress,
+                    "--forward_node",
+                    proc_node.forwardNode,
+                    "--query",
+                    proc_node.query,
                 ]
-                
+
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
-                
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+                proc = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                )
                 self.processes.append(("processing", proc_node.serverAddress, proc))
-                
-                thread = threading.Thread(target=log_reader, args=(proc, log_file, "processing", proc_node.serverAddress))
+
+                thread = threading.Thread(
+                    target=log_reader,
+                    args=(proc, log_file, "processing", proc_node.serverAddress),
+                )
                 thread.daemon = True
                 thread.start()
                 self.log_threads.append(thread)
             else:
                 # Remote execution
                 self.setup_remote_files(host, server_config, ["processing_node.py"])
-                
+
                 cmd = [
-                    server_config.python_env, "-u",
+                    server_config.python_env,
+                    "-u",
                     "processing_node.py",
-                    "--server-address", proc_node.serverAddress,
-                    "--forward_node", proc_node.forwardNode,
-                    "--query", proc_node.query
+                    "--server-address",
+                    proc_node.serverAddress,
+                    "--forward_node",
+                    proc_node.forwardNode,
+                    "--query",
+                    proc_node.query,
                 ]
-                
-                self.run_remote_command(host, server_config, cmd, log_file, "processing", proc_node.serverAddress)
+
+                self.run_remote_command(
+                    host,
+                    server_config,
+                    cmd,
+                    log_file,
+                    "processing",
+                    proc_node.serverAddress,
+                )
         time.sleep(2)
 
     def run_source_nodes(self):
         """Start all source nodes with live logging"""
         print("Starting source nodes...")
         for i, source_node in enumerate(self.config.sourceNodes):
-            server_addresses = ",".join([pn.address for pn in source_node.processingNodes])
-            log_file = os.path.join(self.log_dir, f"{self.log_prefix}source_{source_node.stream.replace('.', '_')}_{i}.log")
-            
+            server_addresses = ",".join(
+                [pn.address for pn in source_node.processingNodes]
+            )
+            log_file = os.path.join(
+                self.log_dir,
+                f"{self.log_prefix}source_{source_node.stream.replace('.', '_')}_{i}.log",
+            )
+
             # deployment_server is required for source nodes
             if not source_node.deployment_server:
-                raise ValueError(f"Source node {i} missing required 'deployment_server' field")
-            
+                raise ValueError(
+                    f"Source node {i} missing required 'deployment_server' field"
+                )
+
             host = source_node.deployment_server
             server_config = self.get_server_config(host)
-            
+
             if self.mode == "local" or server_config is None:
                 # Local execution
                 cmd = [
-                    sys.executable, "-u",
+                    sys.executable,
+                    "-u",
                     os.path.join(self.src_dir, "source_node.py"),
-                    "--stream", source_node.stream,
-                    "--tuples-per-batch", str(source_node.tuples_per_batch),
-                    "--overall-tuples", str(source_node.overall_tuples),
-                    "--processing-servers", server_addresses,
-                    "--thread-count", str(source_node.thread_count)
+                    "--stream",
+                    source_node.stream,
+                    "--tuples-per-batch",
+                    str(source_node.tuples_per_batch),
+                    "--overall-tuples",
+                    str(source_node.overall_tuples),
+                    "--processing-servers",
+                    server_addresses,
+                    "--thread-count",
+                    str(source_node.thread_count),
                 ]
-                
+
                 print(f"Running locally: {' '.join(cmd)} > {log_file}")
-                
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+                proc = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                )
                 self.processes.append(("source", source_node.stream, proc))
-                
-                thread = threading.Thread(target=log_reader, args=(proc, log_file, "source", source_node.stream))
+
+                thread = threading.Thread(
+                    target=log_reader, args=(proc, log_file, "source", source_node.stream)
+                )
                 thread.daemon = True
                 thread.start()
                 self.log_threads.append(thread)
             else:
-                # Remote execution - add delay to avoid too many concurrent SSH connections
+                # Remote execution - add delay to avoid many concurrent SSH connections
                 time.sleep(1)
-                self.setup_remote_files(host, server_config, ["source_node.py", "data_generator.py"])
-                
+                self.setup_remote_files(
+                    host, server_config, ["source_node.py", "data_generator.py"]
+                )
+
                 cmd = [
-                    server_config.python_env, "-u",
+                    server_config.python_env,
+                    "-u",
                     "source_node.py",
-                    "--stream", source_node.stream,
-                    "--tuples-per-batch", str(source_node.tuples_per_batch),
-                    "--overall-tuples", str(source_node.overall_tuples),
-                    "--processing-servers", server_addresses,
-                    "--thread-count", str(source_node.thread_count),
-                    "--generator-executable", "/home/picocluster/.cargo/bin/nexmark"
+                    "--stream",
+                    source_node.stream,
+                    "--tuples-per-batch",
+                    str(source_node.tuples_per_batch),
+                    "--overall-tuples",
+                    str(source_node.overall_tuples),
+                    "--processing-servers",
+                    server_addresses,
+                    "--thread-count",
+                    str(source_node.thread_count),
+                    "--generator-executable",
+                    "/home/picocluster/.cargo/bin/nexmark",
                 ]
-                
-                self.run_remote_command(host, server_config, cmd, log_file, "source", source_node.stream)
+
+                self.run_remote_command(
+                    host, server_config, cmd, log_file, "source", source_node.stream
+                )
 
     def monitor_processes(self):
         """Monitor processes and show live output"""
         print(f"\n{'='*60}")
         print("LIVE OUTPUT FROM ALL PROCESSES")
         print(f"{'='*60}")
-        
+
         try:
             while True:
                 all_done = True
@@ -366,12 +475,15 @@ class DeploymentRunner:
                     if proc.poll() is None:
                         all_done = False
                     elif proc.returncode != 0:
-                        print(f"[{proc_type.upper()}:{identifier}] Process ended with error (exit code: {proc.returncode})")
-                
+                        print(
+                            f"[{proc_type.upper()}:{identifier}] "
+                            f"Process ended with error (exit code: {proc.returncode})"
+                        )
+
                 if all_done:
                     print("All processes completed.")
                     break
-                    
+
                 time.sleep(1)
         except KeyboardInterrupt:
             print("\nShutting down all processes...")
@@ -381,24 +493,25 @@ class DeploymentRunner:
     def cleanup(self):
         """Terminate all running processes and close SSH connections"""
         for proc_type, identifier, proc in self.processes:
-            print(f"    terminate process .. ({proc_type}, {identifier},{proc})")
+            print(f"    terminate process .. ({proc_type}, {identifier}, {proc})")
             try:
-                if hasattr(proc, 'terminate'):
+                if hasattr(proc, "terminate"):
                     proc.terminate()
-                    if hasattr(proc, 'wait'):
+                    if hasattr(proc, "wait"):
                         proc.wait(timeout=5)
-            except:
+            except (OSError, PermissionError, subprocess.TimeoutExpired):
                 try:
-                    if hasattr(proc, 'kill'):
+                    if hasattr(proc, "kill"):
                         proc.kill()
-                except:
+                except (OSError, PermissionError):
+                    # Process is already gone or can't be killed, safely ignore
                     pass
-        
+
         # Close SSH connections
         for ssh in self.ssh_connections.values():
             try:
                 ssh.close()
-            except:
+            except Exception:
                 pass
 
     def deploy(self):
@@ -406,31 +519,31 @@ class DeploymentRunner:
         print(f"\n{'='*60}")
         print(f"STARTING WOOLMILK STREAMING DEPLOYMENT ({self.mode.upper()} MODE)")
         print(f"{'='*60}")
-        
+
         try:
             # Kill existing processes on remote hosts
             if self.mode == "deploy":
                 host_ports = {}  # Dictionary to map each host to its specific ports
-                
+
                 for sink in self.config.sinkNodes:
-                    host = sink.serverAddress.split(':')[0]
-                    port = sink.serverAddress.split(':')[1]
+                    host = sink.serverAddress.split(":")[0]
+                    port = sink.serverAddress.split(":")[1]
                     if host not in host_ports:
                         host_ports[host] = set()
                     host_ports[host].add(port)
-                
+
                 for proc_node in self.config.processingNodes:
-                    host = proc_node.serverAddress.split(':')[0]
-                    port = proc_node.serverAddress.split(':')[1]
+                    host = proc_node.serverAddress.split(":")[0]
+                    port = proc_node.serverAddress.split(":")[1]
                     if host not in host_ports:
                         host_ports[host] = set()
                     host_ports[host].add(port)
-                
+
                 for host, ports in host_ports.items():
                     server_config = self.get_server_config(host)
                     if server_config:
                         self.kill_remote_processes(host, server_config, list(ports))
-            
+
             self.run_sink_nodes()
             self.run_processing_nodes()
             self.run_source_nodes()
@@ -439,9 +552,14 @@ class DeploymentRunner:
             print(f"Error during deployment: {e}")
             self.cleanup()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Streaming Deployment")
-    parser.add_argument("mode", choices=["local", "deploy"], help="Deployment mode: local or remote deploy")
+    parser.add_argument(
+        "mode",
+        choices=["local", "deploy"],
+        help="Deployment mode: local or remote deploy",
+    )
     parser.add_argument("--config", default="config.json", help="Configuration file path")
     parser.add_argument("--src-dir", default="../src", help="Source directory path")
     parser.add_argument("--log-dir", default="logs", help="Log directory path")
