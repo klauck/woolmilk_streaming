@@ -13,14 +13,10 @@ class SourceNode:
     for different Nexmark events (bid, auction, person, etc.).
     It uses a stream provider to generate the data and sends it in batches.
     """
-    def __init__(self, stream_provider, tuples_per_second, servers, thread_id=0):
+    def __init__(self, stream_provider, servers, thread_id=0):
         self.server_addresses = servers
         self.stream_provider = stream_provider
         self.thread_id = thread_id
-        self.tuples_per_second = tuples_per_second
-        
-    def print(self, message):
-        print(f"THREAD:[{self.thread_id}]:{message}")
 
     def send_data_to_node(self, client, tbl_name, tbl, address):
         if tbl is not None and tbl.num_rows > 0:
@@ -29,30 +25,10 @@ class SourceNode:
                 tbl.schema
             )
 
-            start_time = time.time()
-            total_tuples_sent = 0
-            total_bytes = 0
-
-            time_per_tuple = 1.0 / self.tuples_per_second
-            self.print(f"{tbl_name}@{address}: Target: {self.tuples_per_second} tuples/sec, time per tuple: {time_per_tuple:.6f}s")
+            start = time.time()
 
             for batch in tbl.to_batches(max_chunksize=65536):
-                batch_start = time.time()
                 writer.write_batch(batch)
-                batch_end = time.time()
-                
-                total_tuples_sent += batch.num_rows
-                total_bytes += batch.nbytes
-
-                required_time = batch.num_rows * time_per_tuple
-                actual_send_time = batch_end - batch_start
-                
-                if required_time > actual_send_time:
-                    sleep_time = required_time - actual_send_time
-                    self.print(f"{tbl_name}@{address}: Sent {batch.num_rows} tuples in {actual_send_time:.4f}s, sleeping {sleep_time:.4f}s")
-                    time.sleep(sleep_time)
-                else:
-                    self.print(f"{tbl_name}@{address}: Sent {batch.num_rows} tuples in {actual_send_time:.4f}s, no sleep needed")
         
             writer.done_writing()
 
@@ -127,10 +103,10 @@ class NexmarkStreamProvider(StreamProvider):
         return self.data_generator.generate()
 
 
-def send_data(thread_id, stream, tuples_per_batch, overall_tuples, tuples_per_second, servers, generator_executable):
+def send_data(thread_id, stream, tuples_per_batch, overall_tuples, servers, generator_executable):
     """Function to send data in a separate thread."""
     stream_provider = StreamProvider.getStreamProvider(stream, tuples_per_batch, overall_tuples, generator_executable)
-    source_node = SourceNode(stream_provider, tuples_per_second, servers, thread_id)
+    source_node = SourceNode(stream_provider, servers, thread_id)
     source_node.start()
     
 if __name__ == "__main__":
@@ -145,12 +121,6 @@ if __name__ == "__main__":
         "--generator-executable",
         default="nexmark",
         help="Executable to generate data"
-    )
-    parser.add_argument(
-        "--tuples-per-batch",
-        type=int,
-        default=10000,
-        help="Tuple rate (number)"
     )
     parser.add_argument(
         "--overall-tuples",
@@ -204,8 +174,7 @@ if __name__ == "__main__":
         t = threading.Thread(target=send_data, 
                              args=(thread_id, args.stream, 
                                     args.tuples_per_batch, 
-                                    args.overall_tuples, 
-                                    args.tuples_per_second,
+                                    args.overall_tuples,
                                     servers,
                                     args.generator_executable)
         )

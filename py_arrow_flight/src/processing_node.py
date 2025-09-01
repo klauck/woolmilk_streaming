@@ -22,28 +22,24 @@ class ProcessingNode(pa.flight.FlightServerBase):
             raise ValueError("Failed to parse the provided schema.")
     
     def _parse_schema(self, schema_json):
-        try:
-            schema_dict = json.loads(schema_json)
-            fields = []
-            for field in schema_dict.get("fields", []):
-                field_name = field["name"]
-                field_type = field["type"]
-                
-                if field_type == "int64":
-                    pa_type = pa.int64()
-                elif field_type == "string":
-                    pa_type = pa.string()
-                elif field_type == "float64":
-                    pa_type = pa.float64()
-                else:
-                    pa_type = pa.string()
-                
-                fields.append(pa.field(field_name, pa_type))
-            
-            return pa.schema(fields)
-        except Exception as e:
-            print(f"Error parsing schema: {e}")
-            return None
+        schema_dict = json.loads(schema_json)
+        fields = []
+        for field in schema_dict.get("fields", []):
+            field_name = field["name"]
+            field_type = field["type"]
+
+            if field_type == "int64":
+                pa_type = pa.int64()
+            elif field_type == "string":
+                pa_type = pa.string()
+            elif field_type == "float64":
+                pa_type = pa.float64()
+            else:
+                pa_type = pa.string()
+
+            fields.append(pa.field(field_name, pa_type))
+
+        return pa.schema(fields)
 
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
