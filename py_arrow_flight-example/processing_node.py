@@ -3,7 +3,7 @@ import time
 
 import pyarrow as pa
 import pyarrow.flight
-from datafusion import SessionContext
+from datafusion import SessionContext, column, literal
 
 
 class ProcessingNode(pa.flight.FlightServerBase):
