@@ -1,0 +1,9 @@
+datafusion
+
+# remote deployment
+paramiko
+
+# linting and formatting
+flake8
+isort
+black

@@ -1,20 +1,4 @@
 {
-   "config": {
-      "servers": {
-         "192.168.2.42": {
-            "username": "picocluster",
-            "password": "picocluster",
-            "base_dir": "arrow-flight",
-            "python_env": "/home/picocluster/usama/woolmilk_env/bin/python3"
-         },
-         "192.168.2.43": {
-            "username": "picocluster",
-            "password": "picocluster",
-            "base_dir": "arrow-flight",
-            "python_env": "/home/picocluster/usama/woolmilk_env/bin/python3"
-         }
-      }
-   },
    "schemas": [
       {
          "name": "nexmark_data",
@@ -31,14 +15,14 @@
    ],
    "sinkNodes": [
       {
-         "serverAddress": "192.168.2.42:8820"
+         "serverAddress": "127.0.0.1:8027"
       }
    ],
    "processingNodes": [
       {
-         "serverAddress": "192.168.2.43:8815",
+         "serverAddress": "127.0.0.1:8017",
          "query": "SELECT * FROM nexmark_data WHERE price > 100",
-         "forwardNode": "192.168.2.42:8820",
+         "forwardNode": "127.0.0.1:8027",
          "query_result_schema": "nexmark_data"
       }
    ],
@@ -46,15 +30,14 @@
       {
          "processingNodes": [
             {
-               "address": "192.168.2.43:8815"
+               "address": "127.0.0.1:8017"
             }
          ],
          "stream": "nexmark.bid",
-         "overall_tuples": 1000000,
-         "tuples_per_batch": 100000,
+         "overall_tuples": 100000,
+         "tuples_per_batch": 10000,
          "thread_count": 1,
-         "deployment_server": "192.168.2.42",
-         "tuples_per_second": 10000
+         "deployment_server": "127.0.0.1"
       }
    ]
 }

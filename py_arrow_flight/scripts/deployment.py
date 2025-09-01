@@ -7,6 +7,7 @@ import os
 import time
 import argparse
 from datetime import datetime
+import evaluate_log_files
 import threading
 import paramiko
 
@@ -425,6 +426,7 @@ class DeploymentRunner:
         except KeyboardInterrupt:
             print("\nShutting down all processes...")
             self.cleanup()
+            evaluate_log_files.evaluate_bandwidth(self.log_prefix)
 
     def cleanup(self):
         """Terminate all running processes and close SSH connections"""

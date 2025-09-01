@@ -55,13 +55,14 @@ class SourceNode:
                     self.print(f"{tbl_name}@{address}: Sent {batch.num_rows} tuples in {actual_send_time:.4f}s, no sleep needed")
         
             writer.done_writing()
-            end_time = time.time()
-            
-            total_duration = end_time - start_time
-            actual_rate = total_tuples_sent / total_duration if total_duration > 0 else 0
-            mbps = (total_bytes * 8) / (total_duration * 1024 * 1024) if total_duration > 0 else 0
-            
-            self.print(f"{tbl_name}@{address}: ====> {actual_rate:.0f} tuples/sec, {total_tuples_sent} tuples in {total_duration:.2f}s, {mbps:.2f} Mbps (Target: {self.tuples_per_second})")
+
+            end = time.time()
+            total_bytes = tbl.nbytes
+            duration = end - start
+            mbps = (total_bytes * 8) / (duration * 1024 * 1024)
+            print(
+                f'WM_LOG= {{"THREAD": "{self.thread_id}:{tbl_name}@{address}", "send_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}'
+            )
             
     
     def start(self):

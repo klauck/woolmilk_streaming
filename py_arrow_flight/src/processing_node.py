@@ -73,7 +73,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         duration = end - start
         mbps = (total_bytes * 8) / (duration * 1024 * 1024)
-        print(f"Received {total_bytes} bytes in {duration:.2f} seconds ({mbps:.2f} Mbps)")
+        print(f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start}, "duration": {duration}, "Mbps": {mbps:.2f}}}')
 
 
 if __name__ == "__main__":
