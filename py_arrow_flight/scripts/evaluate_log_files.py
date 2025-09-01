@@ -47,5 +47,5 @@ def evaluate_bandwidth(log_prefix):
 
 
 if __name__ == "__main__":
-    assert len(sys.argv) == 2, "USAGE: python {__file__} LOG_PREFIX"
+    assert len(sys.argv) == 2, f"USAGE: python {__file__} LOG_PREFIX"
     evaluate_bandwidth(log_prefix=sys.argv[1])
