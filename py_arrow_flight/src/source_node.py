@@ -26,13 +26,11 @@ class SourceNode:
             )
 
             start = time.time()
-
             for batch in tbl.to_batches(max_chunksize=65536):
                 writer.write_batch(batch)
-        
             writer.done_writing()
-
             end = time.time()
+
             total_bytes = tbl.nbytes
             duration = end - start
             mbps = (total_bytes * 8) / (duration * 1024 * 1024)
@@ -129,6 +127,12 @@ if __name__ == "__main__":
         help="Total number of records needs to be sent."
     )
     parser.add_argument(
+        "--tuples-per-batch",
+        type=int,
+        default=10000,
+        help="Tuple rate (number)"
+    )
+    parser.add_argument(
         "--processing-servers",
         help="Flight server address (host:port,host:port)",
         type=str,
@@ -140,24 +144,17 @@ if __name__ == "__main__":
         help="Number of threads to use for sending data",
         default=1,
     )
-    parser.add_argument(
-        "--tuples-per-second",
-        type=int,
-        help="Number of tuples to send per second",
-        default=10000
-    )
     args = parser.parse_args()
 
     print("\n" + "="*40)
     print(" WoolMilk Source Node Parameters")
     print("="*40)
     print(f" Stream Type                : {args.stream}")
-    print(f" Tuples Per Batch           : {args.tuples_per_batch}")
     print(f" Overall Tuples             : {args.overall_tuples}")
+    print(f" Tuples Per Batch           : {args.tuples_per_batch}")
     print(f" Processing Servers         : {args.processing_servers}")
     print(f" Thread Count               : {args.thread_count}")
     print(f" Generator Executable       : {args.generator_executable}")
-    print(f" Tuples Per Second          : {args.tuples_per_second}")
     print("="*40 + "\n")
 
     servers = []

@@ -156,7 +156,6 @@ mode                local or deploy
     "processingNodes": [{"address": "192.168.1.11:8815"}],
     "stream": "nexmark.bid",
     "records_count": 100000,
-    "tuples_per_second": 10000,
     "thread_count": 1,
     "deployment_server": "192.168.1.12"
   }
@@ -174,5 +173,5 @@ mode                local or deploy
 -  **deployment_server**: Where to deploy the client (required)
 -  **stream**: Data stream type (nexmark.bid, nexmark.auction, nexmark.person)
 -  **records_count**: Total records to generate
--  **tuples_per_second**: Records per batch
+-  **tuples_per_batch**: Tuples per batch
 -  **thread_count**: Parallel threads for data sending
