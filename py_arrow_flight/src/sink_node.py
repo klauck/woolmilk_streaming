@@ -37,7 +37,7 @@ class SinkNode(pa.flight.FlightServerBase):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Sink Node")
     parser.add_argument(
-        "--port", type=int, default="8020", help="Port to run the WoolMilk sink node"
+        "--port", type=int, default=8020, help="Port to run the WoolMilk sink node"
     )
     args = parser.parse_args()
 
