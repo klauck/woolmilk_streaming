@@ -1,6 +1,5 @@
 import argparse
 import json
-import sys
 import time
 
 import pyarrow as pa
@@ -43,22 +42,22 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
-        total_bytes = 0
-        forwarding_times = []
-        cost_break_down = {"receiving": [], "querying": [], "sending": []}
-        forward_start = start = time.time()
 
         forward_writer, _ = self.forwarding_client.do_put(
             pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
             schema=self.predefined_schema,
         )
 
+        total_bytes = 0
+        forwarding_times = []
+        cost_break_down = {"receiving": [], "querying": [], "sending": []}
+        forward_start = start = time.time()
+
         for chunk in reader:
             batch = chunk.data
 
             processing_start = time.time()
             ctx.register_record_batches(self.default_table_name, [[batch]])
-            df = ctx.table(self.default_table_name)
 
             result_df = ctx.sql(self.query)
 
@@ -131,7 +130,7 @@ if __name__ == "__main__":
     print(f" Port           : {args.port}")
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
-    print(f" Schema         : Provided and parsed successfully")
+    print(" Schema          : Provided and parsed successfully")
     print("=" * 40 + "\n")
 
     port = args.port
