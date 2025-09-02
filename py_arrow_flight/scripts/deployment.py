@@ -93,7 +93,9 @@ def parse_config(json_path: str) -> Config:
 
     source_nodes = []
     for sn in data.get("sourceNodes", []):
-        proc_nodes = [SourceProcessingNode(**pn) for pn in sn.get("processingNodes", [])]
+        proc_nodes = [
+            SourceProcessingNode(**pn) for pn in sn.get("processingNodes", [])
+        ]
         source_nodes.append(
             SourceNode(
                 processingNodes=proc_nodes,
@@ -281,7 +283,9 @@ class DeploymentRunner:
                         log_line = f"[{timestamp}] ERROR: {line}"
                         f.write(log_line)
                         f.flush()
-                        print(f"[{proc_type.upper()}:{identifier}] ERROR: {line.strip()}")
+                        print(
+                            f"[{proc_type.upper()}:{identifier}] ERROR: {line.strip()}"
+                        )
 
         thread = threading.Thread(target=remote_log_reader)
         thread.daemon = True
@@ -480,7 +484,8 @@ class DeploymentRunner:
                 self.processes.append(("source", source_node.stream, proc))
 
                 thread = threading.Thread(
-                    target=log_reader, args=(proc, log_file, "source", source_node.stream)
+                    target=log_reader,
+                    args=(proc, log_file, "source", source_node.stream),
                 )
                 thread.daemon = True
                 thread.start()
@@ -610,7 +615,9 @@ if __name__ == "__main__":
         choices=["local", "deploy"],
         help="Deployment mode: local or remote deploy",
     )
-    parser.add_argument("--config", default="config.json", help="Configuration file path")
+    parser.add_argument(
+        "--config", default="config.json", help="Configuration file path"
+    )
     parser.add_argument("--src-dir", default="../src", help="Source directory path")
     parser.add_argument("--log-dir", default="logs", help="Log directory path")
     args = parser.parse_args()

@@ -64,12 +64,12 @@ def deploy_to_main_server():
         else:
             print(f"Warning: {local_path} not found")
 
-    print(f"\nDeployment completed successfully!")
+    print("\nDeployment completed successfully!")
     print(f"Files copied to: {host}:{remote_base}/")
-    print(f"\nTo run on remote server:")
+    print("\nTo run on remote server:")
     print(f"ssh -i {ssh_key} {host}")
     print(f"cd {remote_base}/scripts")
-    print(f"python3 deployment.py")
+    print("python3 deployment.py")
 
     return True
 
