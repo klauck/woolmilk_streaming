@@ -5,7 +5,7 @@ import pyarrow as pa
 import pyarrow.flight
 
 
-class SourceNode(pa.flight.FlightServerBase):
+class SinkNode(pa.flight.FlightServerBase):
     def __init__(self, location):
         super().__init__(location)
 
@@ -40,6 +40,6 @@ if __name__ == "__main__":
         print(f"USAGE: python {sys.argv[0]} PORT")
         exit(1)
     port = int(sys.argv[1])
-    server = SourceNode(f"grpc://0.0.0.0:{port}")
+    server = SinkNode(f"grpc://0.0.0.0:{port}")
     print(f"Flight server running on port {port}")
     server.serve()
