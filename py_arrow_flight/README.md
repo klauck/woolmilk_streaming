@@ -143,7 +143,7 @@ mode                local or deploy
   {
     "serverAddress": "192.168.1.11:8815",
     "query": "SELECT * FROM nexmark_data WHERE price > 100",
-    "sinkNode": "192.168.1.10:8820"
+    "forwardNode": "192.168.1.10:8820"
   }
 ]
 ```
@@ -151,12 +151,12 @@ mode                local or deploy
 **Client nodes** - generate data streams
 
 ```json
-"clientNodes": [
+"sourceNodes": [
   {
     "processingNodes": [{"address": "192.168.1.11:8815"}],
     "stream": "nexmark.bid",
-    "records_count": 100000,
-    "tuple_rate": 10000,
+    "overall_tuples": 100000,
+    "tuples_per_batch": 10000,
     "thread_count": 1,
     "deployment_server": "192.168.1.12"
   }
@@ -173,6 +173,6 @@ mode                local or deploy
 -  **sinkNode**: Where processing node forwards data
 -  **deployment_server**: Where to deploy the client (required)
 -  **stream**: Data stream type (nexmark.bid, nexmark.auction, nexmark.person)
--  **records_count**: Total records to generate
--  **tuple_rate**: Records per batch
+-  **overall_tuples**: Total tuples to generate
+-  **tuples_per_batch**: Tuples per batch
 -  **thread_count**: Parallel threads for data sending
