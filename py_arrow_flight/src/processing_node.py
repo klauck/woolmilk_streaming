@@ -99,6 +99,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Processing Node")
     parser.add_argument(
+        "--port",
+        type=int,
         default=8010,
         help="Port to run the WoolMilk processing node",
     )
