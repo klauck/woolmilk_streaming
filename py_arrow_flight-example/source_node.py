@@ -31,7 +31,7 @@ def generate_table(num_rows=10**6, event_type="person"):
 def send_data(thread_id, server):
     client = pa.flight.FlightClient(f"grpc://{server}")
 
-    table = generate_table(num_rows=1000, event_type="person")
+    table = generate_table(num_rows=100000, event_type="person")
     writer, _ = client.do_put(
         pa.flight.FlightDescriptor.for_path("bandwidth-test"), table.schema
     )
