@@ -34,7 +34,9 @@ def generate_table(num_rows=10**6, event_type="person", generator_executable="ne
 def send_data(thread_id, schema, batches, processing_nodes):
     writers = []
     for processing_node in processing_nodes:
-        client = pa.flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
+        client = pa.flight.FlightClient(
+            f"grpc://{processing_node[0]}:{processing_node[1]}"
+        )
         writer, _ = client.do_put(
             pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
         )
@@ -47,8 +49,6 @@ def send_data(thread_id, schema, batches, processing_nodes):
         writer.done_writing()
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Source Node")
     parser.add_argument(
@@ -58,9 +58,7 @@ if __name__ == "__main__":
         help="Stream type",
     )
     parser.add_argument(
-        "--generator-executable",
-        default="nexmark",
-        help="Executable to generate data"
+        "--generator-executable", default="nexmark", help="Executable to generate data"
     )
     parser.add_argument(
         "--overall-tuples",
@@ -106,7 +104,11 @@ if __name__ == "__main__":
 
     event_type = args.stream.split(".")[1]
 
-    table = generate_table(num_rows=args.overall_tuples, event_type=event_type, generator_executable=args.generator_executable)
+    table = generate_table(
+        num_rows=args.overall_tuples,
+        event_type=event_type,
+        generator_executable=args.generator_executable,
+    )
     batches = table.to_batches(max_chunksize=args.tuples_per_batch)
 
     threads = []
@@ -116,8 +118,8 @@ if __name__ == "__main__":
             args=(
                 thread_id,
                 table.schema,
-                batches[thread_id::args.thread_count],
-                processing_nodes
+                batches[thread_id :: args.thread_count],
+                processing_nodes,
             ),
         )
         threads.append(t)
