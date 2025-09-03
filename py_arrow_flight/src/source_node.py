@@ -42,11 +42,30 @@ def send_data(thread_id, schema, batches, processing_nodes):
         )
         writers.append(writer)
 
+    start = time.time()
+    send_times = []
+    total_bytes = 0
     for i, batch in enumerate(batches):
+        send_start = time.time()
         writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
+        total_bytes += batch.nbytes
+        send_end = time.time()
+        send_times.append((send_start, send_end))
 
     for writer in writers:
         writer.done_writing()
+
+    end = time.time()
+
+    duration = end - start
+    gbps = (total_bytes * 8) / (duration * 1000**3)
+    mbps = total_bytes / (duration * 1000**2)
+
+    print(f"[Thread {thread_id}] Start: {start}\n" f"send_times = ", send_times)
+    print(
+        f"{thread_id}: Sent {total_bytes / 1000 ** 2} MB in {duration:.7f} seconds; "
+        f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
+    )
 
 
 if __name__ == "__main__":
