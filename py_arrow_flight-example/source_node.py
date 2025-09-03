@@ -52,7 +52,7 @@ def send_data(thread_id, server):
     gbps = (total_bytes * 8) / (duration * 1000**3)
     mbps = total_bytes / (duration * 1000**2)
 
-    print(f"Start: {start})")
+    print(f"Start: {start}")
     print("send_times = ", send_times)
     print(
         f"{thread_id}: Sent {total_bytes / 1000**2} MB in {duration:.7f} seconds; "
