@@ -5,4 +5,4 @@ jobs:
   Lint-and-Test:
     runs-on: ubuntu-latest
     steps:
-      - run echo "Automatically triggered tests of WoolMilk ${{ github.repository }} .."
+      - run: echo "Automatically triggered tests of WoolMilk ${{ github.repository }} .."
