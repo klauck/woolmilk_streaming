@@ -1,0 +1,8 @@
+name: GitHub Actions
+run-name: ${{ github.actor }} is testing WoolMilk
+on: [push]
+jobs:
+  Lint-and-Test:
+    runs-on: ubuntu-latest
+    steps:
+      - run echo "Automatically triggered tests of WoolMilk ${{ github.repository }} .."
