@@ -47,5 +47,5 @@ class TestQueries(unittest.TestCase):
         source.wait()
 
 
-if __name__ == "__main_":
+if __name__ == "__main__":
     unittest.main()
