@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 import unittest
 
 
@@ -23,6 +24,7 @@ class TestQueries(unittest.TestCase):
                 '{"fields":[{"name":"id","type":"int64"},{"name":"name","type":"string"},{"name":"email_address","type":"string"},{"name":"credit_card","type":"string"},{"name":"city","type":"string"},{"name":"state","type":"string"},{"name":"date_time","type":"int64"},{"name":"extra","type":"string"}]}',
             ]
         )
+        time.sleep(1)
 
     def tearDown(self):
         self.processing_node.terminate()
