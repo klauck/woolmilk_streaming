@@ -3,8 +3,8 @@ import os
 import time
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.flight
+import pyarrow.parquet as pq
 
 
 class SinkNode(pa.flight.FlightServerBase):
@@ -44,7 +44,6 @@ class SinkNode(pa.flight.FlightServerBase):
         if result_folder:
             table = pa.Table.from_batches(result)
             pq.write_table(table, f"{result_folder}/{self.file_counter}.parquet")
-
 
 
 if __name__ == "__main__":
