@@ -139,7 +139,7 @@ class TestNexmarkDistributed(unittest.TestCase):
         print(expected_table)
         self.assertTrue(actual_table.equals(expected_table))
 
-    def test_two_processing_node_one_threads(self):
+    def test_two_processing_node_multiple_threads(self):
         processing_node2 = subprocess.Popen(
             [
                 "python",
@@ -201,6 +201,75 @@ class TestNexmarkDistributed(unittest.TestCase):
 
         self.assertTrue(actual_table.equals(expected_table))
 
+    def test_two_sources(self):
+        processing_node2 = subprocess.Popen(
+            [
+                "python",
+                os.path.join(self.woolmilk_dir, "processing_node.py"),
+                "--port",
+                "8911",
+                "--forward-node",
+                "127.0.0.1:8920",
+                "--query-result-schema",
+                '{"fields":[{"name":"auction","type":"int64"},'
+                '{"name":"price","type":"int64"}]}',
+                "--query",
+                "SELECT auction, price "
+                "FROM nexmark_data "
+                "WHERE auction = 1007 OR auction = 1020 "
+                "OR auction = 2001 OR auction = 2019 OR auction = 2087",
+            ]
+        )
+        time.sleep(1)
+
+        number_of_source_nodes = 2
+        sources = []
+        for source_id in range(number_of_source_nodes):
+            source = subprocess.Popen(
+                [
+                    "python",
+                    os.path.join(self.woolmilk_dir, "source_node.py"),
+                    "--stream",
+                    "nexmark.bid",
+                    "--processing-nodes",
+                    "127.0.0.1:8910,127.0.0.1:8911",
+                    "--overall-tuples",
+                    str(self.overall_tuples / number_of_source_nodes),
+                    "--tuples-per-batch",
+                    "100",
+                    "--thread-count",
+                    "3",
+                    "--offset",
+                    str(source_id),
+                    "--step",
+                    str(number_of_source_nodes),
+                ]
+            )
+        for source in sources:
+            source.wait()
+
+        time.sleep(1)
+        processing_node2.terminate()
+        processing_node2.wait()
+
+        # Compare expected and actual results
+        ctx = datafusion.SessionContext()
+
+        # Register actual results with potentially multiple parquet files)
+        ctx.register_parquet("actual", self.result_folder)
+        actual_batches = ctx.sql("SELECT * FROM actual").collect()
+        actual_table = pyarrow.Table.from_batches(actual_batches).sort_by(
+            [("auction", "ascending"), ("price", "ascending")]
+        )
+
+        expected_table = pyarrow.Table.from_batches(self.expected_q2).sort_by(
+            [("auction", "ascending"), ("price", "ascending")]
+        )
+
+        print(actual_table)
+        print(expected_table)
+
+        self.assertTrue(actual_table.equals(expected_table))
 
 if __name__ == "__main__":
     unittest.main()

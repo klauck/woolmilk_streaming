@@ -9,8 +9,8 @@ import pyarrow as pa
 import pyarrow.flight
 
 
-def generate_table(num_rows=10**6, event_type="person", generator_executable="nexmark"):
-    cmd = [generator_executable, "-n", str(num_rows), "--type", event_type, "--no-wait"]
+def generate_table(num_rows=10**6, event_type="person", generator_executable="nexmark", offset=0, step=1):
+    cmd = [generator_executable, "-n", str(num_rows), "--offset", str(offset), "--step", str(step), "--type", event_type, "--no-wait"]
     print("Generate data..")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     records = []
@@ -91,6 +91,12 @@ if __name__ == "__main__":
         "--tuples-per-batch", type=int, default=10**4, help="Number of tuples per batch"
     )
     parser.add_argument(
+        "--offset", type=int, default=0, help="Offset to start data generation"
+    )
+    parser.add_argument(
+        "--step", type=int, default=1, help="Step for next tuple to generate"
+    )
+    parser.add_argument(
         "--processing-nodes",
         help="Flight server address (host:port,host:port)",
         type=str,
@@ -110,6 +116,8 @@ if __name__ == "__main__":
     print(f" Stream Type                : {args.stream}")
     print(f" Overall Tuples             : {args.overall_tuples}")
     print(f" Tuples Per Batch           : {args.tuples_per_batch}")
+    print(f" Offset                     : {args.offset}")
+    print(f" Step                       : {args.step}")
     print(f" Processing Nodes           : {args.processing_nodes}")
     print(f" Thread Count               : {args.thread_count}")
     print("=" * 40 + "\n")
@@ -129,6 +137,8 @@ if __name__ == "__main__":
         num_rows=args.overall_tuples,
         event_type=event_type,
         generator_executable=args.generator_executable,
+        offset=args.offset,
+        step=args.step,
     )
     batches = table.to_batches(max_chunksize=args.tuples_per_batch)
 
