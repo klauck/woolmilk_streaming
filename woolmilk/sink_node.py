@@ -10,8 +10,9 @@ import pyarrow.parquet as pq
 class SinkNode(pa.flight.FlightServerBase):
     def __init__(self, location, result_folder=None):
         super().__init__(location)
-        os.makedirs(result_folder, exist_ok=True)
         self.result_folder = result_folder
+        if result_folder:
+            os.makedirs(result_folder, exist_ok=True)
         self.file_counter = 0
 
     def do_put(self, context, descriptor, reader, writer):

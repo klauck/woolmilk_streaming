@@ -21,7 +21,14 @@ class TestQueries(unittest.TestCase):
                 "--forward-node",
                 "127.0.0.1:8920",
                 "--query-result-schema",
-                '{"fields":[{"name":"id","type":"int64"},{"name":"name","type":"string"},{"name":"email_address","type":"string"},{"name":"credit_card","type":"string"},{"name":"city","type":"string"},{"name":"state","type":"string"},{"name":"date_time","type":"int64"},{"name":"extra","type":"string"}]}',
+                '{"fields":[{"name":"id","type":"int64"},'
+                '{"name":"name","type":"string"},'
+                '{"name":"email_address","type":"string"},'
+                '{"name":"credit_card","type":"string"},'
+                '{"name":"city","type":"string"},'
+                '{"name":"state","type":"string"},'
+                '{"name":"date_time","type":"int64"},'
+                '{"name":"extra","type":"string"}]}',
             ]
         )
         time.sleep(1)

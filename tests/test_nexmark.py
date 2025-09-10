@@ -1,5 +1,3 @@
-import os
-import subprocess
 import time
 import unittest
 
@@ -54,17 +52,13 @@ class TestNexmarkQueries(unittest.TestCase):
     def test_q4(self):
         current_time = time.time() * 1000 + 100000
 
-        # result_df = TestNexmarkQueries.ctx.sql("SELECT MAX(B.price) AS final, A.category "
-        # "    FROM Auction A, Bid B "
-        # f"    WHERE A.id=B.auction AND B.date_time < A.expires AND A.expires < {current_time} "
-        # "    GROUP BY A.id, A.category")
-
         result_df = TestNexmarkQueries.ctx.sql(
             "SELECT AVG(Q.final) "
             "FROM Category C, "
             "    (SELECT MAX(B.price) AS final, A.category "
             "    FROM Auction A, Bid B "
-            f"    WHERE A.id=B.auction AND B.date_time < A.expires AND A.expires < {current_time} "
+            f"    WHERE A.id=B.auction AND B.date_time < A.expires "
+            f"    AND A.expires < {current_time} "
             "    GROUP BY A.id, A.category) Q "
             "WHERE Q.category = C.id "
             "GROUP BY C.id"
