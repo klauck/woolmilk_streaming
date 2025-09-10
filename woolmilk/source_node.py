@@ -9,8 +9,21 @@ import pyarrow as pa
 import pyarrow.flight
 
 
-def generate_table(num_rows=10**6, event_type="person", generator_executable="nexmark", offset=0, step=1):
-    cmd = [generator_executable, "-n", str(num_rows), "--offset", str(offset), "--step", str(step), "--type", event_type, "--no-wait"]
+def generate_table(
+    num_rows=10**6, event_type="person", generator_executable="nexmark", offset=0, step=1
+):
+    cmd = [
+        generator_executable,
+        "-n",
+        str(num_rows),
+        "--offset",
+        str(offset),
+        "--step",
+        str(step),
+        "--type",
+        event_type,
+        "--no-wait",
+    ]
     print("Generate data..")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     records = []

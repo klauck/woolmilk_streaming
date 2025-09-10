@@ -1,5 +1,6 @@
 import argparse
 import os
+import threading
 import time
 
 import pyarrow as pa
@@ -14,6 +15,7 @@ class SinkNode(pa.flight.FlightServerBase):
         if result_folder:
             os.makedirs(result_folder, exist_ok=True)
         self.file_counter = 0
+        self.file_counter_lock = threading.Lock()
 
     def do_put(self, context, descriptor, reader, writer):
         total_bytes = 0
@@ -41,10 +43,16 @@ class SinkNode(pa.flight.FlightServerBase):
         )
         print(f"End: {end}")
         print("receive_times = ", receive_times)
-        self.file_counter += 1
+        with self.file_counter_lock:
+            local_id = self.file_counter
+            self.file_counter += 1
+
         if self.result_folder:
-            table = pa.Table.from_batches(result)
-            pq.write_table(table, f"{self.result_folder}/{self.file_counter}.parquet")
+            if result:
+                # Result is not empty
+                table = pa.Table.from_batches(result)
+                pq.write_table(table, f"{self.result_folder}/{local_id}.parquet")
+                print(f"Wrote .. {self.result_folder}/{local_id}.parquet")
 
 
 if __name__ == "__main__":

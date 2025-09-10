@@ -7,6 +7,7 @@ from pathlib import Path
 
 import datafusion
 import pyarrow
+import pyarrow.parquet
 
 import woolmilk.source_node
 
@@ -234,7 +235,7 @@ class TestNexmarkDistributed(unittest.TestCase):
                     "--processing-nodes",
                     "127.0.0.1:8910,127.0.0.1:8911",
                     "--overall-tuples",
-                    str(self.overall_tuples / number_of_source_nodes),
+                    str(self.overall_tuples // number_of_source_nodes),
                     "--tuples-per-batch",
                     "100",
                     "--thread-count",
@@ -245,6 +246,7 @@ class TestNexmarkDistributed(unittest.TestCase):
                     str(number_of_source_nodes),
                 ]
             )
+            sources.append(source)
         for source in sources:
             source.wait()
 
@@ -270,6 +272,7 @@ class TestNexmarkDistributed(unittest.TestCase):
         print(expected_table)
 
         self.assertTrue(actual_table.equals(expected_table))
+
 
 if __name__ == "__main__":
     unittest.main()
