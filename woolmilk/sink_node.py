@@ -24,7 +24,7 @@ class SinkNode(pa.flight.FlightServerBase):
             batch = chunk.data
             # execute and forward data here
             total_bytes += batch.nbytes
-            if result_folder:
+            if self.result_folder:
                 result.append(batch)
             receive_end = time.time()
             receive_times.append((receive_start, receive_end))
@@ -42,9 +42,9 @@ class SinkNode(pa.flight.FlightServerBase):
         print(f"End: {end}")
         print("receive_times = ", receive_times)
         self.file_counter += 1
-        if result_folder:
+        if self.result_folder:
             table = pa.Table.from_batches(result)
-            pq.write_table(table, f"{result_folder}/{self.file_counter}.parquet")
+            pq.write_table(table, f"{self.result_folder}/{self.file_counter}.parquet")
 
 
 if __name__ == "__main__":
