@@ -1,22 +1,33 @@
 import argparse
+import os
+import threading
 import time
 
 import pyarrow as pa
 import pyarrow.flight
+import pyarrow.parquet as pq
 
 
 class SinkNode(pa.flight.FlightServerBase):
-    def __init__(self, location):
+    def __init__(self, location, result_folder=None):
         super().__init__(location)
+        self.result_folder = result_folder
+        if result_folder:
+            os.makedirs(result_folder, exist_ok=True)
+        self.file_counter = 0
+        self.file_counter_lock = threading.Lock()
 
     def do_put(self, context, descriptor, reader, writer):
         total_bytes = 0
         receive_times = []
         start = receive_start = time.time()
+        result = []
         for chunk in reader:
             batch = chunk.data
             # execute and forward data here
             total_bytes += batch.nbytes
+            if self.result_folder:
+                result.append(batch)
             receive_end = time.time()
             receive_times.append((receive_start, receive_end))
             receive_start = receive_end
@@ -32,12 +43,25 @@ class SinkNode(pa.flight.FlightServerBase):
         )
         print(f"End: {end}")
         print("receive_times = ", receive_times)
+        with self.file_counter_lock:
+            local_id = self.file_counter
+            self.file_counter += 1
+
+        if self.result_folder:
+            if result:
+                # Result is not empty
+                table = pa.Table.from_batches(result)
+                pq.write_table(table, f"{self.result_folder}/{local_id}.parquet")
+                print(f"Wrote .. {self.result_folder}/{local_id}.parquet")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Sink Node")
     parser.add_argument(
         "--port", type=int, default=8020, help="Port to run the WoolMilk sink node"
+    )
+    parser.add_argument(
+        "--result-folder", type=str, default="None", help="Folder to store results"
     )
     args = parser.parse_args()
 
@@ -48,6 +72,9 @@ if __name__ == "__main__":
     print("=" * 40 + "\n")
 
     location = f"grpc://0.0.0.0:{args.port}"
-    sink_node = SinkNode(location)
+    result_folder = args.result_folder
+    if args.result_folder == "None":
+        result_folder = None
+    sink_node = SinkNode(location, result_folder)
     print(f"WoolMilk sink node running at {location}")
     sink_node.serve()
