@@ -38,7 +38,7 @@ class SourceNode:
     overall_tuples: int
     tuples_per_batch: int
     thread_count: int = 1
-    deployment_server: str = None
+    deployment_server: Optional[str] = None
 
 
 @dataclass
@@ -119,8 +119,6 @@ class DeploymentRunner:
                     os.path.join(self.src_dir, "sink_node.py"),
                     "--port",
                     str(port),
-                    # ">",
-                    # log_file,
                 ]
                 if sink.result_folder:
                     cmd.append("--result-folder")
@@ -162,7 +160,6 @@ class DeploymentRunner:
                     "--query-result-schema",
                     json.dumps(proc_node.query_result_schema),
                 ]
-                print(json.dumps(proc_node.query_result_schema))
                 print(f"Running locally: {' '.join(cmd)}")
 
                 proc = subprocess.Popen(
@@ -239,7 +236,7 @@ class DeploymentRunner:
         except Exception as e:
             print(f"Error during deployment: {e}")
             self.cleanup()
-            exit()
+            sys.exit(1)
 
 
 if __name__ == "__main__":
