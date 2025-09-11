@@ -22,7 +22,7 @@
    ],
    "source_nodes": [
       {
-         "processing_nodes": ["127.0.0.1:8917,127.0.0.1:8918"],
+         "processing_nodes": ["127.0.0.1:8917", "127.0.0.1:8917"],
          "stream": "nexmark.bid",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,

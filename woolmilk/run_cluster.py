@@ -134,22 +134,6 @@ class DeploymentRunner:
                 )
                 self.processes.append(("sink", sink.server_address, process))
 
-            else:
-                # Remote execution
-                self.setup_remote_files(host, server_config, ["sink_node.py"])
-
-                cmd = [
-                    server_config.python_env,
-                    "-u",
-                    "sink_node.py",
-                    "--server-address",
-                    sink.server_address,
-                ]
-
-                self.run_remote_command(
-                    host, server_config, cmd, log_file, "sink", sink.server_address
-                )
-
     def run_processing_nodes(self):
         """Start all processing nodes"""
         print("Starting processing nodes...")
@@ -187,30 +171,6 @@ class DeploymentRunner:
                     bufsize=1,
                 )
                 self.processes.append(("processing", proc_node.server_address, proc))
-            else:
-                # Remote execution
-                self.setup_remote_files(host, server_config, ["processing_node.py"])
-
-                cmd = [
-                    server_config.python_env,
-                    "-u",
-                    "processing_node.py",
-                    "--server-address",
-                    proc_node.server_address,
-                    "--forward_node",
-                    proc_node.forward_node,
-                    "--query",
-                    proc_node.query,
-                ]
-
-                self.run_remote_command(
-                    host,
-                    server_config,
-                    cmd,
-                    log_file,
-                    "processing",
-                    proc_node.server_address,
-                )
         time.sleep(1)
 
     def run_source_nodes(self):
@@ -273,33 +233,9 @@ class DeploymentRunner:
         print(f"{'='*60}")
 
         try:
-            # Kill existing processes on remote hosts
-            if self.mode == "deploy":
-                host_ports = {}  # Dictionary to map each host to its specific ports
-
-                for sink in self.config.sink_nodes:
-                    host = sink.server_address.split(":")[0]
-                    port = sink.server_address.split(":")[1]
-                    if host not in host_ports:
-                        host_ports[host] = set()
-                    host_ports[host].add(port)
-
-                for proc_node in self.config.processing_nodes:
-                    host = proc_node.server_address.split(":")[0]
-                    port = proc_node.server_address.split(":")[1]
-                    if host not in host_ports:
-                        host_ports[host] = set()
-                    host_ports[host].add(port)
-
-                for host, ports in host_ports.items():
-                    server_config = self.get_server_config(host)
-                    if server_config:
-                        self.kill_remote_processes(host, server_config, list(ports))
-
             self.run_sink_nodes()
             self.run_processing_nodes()
             self.run_source_nodes()
-            # self.monitor_processes()
         except Exception as e:
             print(f"Error during deployment: {e}")
             self.cleanup()
