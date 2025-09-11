@@ -1,0 +1,26 @@
+{
+   "sink_nodes": [
+      {
+         "server_address": "127.0.0.1:8927",
+         "result_folder": "../tests/results"
+
+      }
+   ],
+   "processing_nodes": [
+      {
+         "server_address": "127.0.0.1:8917",
+         "query": "SELECT auction, price FROM nexmark_data WHERE auction = 1007 OR auction = 1020 OR auction = 2001 OR auction = 2019 OR auction = 2087",
+         "forward_node": "127.0.0.1:8927",
+         "query_result_schema": {"fields":[{"name":"auction","type":"int64"},{"name":"price","type":"int64"}]}
+      }
+   ],
+   "source_nodes": [
+      {
+         "processing_nodes": ["127.0.0.1:8917"],
+         "stream": "nexmark.bid",
+         "overall_tuples": 1000,
+         "tuples_per_batch": 100,
+         "thread_count": 2
+      }
+   ]
+}

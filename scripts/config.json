@@ -1,26 +1,24 @@
 {
-   "sinkNodes": [
+   "sink_nodes": [
       {
-         "serverAddress": "127.0.0.1:8027"
+         "server_address": "127.0.0.1:8027",
+         "result_folder": "results"
       }
    ],
-   "processingNodes": [
+   "processing_nodes": [
       {
-         "serverAddress": "127.0.0.1:8017",
-         "query": "SELECT * FROM nexmark_data WHERE price > 100",
-         "forwardNode": "127.0.0.1:8027"
+         "server_address": "127.0.0.1:8017",
+         "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+         "forward_node": "127.0.0.1:8027",
+         "query_result_schema": {"fields":[{"name":"id","type":"int64"},{"name":"name","type":"string"},{"name":"email_address","type":"string"},{"name":"credit_card","type":"string"},{"name":"city","type":"string"},{"name":"state","type":"string"},{"name":"date_time","type":"int64"},{"name":"extra","type":"string"}]}
       }
    ],
-   "sourceNodes": [
+   "source_nodes": [
       {
-         "processingNodes": [
-            {
-               "address": "127.0.0.1:8017"
-            }
-         ],
-         "stream": "nexmark.bid",
-         "overall_tuples": 100000,
-         "tuples_per_batch": 10000,
+         "processing_nodes": ["127.0.0.1:8017"],
+         "stream": "nexmark.person",
+         "overall_tuples": 1000000,
+         "tuples_per_batch": 100000,
          "thread_count": 1,
          "deployment_server": "127.0.0.1"
       }

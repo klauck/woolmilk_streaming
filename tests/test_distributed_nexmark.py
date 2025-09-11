@@ -7,7 +7,6 @@ from pathlib import Path
 
 import datafusion
 import pyarrow
-import pyarrow.parquet
 
 import woolmilk.source_node
 
