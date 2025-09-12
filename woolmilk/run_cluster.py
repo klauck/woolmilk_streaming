@@ -155,11 +155,13 @@ class DeploymentRunner:
                     str(port),
                     "--forward-node",
                     proc_node.forward_node,
-                    "--query",
-                    proc_node.query,
                     "--query-result-schema",
                     json.dumps(proc_node.query_result_schema),
                 ]
+                if proc_node.query:
+                    cmd.append("--query")
+                    cmd.append(proc_node.query)
+                print(f"Running locally: {' '.join(cmd)}")
                 print(f"Running locally: {' '.join(cmd)}")
 
                 proc = subprocess.Popen(
