@@ -130,7 +130,7 @@ if __name__ == "__main__":
     print(f" Port           : {args.port}")
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
-    print(" Schema          : Provided and parsed successfully")
+    print(f" Schema         : {args.query_result_schema}")
     print("=" * 40 + "\n")
 
     port = args.port
