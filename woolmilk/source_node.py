@@ -1,12 +1,16 @@
 import argparse
 import json
+import os
 import subprocess
 import sys
 import threading
 import time
 
+from pathlib import Path
+
 import pyarrow as pa
 import pyarrow.flight
+import pyarrow.parquet as pq
 
 
 def generate_table(
@@ -121,6 +125,12 @@ if __name__ == "__main__":
         help="Number of threads to use for sending data",
         default=1,
     )
+    parser.add_argument(
+        "--store-input",
+        type=str,
+        help="Folder to store generated data",
+        default="",
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -133,6 +143,7 @@ if __name__ == "__main__":
     print(f" Step                       : {args.step}")
     print(f" Processing Nodes           : {args.processing_nodes}")
     print(f" Thread Count               : {args.thread_count}")
+    print(f" Store Input                : {args.store_input}")
     print("=" * 40 + "\n")
 
     processing_nodes = []
@@ -154,6 +165,14 @@ if __name__ == "__main__":
         step=args.step,
     )
     batches = table.to_batches(max_chunksize=args.tuples_per_batch)
+
+    if args.store_input != "":
+            input_file = Path(args.store_input)
+            input_folder = input_file.parent
+            os.makedirs(input_folder, exist_ok=True)
+            table = pa.Table.from_batches(batches)
+            pq.write_table(table, f"{input_file}")
+            print(f"Wrote .. {input_file}")
 
     threads = []
     for thread_id in range(args.thread_count):

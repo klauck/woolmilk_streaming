@@ -6,6 +6,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
 
 
@@ -39,7 +40,7 @@ class SourceNode:
     tuples_per_batch: int
     thread_count: int = 1
     deployment_server: Optional[str] = None
-
+    store_input: Optional[str] = None
 
 @dataclass
 class Config:
@@ -72,6 +73,7 @@ def parse_config(json_path: str) -> Config:
                 tuples_per_batch=sn.get("tuples_per_batch"),
                 thread_count=sn.get("thread_count", 1),
                 deployment_server=sn.get("deployment_server"),
+                store_input=sn.get("store_input"),
             )
         )
 
@@ -88,7 +90,7 @@ class DeploymentRunner:
         self.config = config
         self.log_dir = log_dir
         self.mode = "local"
-        self.src_dir = os.path.dirname(os.path.abspath(__file__))
+        self.src_dir = Path(__file__).resolve().parent
         self.processes = []
 
         os.makedirs(log_dir, exist_ok=True)
@@ -116,13 +118,13 @@ class DeploymentRunner:
                 cmd = [
                     sys.executable,
                     "-u",
-                    os.path.join(self.src_dir, "sink_node.py"),
+                   str(self.src_dir / "sink_node.py"),
                     "--port",
                     str(port),
                 ]
                 if sink.result_folder:
                     cmd.append("--result-folder")
-                    cmd.append(f"{self.src_dir}/{sink.result_folder}")
+                    cmd.append(str(self.src_dir / sink.result_folder))
                 print(f"Running locally: {' '.join(cmd)}")
 
                 process = subprocess.Popen(
@@ -150,7 +152,7 @@ class DeploymentRunner:
                 cmd = [
                     sys.executable,
                     "-u",
-                    os.path.join(self.src_dir, "processing_node.py"),
+                    str(self.src_dir / "processing_node.py"),
                     "--port",
                     str(port),
                     "--forward-node",
@@ -186,7 +188,7 @@ class DeploymentRunner:
                 cmd = [
                     sys.executable,
                     "-u",
-                    os.path.join(self.src_dir, "source_node.py"),
+                    str(self.src_dir / "source_node.py"),
                     "--stream",
                     source_node.stream,
                     "--tuples-per-batch",
@@ -198,6 +200,9 @@ class DeploymentRunner:
                     "--thread-count",
                     str(source_node.thread_count),
                 ]
+                if source_node.store_input:
+                    cmd.append("--store-input")
+                    cmd.append(str(self.src_dir / Path(source_node.store_input)))
 
                 print(f"Running locally: {' '.join(cmd)}")
 
