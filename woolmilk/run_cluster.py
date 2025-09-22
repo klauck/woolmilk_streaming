@@ -42,6 +42,7 @@ class SourceNode:
     deployment_server: Optional[str] = None
     store_input: Optional[str] = None
 
+
 @dataclass
 class Config:
     sink_nodes: List[SinkNode]
@@ -118,7 +119,7 @@ class DeploymentRunner:
                 cmd = [
                     sys.executable,
                     "-u",
-                   str(self.src_dir / "sink_node.py"),
+                    str(self.src_dir / "sink_node.py"),
                     "--port",
                     str(port),
                 ]

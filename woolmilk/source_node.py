@@ -5,7 +5,6 @@ import subprocess
 import sys
 import threading
 import time
-
 from pathlib import Path
 
 import pyarrow as pa
@@ -167,12 +166,12 @@ if __name__ == "__main__":
     batches = table.to_batches(max_chunksize=args.tuples_per_batch)
 
     if args.store_input != "":
-            input_file = Path(args.store_input)
-            input_folder = input_file.parent
-            os.makedirs(input_folder, exist_ok=True)
-            table = pa.Table.from_batches(batches)
-            pq.write_table(table, f"{input_file}")
-            print(f"Wrote .. {input_file}")
+        input_file = Path(args.store_input)
+        input_folder = input_file.parent
+        os.makedirs(input_folder, exist_ok=True)
+        table = pa.Table.from_batches(batches)
+        pq.write_table(table, f"{input_file}")
+        print(f"Wrote .. {input_file}")
 
     threads = []
     for thread_id in range(args.thread_count):
