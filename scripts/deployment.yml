@@ -1,0 +1,42 @@
+---
+- name: (WoolMilk) setup Python environment and deploy files to Raspberry Pi cluster
+  hosts: rpi_cluster
+  become: yes   # escalate privileges for package installation
+  vars:
+    project_src: ~/woolmilk_streaming          # local path on control machine
+    project_dest: /home/picocluster/woolmilk   # destination path on Raspberry Pis
+    venv_path: /home/picocluster/woolmilk/venv # virtual environment location
+
+  tasks:
+    - name: Create project directory
+      file:
+        path: "{{ project_dest }}"
+        state: directory
+        owner: picocluster
+        group: picocluster
+        mode: '0755'
+
+    - name: Copy project files to Raspberry Pis
+      synchronize:
+        src: "{{ project_src }}/"
+        dest: "{{ project_dest }}/"
+        recursive: yes
+        delete: no
+
+    - name: Create Python virtual environment
+      command: python3 -m venv "{{ venv_path }}"
+      args:
+        creates: "{{ venv_path }}/bin/activate"
+
+    - name: Upgrade pip inside venv
+      pip:
+        name: pip
+        state: latest
+        virtualenv: "{{ venv_path }}"
+
+    - name: Install requirements if present
+      pip:
+        requirements: "{{ project_dest }}/requirements.txt"
+        virtualenv: "{{ venv_path }}"
+      ignore_errors: yes   # skips if no requirements.txt
+  
