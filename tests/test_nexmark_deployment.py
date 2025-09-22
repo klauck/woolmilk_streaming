@@ -35,18 +35,29 @@ class TestNexmarkDeployment(unittest.TestCase):
         ctx.register_parquet("actual", self.result_folder)
         actual_batches = ctx.sql("SELECT * FROM actual").collect()
         actual_table = pyarrow.Table.from_batches(actual_batches).sort_by(
-            [("auction", "ascending"), ("bidder", "ascending"), ("price", "ascending")]
+            [
+                ("auction", "ascending"),
+                ("bidder", "ascending"),
+                ("price", "ascending"),
+                ("date_time", "ascending"),
+            ]
         )
 
         self.overall_tuples = 1000
         ctx = datafusion.SessionContext()
-        bid = woolmilk.source_node.generate_table(self.overall_tuples, "bid")
-        ctx.register_record_batches("bid", [bid.to_batches()])
+        ctx.register_parquet(
+            "bid", Path(os.path.dirname(__file__)) / "input" / "test_Q1_bid.parquet"
+        )
         expected = ctx.sql(
-            "SELECT auction, price * 0.85 as price, bidder FROM Bid"
+            "SELECT auction, price * 0.85 as price, bidder, date_time FROM Bid"
         ).collect()
         expected_table = pyarrow.Table.from_batches(expected).sort_by(
-            [("auction", "ascending"), ("bidder", "ascending"), ("price", "ascending")]
+            [
+                ("auction", "ascending"),
+                ("bidder", "ascending"),
+                ("price", "ascending"),
+                ("date_time", "ascending"),
+            ]
         )
 
         print(actual_table)
