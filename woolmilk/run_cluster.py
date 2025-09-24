@@ -87,23 +87,36 @@ def parse_config(json_path: str) -> Config:
 
 
 class DeploymentRunner:
-    def __init__(self, config: Config, log_dir: str, mode: str = "local", log_to_file: bool = False):
+    def __init__(
+        self, config: Config, log_dir: str, mode: str = "local", log_to_file: bool = False
+    ):
         self.config = config
-        self.log_dir = log_dir
         self.mode = mode
-        self.log_to_file = log_to_file
         self.src_dir = Path(__file__).resolve().parent
         self.processes = []
 
-        os.makedirs(log_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.log_prefix = f"{timestamp}_"
+        self.log_to_file = log_to_file
+        if log_to_file:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            self.log_dir = Path(log_dir) / timestamp
+            self.log_dir.mkdir(parents=True)
+
 
     def get_server_config(self, host: str) -> Optional[ServerConfig]:
         """Get server config for host"""
         return self.config.servers.get(host)
 
-    def _spawn_process(self, role: str, identifier: str, cmd: List[str], host: Optional[str] = None) -> None:
+    def _spawn_process(
+        self,
+        node_type: str,
+        node_identifier: str,
+        cmd: List[str],
+        host: Optional[str] = None,
+    ) -> None:
+        if self.log_to_file:
+            log_file = (
+                self.log_dir / f"{node_type}_{node_identifier.replace(':', '_')}.log"
+            )
 
         if self.mode == "remote" and host:
             server_config = self.get_server_config(host)
@@ -113,20 +126,19 @@ class DeploymentRunner:
             if self.log_to_file:
                 remote_log = f"{server_config.base_dir}/logs/{log_file.name}"
                 remote_cmd = (
-                        f"mkdir -p {server_config.base_dir}/logs && "
-                        f"cd {server_config.base_dir} && "
-                        f"source {server_config.python_env}/bin/activate && "
-                        + " ".join(cmd)
-                        + f" > {remote_log} 2>&1"
+                    f"mkdir -p {server_config.base_dir}/logs && "
+                    f"cd {server_config.base_dir} && "
+                    f"source {server_config.python_env}/bin/activate && "
+                    + " ".join(cmd)
+                    + f" > {remote_log} 2>&1"
                 )
-                print(f"[{role}] Remote {host}, logs -> {remote_log}")
+                print(f"[{node_type}] Remote {host}, logs -> {remote_log}")
             else:
                 remote_cmd = (
-                        f"cd {server_config.base_dir} && "
-                        f"source {server_config.python_env}/bin/activate && "
-                        + " ".join(cmd)
+                    f"cd {server_config.base_dir} && "
+                    f"source {server_config.python_env}/bin/activate && " + " ".join(cmd)
                 )
-                print(f"[{role}] Remote {host}, streaming logs to terminal")
+                print(f"[{node_type}] Remote {host}, streaming logs to terminal")
 
             ssh_cmd = ["ssh", f"{server_config.username}@{host}", remote_cmd]
             proc = subprocess.Popen(ssh_cmd)
@@ -134,13 +146,15 @@ class DeploymentRunner:
         else:  # local
             if self.log_to_file:
                 log_handle = open(log_file, "w")
-                print(f"[{role}] Local logs -> {log_file}")
-                proc = subprocess.Popen(cmd, stdout=log_handle, stderr=subprocess.STDOUT, text=True)
+                print(f"[{node_type}] Local logs -> {log_file}")
+                proc = subprocess.Popen(
+                    cmd, stdout=log_handle, stderr=subprocess.STDOUT, text=True
+                )
             else:
-                print(f"[{role}] Local streaming logs to terminal")
+                print(f"[{node_type}] Local streaming logs to terminal")
                 proc = subprocess.Popen(cmd, text=True)
 
-        self.processes.append((role, identifier, proc))
+        self.processes.append((node_type, node_identifier, proc))
 
     def run_sink_nodes(self):
         print("Starting sink nodes...")
@@ -212,8 +226,8 @@ class DeploymentRunner:
 
     def cleanup(self):
         print("\nCleaning up processes...")
-        for proc_type, identifier, proc in self.processes:
-            print(f"    Terminate process ({proc_type}, {identifier}, {proc})")
+        for node_type, node_identifier, proc in self.processes:
+            print(f"    Terminate process ({node_type}, {node_identifier}, {proc})")
             try:
                 if hasattr(proc, "terminate"):
                     proc.terminate()
@@ -247,8 +261,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Streaming Deployment")
     parser.add_argument("--config", default="config.json", help="Configuration file path")
     parser.add_argument("--log-dir", default="logs", help="Base log directory path")
-    parser.add_argument("--mode", choices=["local", "remote"], default="local", help="Deployment mode")
-    parser.add_argument("--log-to-file", action="store_true", help="Redirect logs to files instead of terminal")
+    parser.add_argument(
+        "--mode", choices=["local", "remote"], default="local", help="Deployment mode"
+    )
+    parser.add_argument(
+        "--log-to-file",
+        action="store_true",
+        help="Redirect logs to files instead of terminal",
+    )
     args = parser.parse_args()
 
     if not Path(args.config).exists():
@@ -256,7 +276,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     config = parse_config(args.config)
-    runner = DeploymentRunner(config, args.log_dir, mode=args.mode, log_to_file=args.log_to_file)
+    runner = DeploymentRunner(
+        config, args.log_dir, mode=args.mode, log_to_file=args.log_to_file
+    )
     runner.deploy()
 
     time.sleep(2)
