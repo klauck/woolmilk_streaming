@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
@@ -101,7 +100,6 @@ class DeploymentRunner:
             self.log_dir = Path(log_dir) / timestamp
             self.log_dir.mkdir(parents=True)
 
-
     def get_server_config(self, host: str) -> Optional[ServerConfig]:
         """Get server config for host"""
         return self.config.servers.get(host)
@@ -145,11 +143,11 @@ class DeploymentRunner:
 
         else:  # local
             if self.log_to_file:
-                log_handle = open(log_file, "w")
-                print(f"[{node_type}] Local logs -> {log_file}")
-                proc = subprocess.Popen(
-                    cmd, stdout=log_handle, stderr=subprocess.STDOUT, text=True
-                )
+                with open(log_file, "w") as log_handle:
+                    print(f"[{node_type}] Local logs -> {log_file}")
+                    proc = subprocess.Popen(
+                        cmd, stdout=log_handle, stderr=subprocess.STDOUT, text=True
+                    )
             else:
                 print(f"[{node_type}] Local streaming logs to terminal")
                 proc = subprocess.Popen(cmd, text=True)
@@ -170,7 +168,6 @@ class DeploymentRunner:
             if sink.result_folder:
                 cmd.append("--result-folder")
                 cmd.append(str(self.src_dir / sink.result_folder))
-            print(f"Running locally: {' '.join(cmd)}")
 
             self._spawn_process("sink", sink.server_address, cmd, host=host)
 
