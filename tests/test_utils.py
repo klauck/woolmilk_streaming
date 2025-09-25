@@ -1,0 +1,66 @@
+import os
+from pathlib import Path
+import shutil
+import datafusion
+import pyarrow
+from woolmilk.run_cluster import parse_config
+from woolmilk.source_node import generate_table
+
+
+class TestUtil():
+    def __init__(self, test_name: str, overall_tuples: int = 1000):
+        self.test_dir = os.path.dirname(__file__)
+        self.result_folder = os.path.join(self.test_dir, "results")
+        self.ctx = datafusion.SessionContext()
+        self.overall_tuples = overall_tuples
+        self.configs = {}
+
+    def register_config(self, name: str, config_file: str):
+        self.config_path = os.path.join(self.test_dir, f"configurations/{config_file}")
+        assert Path(self.config_path).exists(), "Configuration file does not exist"
+        
+        self.configs[name] = parse_config(self.config_path)
+
+    def get_config(self, name: str):
+        assert name in self.configs, "Configuration not registered"
+        return self.configs[name]
+
+    def setup(self):
+        if Path(self.result_folder).exists():
+            shutil.rmtree(self.result_folder)
+            
+        os.makedirs(self.result_folder, exist_ok=True)
+
+    def register_results_folder(self):
+        self.ctx.register_parquet("actual", self.result_folder)
+
+    def load_table(self, source: str):
+        assert source in ["bid", "auction", "person", "category"], "Invalid source"
+        table = generate_table(self.overall_tuples, source)
+        self.ctx.register_record_batches(source, [table.to_batches()])
+
+    def sql(self, query, sort=None):
+        """
+        Execute a SQL query and return the result as a PyArrow Table.
+        If the query is already a PyArrow Table, it will be sorted if specified.
+
+        Args:
+            query (str | pyarrow.Table): The SQL query to execute or a PyArrow Table.
+            sort (list[tuple[str, str]], optional): A list of columns to sort by. Defaults to None.
+
+        Returns:
+            pyarrow.Table: The result of the query as a PyArrow Table.
+        """
+        if isinstance(query, str):
+            result = self.ctx.sql(query).collect()
+            table = pyarrow.Table.from_batches(result)
+        elif isinstance(query, pyarrow.Table):
+            # query is already a PyArrow Table
+            table = query
+        else:
+            # query is a result from previous sql call (list of batches)
+            table = pyarrow.Table.from_batches(query)
+        
+        if sort:
+            table = table.sort_by(sort)
+        return table
