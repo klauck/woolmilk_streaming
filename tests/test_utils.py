@@ -35,11 +35,27 @@ class TestUtil():
         self.ctx.register_parquet("actual", self.result_folder)
 
     def load_table(self, source: str):
+        """Load a table into the context.
+
+        Args:
+            source (str): The name of the source table to load. Must be one of "bid", "auction", "person", or "category".
+        """
         assert source in ["bid", "auction", "person", "category"], "Invalid source"
+
+        if source == "category":
+            # category is derived from auction table
+            result_df = self.ctx.sql("SELECT DISTINCT(category) AS id FROM auction").collect()
+            self.ctx.register_record_batches("category", [result_df])
+            return
+
         table = generate_table(self.overall_tuples, source)
         self.ctx.register_record_batches(source, [table.to_batches()])
 
-    def sql(self, query, sort=None):
+    
+    def load_parquet(self, table_name: str, parquet_path: str):
+        self.ctx.register_parquet(table_name, parquet_path)
+
+    def sql(self, query, sort=None, showOnly=False):
         """
         Execute a SQL query and return the result as a PyArrow Table.
         If the query is already a PyArrow Table, it will be sorted if specified.
@@ -52,8 +68,13 @@ class TestUtil():
             pyarrow.Table: The result of the query as a PyArrow Table.
         """
         if isinstance(query, str):
-            result = self.ctx.sql(query).collect()
-            table = pyarrow.Table.from_batches(result)
+            result = self.ctx.sql(query)
+
+            if showOnly:
+                result.show()
+                return None
+            
+            table = pyarrow.Table.from_batches(result.collect())
         elif isinstance(query, pyarrow.Table):
             # query is already a PyArrow Table
             table = query
@@ -63,4 +84,5 @@ class TestUtil():
         
         if sort:
             table = table.sort_by(sort)
+
         return table

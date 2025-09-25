@@ -1,58 +1,46 @@
 import time
 import unittest
-
-import datafusion
-
-import woolmilk.source_node
+from tests.test_utils import TestUtil
 
 
 class TestNexmarkQueries(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.ctx = datafusion.SessionContext()
-
-        bid = woolmilk.source_node.generate_table(1000, "bid")
-        cls.ctx.register_record_batches("bid", [bid.to_batches()])
-
-        auction = woolmilk.source_node.generate_table(1000, "auction")
-        cls.ctx.register_record_batches("auction", [auction.to_batches()])
-
-        person = woolmilk.source_node.generate_table(1000, "person")
-        cls.ctx.register_record_batches("person", [person.to_batches()])
-
-        result_df = cls.ctx.sql("SELECT DISTINCT(category) AS id FROM auction").collect()
-        cls.ctx.register_record_batches("category", [result_df])
+    def setUp(self):
+        self.util = TestUtil("test_nexmark_queries", 1000)
+        self.util.load_table("bid")
+        self.util.load_table("auction")
+        self.util.load_table("person")
+        self.util.load_table("category")
 
     def test_q1(self):
-        result_df = TestNexmarkQueries.ctx.sql(
-            "SELECT auction, price * 0.85, bidder, date_time FROM bid"
+        self.util.sql(
+            "SELECT auction, price * 0.85, bidder, date_time FROM bid",
+            showOnly=True
         )
-        result_df.show()
 
     def test_q2(self):
-        result_df = TestNexmarkQueries.ctx.sql(
+        self.util.sql(
             "SELECT auction, price "
             "FROM Bid "
             "WHERE auction = 1007 OR auction = 1020 "
-            "OR auction = 2001 OR auction = 2019 OR auction = 2087"
+            "OR auction = 2001 OR auction = 2019 OR auction = 2087",
+            showOnly=True
         )
-        result_df.show()
+
 
     def test_q3(self):
-        result_df = TestNexmarkQueries.ctx.sql(
+        self.util.sql(
             "SELECT P.name, P.city, P.state, A.id "
             "FROM Auction A, Person P "
             "WHERE A.seller = P.id "
             "AND (P.state = 'or' OR P.state = 'id' OR P.state = 'ca') "
-            "AND A.category = 10"
+            "AND A.category = 10",
+            showOnly=True
         )
-        result_df.show()
 
     def test_q4(self):
         current_time = time.time() * 1000 + 100000
 
-        result_df = TestNexmarkQueries.ctx.sql(
+        self.util.sql(
             "SELECT AVG(Q.final) "
             "FROM Category C, "
             "    (SELECT MAX(B.price) AS final, A.category "
@@ -61,9 +49,9 @@ class TestNexmarkQueries(unittest.TestCase):
             f"    AND A.expires < {current_time} "
             "    GROUP BY A.id, A.category) Q "
             "WHERE Q.category = C.id "
-            "GROUP BY C.id"
+            "GROUP BY C.id",
+            showOnly=True
         )
-        result_df.show()
 
 
 if __name__ == "__main__":
