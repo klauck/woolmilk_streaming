@@ -51,6 +51,9 @@ class TestUtil():
         table = generate_table(self.overall_tuples, source)
         self.ctx.register_record_batches(source, [table.to_batches()])
 
+    def load_table_from_dir(self, source: str, dir_path: str):
+        self.ctx.register_parquet(source, Path(self.test_dir) / dir_path)
+
     
     def load_parquet(self, table_name: str, parquet_path: str):
         self.ctx.register_parquet(table_name, parquet_path)
