@@ -12,35 +12,32 @@ class TestNexmarkQueries(unittest.TestCase):
         self.util.load_table("category")
 
     def test_q1(self):
-        self.util.sql(
-            "SELECT auction, price * 0.85, bidder, date_time FROM bid",
-            showOnly=True
+        self.util.show_sql_result(
+            "SELECT auction, price * 0.85, bidder, date_time FROM bid"
         )
 
     def test_q2(self):
-        self.util.sql(
+        self.util.show_sql_result(
             "SELECT auction, price "
             "FROM Bid "
             "WHERE auction = 1007 OR auction = 1020 "
-            "OR auction = 2001 OR auction = 2019 OR auction = 2087",
-            showOnly=True
+            "OR auction = 2001 OR auction = 2019 OR auction = 2087"
         )
 
 
     def test_q3(self):
-        self.util.sql(
+        self.util.show_sql_result(
             "SELECT P.name, P.city, P.state, A.id "
             "FROM Auction A, Person P "
             "WHERE A.seller = P.id "
             "AND (P.state = 'or' OR P.state = 'id' OR P.state = 'ca') "
-            "AND A.category = 10",
-            showOnly=True
+            "AND A.category = 10"
         )
 
     def test_q4(self):
         current_time = time.time() * 1000 + 100000
 
-        self.util.sql(
+        self.util.show_sql_result(
             "SELECT AVG(Q.final) "
             "FROM Category C, "
             "    (SELECT MAX(B.price) AS final, A.category "
@@ -49,8 +46,7 @@ class TestNexmarkQueries(unittest.TestCase):
             f"    AND A.expires < {current_time} "
             "    GROUP BY A.id, A.category) Q "
             "WHERE Q.category = C.id "
-            "GROUP BY C.id",
-            showOnly=True
+            "GROUP BY C.id"
         )
 
 

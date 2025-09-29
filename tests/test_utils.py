@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import shutil
+import subprocess
+from typing import Dict
 import datafusion
 import pyarrow
 from woolmilk.run_cluster import parse_config
@@ -8,9 +10,12 @@ from woolmilk.source_node import generate_table
 
 
 class TestUtil():
-    def __init__(self, test_name: str, overall_tuples: int = 1000):
+    __test__ = False  # Tell pytest this is not a test class
+    
+    def __init__(self, test_name: str, overall_tuples: int = 1000, results_folder: str = "results"):
         self.test_dir = os.path.dirname(__file__)
-        self.result_folder = os.path.join(self.test_dir, "results")
+        self.result_folder = os.path.join(self.test_dir, results_folder)
+        self.woolmilk_dir = os.path.join(self.test_dir, "../woolmilk/")
         self.ctx = datafusion.SessionContext()
         self.overall_tuples = overall_tuples
         self.configs = {}
@@ -53,12 +58,20 @@ class TestUtil():
 
     def load_table_from_dir(self, source: str, dir_path: str):
         self.ctx.register_parquet(source, Path(self.test_dir) / dir_path)
-
     
     def load_parquet(self, table_name: str, parquet_path: str):
         self.ctx.register_parquet(table_name, parquet_path)
 
-    def sql(self, query, sort=None, showOnly=False):
+    def show_sql_result(self, query: str):
+        """Show the result of a SQL query.
+
+        Args:
+            query (str): The SQL query to execute.
+        """
+        result = self.ctx.sql(query)
+        result.show()
+
+    def sql(self, query, sort=None):
         """
         Execute a SQL query and return the result as a PyArrow Table.
         If the query is already a PyArrow Table, it will be sorted if specified.
@@ -72,11 +85,6 @@ class TestUtil():
         """
         if isinstance(query, str):
             result = self.ctx.sql(query)
-
-            if showOnly:
-                result.show()
-                return None
-            
             table = pyarrow.Table.from_batches(result.collect())
         elif isinstance(query, pyarrow.Table):
             # query is already a PyArrow Table
@@ -89,3 +97,20 @@ class TestUtil():
             table = table.sort_by(sort)
 
         return table
+    
+    def new_python_process(self, source: str, commands: Dict[str, str]) -> subprocess.Popen:
+        """Create a new Python process.
+
+        Args:
+            source (str): The source file to execute.
+            commands (Dict[str, str]): The command-line arguments to pass to the process.
+
+        Returns:
+            subprocess.Popen: The subprocess.Popen instance for the new process.
+        """
+        cmd = ["python", os.path.join(self.woolmilk_dir, source)]
+        for key, value in commands.items():
+            cmd.append(f"--{key}")
+            if value:
+                cmd.append(value)
+        return subprocess.Popen(cmd)

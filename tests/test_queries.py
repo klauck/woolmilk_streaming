@@ -1,64 +1,39 @@
-import os
-import shutil
-import subprocess
+
 import time
 import unittest
-from pathlib import Path
 
-import datafusion
-import pyarrow
+from tests.test_utils import TestUtil
 
-import woolmilk.source_node
-
+PROCESSING_NODE_FILE = "processing_node.py"
+SINK_NODE_FILE = "sink_node.py"
+SOURCE_NODE_FILE = "source_node.py"
 
 class TestQueries(unittest.TestCase):
-
     def setUp(self):
-        current_dir = os.path.dirname(__file__)
-        self.result_folder = os.path.join(current_dir, "test_nexmark_q2")
-        if Path(self.result_folder).exists():
-            shutil.rmtree(self.result_folder)
-        self.overall_tuples = 1000
+        self.util = TestUtil("TestQueries", overall_tuples=1000, results_folder="test_nexmark_q2")
+        self.util.setup()
 
-        self.woolmilk_dir = os.path.join(current_dir, "../woolmilk/")
-        self.sink = subprocess.Popen(
-            [
-                "python",
-                os.path.join(self.woolmilk_dir, "sink_node.py"),
-                "--port",
-                "8920",
-                "--result-folder",
-                self.result_folder,
-            ]
-        )
-        self.processing_node = subprocess.Popen(
-            [
-                "python",
-                os.path.join(self.woolmilk_dir, "processing_node.py"),
-                "--port",
-                "8910",
-                "--forward-node",
-                "127.0.0.1:8920",
-                "--query-result-schema",
-                '{"fields":[{"name":"auction","type":"int64"},'
-                '{"name":"price","type":"int64"}]}',
-                "--query",
-                "SELECT auction, price "
-                "FROM nexmark_data "
-                "WHERE auction = 1007 OR auction = 1020 "
-                "OR auction = 2001 OR auction = 2019 OR auction = 2087",
-            ]
-        )
+        self.sink = self.util.new_python_process(SINK_NODE_FILE, {
+            "port": "8920",
+            "result-folder": self.util.result_folder,
+        })
 
-        ctx = datafusion.SessionContext()
-        bid = woolmilk.source_node.generate_table(self.overall_tuples, "bid")
-        ctx.register_record_batches("bid", [bid.to_batches()])
-        self.expected_q2 = ctx.sql(
-            "SELECT auction, price "
-            "FROM Bid "
+        self.processing_node = self.util.new_python_process(PROCESSING_NODE_FILE, {
+            "port": "8910",
+            "forward-node": "127.0.0.1:8920",
+            "query-result-schema": '{"fields":[{"name":"auction","type":"int64"},'
+            '{"name":"price","type":"int64"}]}',
+            "query": "SELECT auction, price "
+            "FROM nexmark_data "
             "WHERE auction = 1007 OR auction = 1020 "
             "OR auction = 2001 OR auction = 2019 OR auction = 2087"
-        ).collect()
+        })
+
+        self.util.load_table("bid")
+        self.expected_q2 = ("SELECT auction, price "
+            "FROM Bid "
+            "WHERE auction = 1007 OR auction = 1020 "
+            "OR auction = 2001 OR auction = 2019 OR auction = 2087")
 
         # Wait for processing node and sink to be ready to accept connections
         time.sleep(1)
@@ -71,130 +46,81 @@ class TestQueries(unittest.TestCase):
         self.sink.wait()
 
     def test_single_processing_node(self):
-        source = subprocess.Popen(
-            [
-                "python",
-                os.path.join(self.woolmilk_dir, "source_node.py"),
-                "--stream",
-                "nexmark.bid",
-                "--processing-nodes",
-                "127.0.0.1:8910",
-                "--overall-tuples",
-                str(self.overall_tuples),
-                "--tuples-per-batch",
-                "100",
-            ]
-        )
-        source.wait()
+        source = self.util.new_python_process(SOURCE_NODE_FILE, {
+            "stream": "nexmark.bid",
+            "processing-nodes": "127.0.0.1:8910",
+            "overall-tuples": str(self.util.overall_tuples),
+            "tuples-per-batch": "100",
+        })
 
+        source.wait()
         time.sleep(1)
 
-        # Compare expected and actual results
-        ctx = datafusion.SessionContext()
+        self.util.register_results_folder()
+        actual_table = self.util.sql("SELECT * FROM actual")
+        expected_table = self.util.sql(self.expected_q2)
 
-        # Register actual results with potentially multiple parquet files)
-        ctx.register_parquet("actual", self.result_folder)
-        actual_batches = ctx.sql("SELECT * FROM actual").collect()
-        actual_table = pyarrow.Table.from_batches(actual_batches)
-
-        expected_table = pyarrow.Table.from_batches(self.expected_q2)
         self.assertTrue(actual_table.equals(expected_table))
 
     def test_single_processing_node_multiple_threads(self):
-        source = subprocess.Popen(
-            [
-                "python",
-                os.path.join(self.woolmilk_dir, "source_node.py"),
-                "--stream",
-                "nexmark.bid",
-                "--processing-nodes",
-                "127.0.0.1:8910",
-                "--overall-tuples",
-                str(self.overall_tuples),
-                "--tuples-per-batch",
-                "100",
-                "--thread-count",
-                "3",
-            ]
-        )
+        source = self.util.new_python_process(SOURCE_NODE_FILE, {
+            "stream": "nexmark.bid",
+            "processing-nodes": "127.0.0.1:8910",
+            "overall-tuples": str(self.util.overall_tuples),
+            "tuples-per-batch": "100",
+            "thread-count": "3",
+        })
+
         source.wait()
 
         time.sleep(1)
 
-        # Compare expected and actual results
-        ctx = datafusion.SessionContext()
-
-        # Register actual results with potentially multiple parquet files)
-        ctx.register_parquet("actual", self.result_folder)
-        actual_batches = ctx.sql("SELECT * FROM actual").collect()
-        actual_table = pyarrow.Table.from_batches(actual_batches).sort_by(
-            [("auction", "ascending"), ("price", "ascending")]
-        )
-
-        expected_table = pyarrow.Table.from_batches(self.expected_q2).sort_by(
-            [("auction", "ascending"), ("price", "ascending")]
-        )
+        self.util.register_results_folder()
+        actual_table = self.util.sql("SELECT * FROM actual", 
+            [("auction", "ascending"), ("price", "ascending")])
+    
+        expected_table = self.util.sql(self.expected_q2,
+            [("auction", "ascending"), ("price", "ascending")])
 
         print(actual_table)
         print(expected_table)
         self.assertTrue(actual_table.equals(expected_table))
 
     def test_two_processing_node_multiple_threads(self):
-        processing_node2 = subprocess.Popen(
-            [
-                "python",
-                os.path.join(self.woolmilk_dir, "processing_node.py"),
-                "--port",
-                "8911",
-                "--forward-node",
-                "127.0.0.1:8920",
-                "--query-result-schema",
-                '{"fields":[{"name":"auction","type":"int64"},'
-                '{"name":"price","type":"int64"}]}',
-                "--query",
-                "SELECT auction, price "
-                "FROM nexmark_data "
-                "WHERE auction = 1007 OR auction = 1020 "
-                "OR auction = 2001 OR auction = 2019 OR auction = 2087",
-            ]
-        )
+        processing_node2 = self.util.new_python_process(PROCESSING_NODE_FILE, {
+            "port": "8911",
+            "forward-node": "127.0.0.1:8920",
+            "query-result-schema": '{"fields":[{"name":"auction","type":"int64"},'
+            '{"name":"price","type":"int64"}]}',
+            "query": "SELECT auction, price "
+            "FROM nexmark_data "
+            "WHERE auction = 1007 OR auction = 1020 "
+            "OR auction = 2001 OR auction = 2019 OR auction = 2087",
+        })
+        
         time.sleep(1)
 
-        source = subprocess.Popen(
-            [
-                "python",
-                os.path.join(self.woolmilk_dir, "source_node.py"),
-                "--stream",
-                "nexmark.bid",
-                "--processing-nodes",
-                "127.0.0.1:8910,127.0.0.1:8911",
-                "--overall-tuples",
-                str(self.overall_tuples),
-                "--tuples-per-batch",
-                "100",
-                "--thread-count",
-                "3",
-            ]
-        )
+        source = self.util.new_python_process(SOURCE_NODE_FILE, {
+            "stream": "nexmark.bid",
+            "processing-nodes": "127.0.0.1:8910,127.0.0.1:8911",
+            "overall-tuples": str(self.util.overall_tuples),
+            "tuples-per-batch": "100",
+            "thread-count": "3",
+        })
+        
         source.wait()
 
         time.sleep(1)
         processing_node2.terminate()
         processing_node2.wait()
 
-        # Compare expected and actual results
-        ctx = datafusion.SessionContext()
+        
+        self.util.register_results_folder()
+        actual_table = self.util.sql("SELECT * FROM actual",
+            [("auction", "ascending"), ("price", "ascending")])
 
-        # Register actual results with potentially multiple parquet files)
-        ctx.register_parquet("actual", self.result_folder)
-        actual_batches = ctx.sql("SELECT * FROM actual").collect()
-        actual_table = pyarrow.Table.from_batches(actual_batches).sort_by(
-            [("auction", "ascending"), ("price", "ascending")]
-        )
-
-        expected_table = pyarrow.Table.from_batches(self.expected_q2).sort_by(
-            [("auction", "ascending"), ("price", "ascending")]
-        )
+        expected_table = self.util.sql(self.expected_q2,
+            [("auction", "ascending"), ("price", "ascending")])
 
         print(actual_table)
         print(expected_table)
@@ -202,49 +128,32 @@ class TestQueries(unittest.TestCase):
         self.assertTrue(actual_table.equals(expected_table))
 
     def test_two_sources(self):
-        processing_node2 = subprocess.Popen(
-            [
-                "python",
-                os.path.join(self.woolmilk_dir, "processing_node.py"),
-                "--port",
-                "8911",
-                "--forward-node",
-                "127.0.0.1:8920",
-                "--query-result-schema",
-                '{"fields":[{"name":"auction","type":"int64"},'
-                '{"name":"price","type":"int64"}]}',
-                "--query",
-                "SELECT auction, price "
-                "FROM nexmark_data "
-                "WHERE auction = 1007 OR auction = 1020 "
-                "OR auction = 2001 OR auction = 2019 OR auction = 2087",
-            ]
-        )
+        processing_node2 = self.util.new_python_process(PROCESSING_NODE_FILE, {
+            "port": "8911",
+            "forward-node": "127.0.0.1:8920",
+            "query-result-schema": '{"fields":[{"name":"auction","type":"int64"},'
+            '{"name":"price","type":"int64"}]}',
+            "query": "SELECT auction, price "
+            "FROM nexmark_data "
+            "WHERE auction = 1007 OR auction = 1020 "
+            "OR auction = 2001 OR auction = 2019 OR auction = 2087",
+        })
+        
         time.sleep(1)
 
         number_of_source_nodes = 2
         sources = []
         for source_id in range(number_of_source_nodes):
-            source = subprocess.Popen(
-                [
-                    "python",
-                    os.path.join(self.woolmilk_dir, "source_node.py"),
-                    "--stream",
-                    "nexmark.bid",
-                    "--processing-nodes",
-                    "127.0.0.1:8910,127.0.0.1:8911",
-                    "--overall-tuples",
-                    str(self.overall_tuples // number_of_source_nodes),
-                    "--tuples-per-batch",
-                    "100",
-                    "--thread-count",
-                    "3",
-                    "--offset",
-                    str(source_id),
-                    "--step",
-                    str(number_of_source_nodes),
-                ]
-            )
+            source = self.util.new_python_process(SOURCE_NODE_FILE, {
+                "stream": "nexmark.bid",
+                "processing-nodes": "127.0.0.1:8910,127.0.0.1:8911",
+                "overall-tuples": str(self.util.overall_tuples // number_of_source_nodes),
+                "tuples-per-batch": "100",
+                "thread-count": "3",
+                "offset": str(source_id),
+                "step": str(number_of_source_nodes),
+            })
+            
             sources.append(source)
         for source in sources:
             source.wait()
@@ -253,17 +162,12 @@ class TestQueries(unittest.TestCase):
         processing_node2.terminate()
         processing_node2.wait()
 
-        # Compare expected and actual results
-        ctx = datafusion.SessionContext()
-
-        # Register actual results with potentially multiple parquet files)
-        ctx.register_parquet("actual", self.result_folder)
-        actual_batches = ctx.sql("SELECT * FROM actual").collect()
-        actual_table = pyarrow.Table.from_batches(actual_batches).sort_by(
+        self.util.register_results_folder()
+        actual_table = self.util.sql("SELECT * FROM actual",
             [("auction", "ascending"), ("price", "ascending")]
         )
 
-        expected_table = pyarrow.Table.from_batches(self.expected_q2).sort_by(
+        expected_table = self.util.sql(self.expected_q2,
             [("auction", "ascending"), ("price", "ascending")]
         )
 
@@ -271,7 +175,6 @@ class TestQueries(unittest.TestCase):
         print(expected_table)
 
         self.assertTrue(actual_table.equals(expected_table))
-
 
 if __name__ == "__main__":
     unittest.main()
