@@ -91,14 +91,20 @@ class DeploymentRunner:
     ):
         self.config = config
         self.mode = mode
-        self.src_dir = Path(__file__).resolve().parent
         self.processes = []
 
         self.log_to_file = log_to_file
         if log_to_file:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.log_dir = Path(log_dir) / timestamp
-            self.log_dir.mkdir(parents=True)
+
+    def get_base_dir(self, host):
+        if self.mode == "local":
+            return Path(__file__).resolve().parent
+        else:
+            assert mode == "remote"
+            return Path(self.get_server_config(host).base_dir)
+
 
     def get_server_config(self, host: str) -> Optional[ServerConfig]:
         """Get server config for host"""
@@ -109,12 +115,16 @@ class DeploymentRunner:
         node_type: str,
         node_identifier: str,
         cmd: List[str],
+        base_dir: Path,
         host: Optional[str] = None,
     ) -> None:
         if self.log_to_file:
+            self.log_dir = base_dir / self.log_dir
             log_file = (
                 self.log_dir / f"{node_type}_{node_identifier.replace(':', '_')}.log"
             )
+            if self.mode == "local":
+                self.log_dir.mkdir(parents=True, exist_ok=True)
 
         if self.mode == "remote" and host:
             server_config = self.get_server_config(host)
@@ -122,18 +132,17 @@ class DeploymentRunner:
                 raise RuntimeError(f"No server config found for host {host}")
 
             if self.log_to_file:
-                remote_log = f"{server_config.base_dir}/logs/{log_file.name}"
                 remote_cmd = (
-                    f"mkdir -p {server_config.base_dir}/logs && "
-                    f"cd {server_config.base_dir} && "
+                    f"mkdir -p {str(base_dir / logs)} && "
+                    f"cd {str(base_dir)} && "
                     f"source {server_config.python_env}/bin/activate && "
                     + " ".join(cmd)
-                    + f" > {remote_log} 2>&1"
+                    + f" > {log_file} 2>&1"
                 )
-                print(f"[{node_type}] Remote {host}, logs -> {remote_log}")
+                print(f"[{node_type}] Remote {host}, logs -> {log_file}")
             else:
                 remote_cmd = (
-                    f"cd {server_config.base_dir} && "
+                    f"cd {str(base_dir)} && "
                     f"source {server_config.python_env}/bin/activate && " + " ".join(cmd)
                 )
                 print(f"[{node_type}] Remote {host}, streaming logs to terminal")
@@ -158,27 +167,29 @@ class DeploymentRunner:
         print("Starting sink nodes...")
         for sink in self.config.sink_nodes:
             host, port = sink.server_address.split(":")
+            base_dir = self.get_base_dir(host)
             cmd = [
-                sys.executable,
+                "python",
                 "-u",
-                str(self.src_dir / "sink_node.py"),
+                str(base_dir / "sink_node.py"),
                 "--port",
                 str(port),
             ]
             if sink.result_folder:
                 cmd.append("--result-folder")
-                cmd.append(str(self.src_dir / sink.result_folder))
+                cmd.append(str(base_dir / sink.result_folder))
 
-            self._spawn_process("sink", sink.server_address, cmd, host=host)
+            self._spawn_process("sink", sink.server_address, cmd, base_dir=base_dir, host=host)
 
     def run_processing_nodes(self):
         print("Starting processing nodes...")
         for proc_node in self.config.processing_nodes:
             host, port = proc_node.server_address.split(":")
+            base_dir = self.get_base_dir(host)
             cmd = [
-                sys.executable,
+                "python",
                 "-u",
-                str(self.src_dir / "processing_node.py"),
+                str(base_dir / "processing_node.py"),
                 "--port",
                 str(port),
                 "--forward-node",
@@ -190,7 +201,7 @@ class DeploymentRunner:
                 cmd.append("--query")
                 cmd.append(proc_node.query)
 
-            self._spawn_process("processing", proc_node.server_address, cmd, host=host)
+            self._spawn_process("processing", proc_node.server_address, cmd, base_dir=base_dir, host=host)
         time.sleep(1)
 
     def run_source_nodes(self):
@@ -199,11 +210,12 @@ class DeploymentRunner:
             processing_nodes = ",".join(source_node.processing_nodes)
 
             host = source_node.deployment_server
+            base_dir = self.get_base_dir(host)
 
             cmd = [
-                sys.executable,
+                "python",
                 "-u",
-                str(self.src_dir / "source_node.py"),
+                str(base_dir / "source_node.py"),
                 "--stream",
                 source_node.stream,
                 "--tuples-per-batch",
@@ -217,9 +229,9 @@ class DeploymentRunner:
             ]
             if source_node.store_input:
                 cmd.append("--store-input")
-                cmd.append(str(self.src_dir / Path(source_node.store_input)))
+                cmd.append(str(base_dir / Path(source_node.store_input)))
 
-            self._spawn_process("source", source_node.stream, cmd, host=host)
+            self._spawn_process("source", source_node.stream, cmd, base_dir=base_dir, host=host)
 
     def cleanup(self):
         print("\nCleaning up processes...")
