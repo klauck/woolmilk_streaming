@@ -101,6 +101,12 @@ class DeploymentRunner:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.log_dir = Path(log_dir) / timestamp
 
+    def get_python(self, host):
+        if self.mode == "local":
+            return "python"
+        else:
+            return self.get_server_config(host).python_env + "/bin/python"
+
     def get_base_dir(self, host):
         if self.mode == "local":
             return Path(__file__).resolve().parent
@@ -111,6 +117,12 @@ class DeploymentRunner:
     def get_server_config(self, host: str) -> Optional[ServerConfig]:
         """Get server config for host"""
         return self.config.servers.get(host)
+
+    def quote_if_remote(self, cmd_str):
+        if self.mode == "remote":
+            return shlex.quote(cmd_str)
+        else:
+            return cmd_str
 
     def _spawn_process(
         self,
@@ -143,7 +155,6 @@ class DeploymentRunner:
                 )
                 print(f"[{node_type}] Remote {host}, logs -> {log_file}")
             else:
-                cmd[0] = server_config.python_env + "/bin/python"
                 remote_cmd = (
                     f"cd {str(base_dir)} && "
                     + " ".join(cmd)
@@ -173,7 +184,7 @@ class DeploymentRunner:
             host, port = sink.server_address.split(":")
             base_dir = self.get_base_dir(host)
             cmd = [
-                "python",
+                self.get_python(host),
                 "-u",
                 str(base_dir / "sink_node.py"),
                 "--port",
@@ -193,7 +204,7 @@ class DeploymentRunner:
             host, port = proc_node.server_address.split(":")
             base_dir = self.get_base_dir(host)
             cmd = [
-                "python",
+                self.get_python(host),
                 "-u",
                 str(base_dir / "processing_node.py"),
                 "--port",
@@ -201,11 +212,11 @@ class DeploymentRunner:
                 "--forward-node",
                 proc_node.forward_node,
                 "--query-result-schema",
-                shlex.quote(json.dumps(proc_node.query_result_schema)),
+                self.quote_if_remote(json.dumps(proc_node.query_result_schema)),
             ]
             if proc_node.query:
                 cmd.append("--query")
-                cmd.append(shlex.quote(proc_node.query))
+                cmd.append(self.quote_if_remote(proc_node.query))
 
             self._spawn_process(
                 "processing", proc_node.server_address, cmd, base_dir=base_dir, host=host
@@ -221,7 +232,7 @@ class DeploymentRunner:
             base_dir = self.get_base_dir(host)
 
             cmd = [
-                "python",
+                self.get_python(host),
                 "-u",
                 str(base_dir / "source_node.py"),
                 "--stream",
