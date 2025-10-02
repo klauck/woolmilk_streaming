@@ -1,5 +1,6 @@
 import argparse
 import json
+import shlex
 import subprocess
 import sys
 import time
@@ -142,10 +143,12 @@ class DeploymentRunner:
                 )
                 print(f"[{node_type}] Remote {host}, logs -> {log_file}")
             else:
+                cmd[0] = server_config.python_env + "/bin/python"
                 remote_cmd = (
                     f"cd {str(base_dir)} && "
-                    f"source {server_config.python_env}/bin/activate && " + " ".join(cmd)
+                    + " ".join(cmd)
                 )
+                print(remote_cmd)
                 print(f"[{node_type}] Remote {host}, streaming logs to terminal")
 
             ssh_cmd = ["ssh", f"{server_config.username}@{host}", remote_cmd]
@@ -198,11 +201,11 @@ class DeploymentRunner:
                 "--forward-node",
                 proc_node.forward_node,
                 "--query-result-schema",
-                json.dumps(proc_node.query_result_schema),
+                shlex.quote(json.dumps(proc_node.query_result_schema)),
             ]
             if proc_node.query:
                 cmd.append("--query")
-                cmd.append(proc_node.query)
+                cmd.append(shlex.quote(proc_node.query))
 
             self._spawn_process(
                 "processing", proc_node.server_address, cmd, base_dir=base_dir, host=host
@@ -248,6 +251,12 @@ class DeploymentRunner:
         print("\nCleaning up processes...")
         for node_type, node_identifier, proc in self.processes:
             print(f"    Terminate process ({node_type}, {node_identifier}, {proc})")
+            if self.mode == "remote":
+                if node_type in ["sink", "processing"]:
+                    host, port = node_identifier.split(":")
+                    ssh_cmd = ["ssh", f"picocluster@{host}", f"fuser -k {port}/tcp"]
+                    print(ssh_cmd)
+                    subprocess.run(ssh_cmd, check=True)
             try:
                 if hasattr(proc, "terminate"):
                     proc.terminate()
