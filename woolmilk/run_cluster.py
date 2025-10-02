@@ -40,6 +40,7 @@ class SourceNode:
     thread_count: int = 1
     deployment_server: Optional[str] = None
     store_input: Optional[str] = None
+    generator_executable: Optional[str] = None
 
 
 @dataclass
@@ -74,6 +75,7 @@ def parse_config(json_path: str) -> Config:
                 thread_count=sn.get("thread_count", 1),
                 deployment_server=sn.get("deployment_server"),
                 store_input=sn.get("store_input"),
+                generator_executable=sn.get("generator_executable"),
             )
         )
 
@@ -233,6 +235,10 @@ class DeploymentRunner:
             if source_node.store_input:
                 cmd.append("--store-input")
                 cmd.append(str(base_dir / Path(source_node.store_input)))
+
+            if source_node.generator_executable:
+                cmd.append("--generator-executable")
+                cmd.append(source_node.generator_executable)
 
             self._spawn_process(
                 "source", source_node.stream, cmd, base_dir=base_dir, host=host
