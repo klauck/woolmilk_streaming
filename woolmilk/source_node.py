@@ -143,6 +143,7 @@ if __name__ == "__main__":
     print(f" Processing Nodes           : {args.processing_nodes}")
     print(f" Thread Count               : {args.thread_count}")
     print(f" Store Input                : {args.store_input}")
+    print(f" Generator Executable       : {args.generator_executable}")
     print("=" * 40 + "\n")
 
     processing_nodes = []
