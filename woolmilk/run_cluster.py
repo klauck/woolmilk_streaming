@@ -102,9 +102,8 @@ class DeploymentRunner:
         if self.mode == "local":
             return Path(__file__).resolve().parent
         else:
-            assert mode == "remote"
+            assert self.mode == "remote"
             return Path(self.get_server_config(host).base_dir)
-
 
     def get_server_config(self, host: str) -> Optional[ServerConfig]:
         """Get server config for host"""
@@ -133,7 +132,7 @@ class DeploymentRunner:
 
             if self.log_to_file:
                 remote_cmd = (
-                    f"mkdir -p {str(base_dir / logs)} && "
+                    f"mkdir -p {self.log_dir} && "
                     f"cd {str(base_dir)} && "
                     f"source {server_config.python_env}/bin/activate && "
                     + " ".join(cmd)
@@ -179,7 +178,9 @@ class DeploymentRunner:
                 cmd.append("--result-folder")
                 cmd.append(str(base_dir / sink.result_folder))
 
-            self._spawn_process("sink", sink.server_address, cmd, base_dir=base_dir, host=host)
+            self._spawn_process(
+                "sink", sink.server_address, cmd, base_dir=base_dir, host=host
+            )
 
     def run_processing_nodes(self):
         print("Starting processing nodes...")
@@ -201,7 +202,9 @@ class DeploymentRunner:
                 cmd.append("--query")
                 cmd.append(proc_node.query)
 
-            self._spawn_process("processing", proc_node.server_address, cmd, base_dir=base_dir, host=host)
+            self._spawn_process(
+                "processing", proc_node.server_address, cmd, base_dir=base_dir, host=host
+            )
         time.sleep(1)
 
     def run_source_nodes(self):
@@ -231,7 +234,9 @@ class DeploymentRunner:
                 cmd.append("--store-input")
                 cmd.append(str(base_dir / Path(source_node.store_input)))
 
-            self._spawn_process("source", source_node.stream, cmd, base_dir=base_dir, host=host)
+            self._spawn_process(
+                "source", source_node.stream, cmd, base_dir=base_dir, host=host
+            )
 
     def cleanup(self):
         print("\nCleaning up processes...")
