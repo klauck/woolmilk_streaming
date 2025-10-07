@@ -12,6 +12,78 @@ Sketch of data transfer from streaming sources to sink(s)
 ![streaming_scenario](https://github.com/user-attachments/assets/7dc973de-dd1b-469e-9dbb-7b92d0764640)
 
 
+## Installation
+
+Optionally create a virtual environment
+
+```
+python3 -m venv woolmilk_env
+source woolmilk_env/bin/activate
+```
+
+Install the requirements including DataFusion and PyArrow
+
+```
+pip install -r requirements.txt
+```
+
+Install the [nexmark data generator](https://github.com/risingwavelabs/nexmark-rs)
+
+```bash
+cargo install nexmark --features bin
+```
+
+## Run Tests
+
+```
+python -m unittest discover
+```
+
+
+## Run local example step-by-step
+
+**1. Start the sink server**
+
+```
+python woolmilk/sink_node.py --port 8027
+```
+
+**2. Start the processing node (in another terminal)**
+
+```
+python woolmilk/processing_node.py \
+  --port 8017 \
+  --forward-node 127.0.0.1:8027 \
+  --query "SELECT * FROM nexmark_data WHERE name > 'H'" \
+  --query-result-schema '{
+    "fields": [
+      {"name": "id", "type": "int64"},
+      {"name": "name", "type": "string"},
+      {"name": "email_address", "type": "string"},
+      {"name": "credit_card", "type": "string"},
+      {"name": "city", "type": "string"},
+      {"name": "state", "type": "string"},
+      {"name": "date_time", "type": "int64"},
+      {"name": "extra", "type": "string"}
+    ]
+  }'
+```
+
+**3. Start the source client (in another terminal)**
+
+```
+python woolmilk/source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017
+```
+
+## Run local example in one command
+
+A configuration is specified in JSON: [config.json](https://github.com/klauck/woolmilk_streaming/blob/main/scripts/config.json)
+
+```
+python woolmilk/run_cluster.py --config scripts/config.json
+```
+
+
 ## Resources
 
 ### Composable Data Management Systems
