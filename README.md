@@ -45,13 +45,13 @@ python -m unittest discover
 **1. Start the sink server**
 
 ```
-python sink_node.py --port 8027
+python woolmilk/sink_node.py --port 8027
 ```
 
 **2. Start the processing node (in another terminal)**
 
 ```
-python processing_node.py \
+python woolmilk/processing_node.py \
   --port 8017 \
   --forward-node 127.0.0.1:8027 \
   --query "SELECT * FROM nexmark_data WHERE name > 'H'" \
@@ -72,10 +72,10 @@ python processing_node.py \
 **3. Start the source client (in another terminal)**
 
 ```
-python source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017
+python woolmilk/source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017
 ```
 
-## Run local example in one command**
+## Run local example in one command
 
 A configuration is specified in JSON: [config.json](https://github.com/klauck/woolmilk_streaming/blob/main/scripts/config.json)
 
