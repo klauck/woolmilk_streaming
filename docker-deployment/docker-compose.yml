@@ -1,0 +1,48 @@
+services:
+   sink:
+      image: woolmilk-sink:latest
+      container_name: woolmilk-sink
+      environment:
+         - PORT=8027
+         - RESULT_FOLDER=/app/results
+      ports:
+         - "8027:8027"
+      volumes:
+         - ./results:/app/results
+      networks:
+         - woolmilk-net
+
+   processing:
+      image: woolmilk-processing:latest
+      container_name: woolmilk-processing
+      environment:
+         - PORT=8017
+         - FORWARD_NODE=sink:8027
+         - QUERY=SELECT * FROM nexmark_data
+      ports:
+         - "8017:8017"
+      depends_on:
+         - sink
+      networks:
+         - woolmilk-net
+
+   source:
+      image: woolmilk-source:latest
+      container_name: woolmilk-source
+      environment:
+         - STREAM=nexmark.person
+         - PROCESSING_NODES=processing:8017
+         - OVERALL_TUPLES=100000
+         - TUPLES_PER_BATCH=10000
+         - THREAD_COUNT=1
+      depends_on:
+         - processing
+      networks:
+         - woolmilk-net
+
+networks:
+   woolmilk-net:
+      driver: bridge
+
+volumes:
+   results:
