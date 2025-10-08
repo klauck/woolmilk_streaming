@@ -51,7 +51,7 @@ class Config:
     servers: Dict[str, ServerConfig] = field(default_factory=dict)
 
 
-def parse_config(json_path: str) -> Config:
+def parse_config(json_path: Path) -> Config:
     with open(json_path, "r") as f:
         data = json.load(f)
 
@@ -253,11 +253,12 @@ if __name__ == "__main__":
     parser.add_argument("--log-dir", default="logs", help="Log directory path")
     args = parser.parse_args()
 
-    if not os.path.exists(args.config):
+    config_path = Path(args.config)
+    if not config_path.exists():
         print(f"Config file {args.config} not found!")
         sys.exit(1)
 
-    config = parse_config(args.config)
+    config = parse_config(config_path)
     runner = DeploymentRunner(config, args.log_dir)
     runner.deploy()
     time.sleep(2)
