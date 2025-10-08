@@ -13,7 +13,6 @@ from typing import Dict, List, Optional
 @dataclass
 class ServerConfig:
     username: str
-    password: str
     base_dir: str
     python_env: str
 
