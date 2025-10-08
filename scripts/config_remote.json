@@ -1,6 +1,6 @@
 {
    "config": {
-      "servers": {
+      "remote_servers": {
          "192.168.2.63": {
             "username": "picocluster",
             "base_dir": "/home/picocluster/woolmilk/woolmilk",

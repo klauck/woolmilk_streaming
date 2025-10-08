@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 
 
 @dataclass
-class ServerConfig:
+class RemoteServerConfig:
     username: str
     base_dir: str
     python_env: str
@@ -48,7 +48,7 @@ class Config:
     sink_nodes: List[SinkNode]
     processing_nodes: List[ProcessingNode]
     source_nodes: List[SourceNode]
-    servers: Dict[str, ServerConfig] = field(default_factory=dict)
+    remote_servers: Dict[str, RemoteServerConfig] = field(default_factory=dict)
 
 
 def parse_config(json_path: Path) -> Config:
@@ -57,9 +57,9 @@ def parse_config(json_path: Path) -> Config:
 
     # Parse servers config
     servers = {}
-    if "config" in data and "servers" in data["config"]:
-        for host, server_data in data["config"]["servers"].items():
-            servers[host] = ServerConfig(**server_data)
+    if "config" in data and "remote_servers" in data["config"]:
+        for host, server_data in data["config"]["remote_servers"].items():
+            servers[host] = RemoteServerConfig(**server_data)
 
     sink_nodes = [SinkNode(**sn) for sn in data.get("sink_nodes", [])]
     processing_nodes = [ProcessingNode(**pn) for pn in data.get("processing_nodes", [])]
@@ -83,7 +83,7 @@ def parse_config(json_path: Path) -> Config:
         sink_nodes=sink_nodes,
         processing_nodes=processing_nodes,
         source_nodes=source_nodes,
-        servers=servers,
+        remote_servers=servers,
     )
 
 
@@ -100,24 +100,25 @@ class DeploymentRunner:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.log_dir = Path(log_dir) / timestamp
 
-    def get_python(self, host):
+    def get_python(self, host: str) -> str:
         if self.mode == "local":
             return "python"
         else:
-            return self.get_server_config(host).python_env + "/bin/python"
+            assert self.mode == "remote"
+            return self.get_remote_server_config(host).python_env + "/bin/python"
 
-    def get_base_dir(self, host):
+    def get_base_dir(self, host: str) -> Path:
         if self.mode == "local":
             return Path(__file__).resolve().parent
         else:
             assert self.mode == "remote"
-            return Path(self.get_server_config(host).base_dir)
+            return Path(self.get_remote_server_config(host).base_dir)
 
-    def get_server_config(self, host: str) -> Optional[ServerConfig]:
+    def get_remote_server_config(self, host: str) -> RemoteServerConfig:
         """Get server config for host"""
-        return self.config.servers.get(host)
+        return self.config.remote_servers[host]
 
-    def quote_if_remote(self, cmd_str):
+    def quote_if_remote(self, cmd_str: str) -> str:
         if self.mode == "remote":
             return shlex.quote(cmd_str)
         else:
@@ -134,13 +135,11 @@ class DeploymentRunner:
         if self.log_to_file:
             self.log_dir = base_dir / self.log_dir
             log_file = (
-                self.log_dir / f"{node_type}_{node_identifier.replace(':', '_')}.log"
+                self.log_dir / f"{node_type}__{node_identifier.replace(':', '_')}.log"
             )
-            if self.mode == "local":
-                self.log_dir.mkdir(parents=True, exist_ok=True)
 
         if self.mode == "remote" and host:
-            server_config = self.get_server_config(host)
+            server_config = self.get_remote_server_config(host)
             if not server_config:
                 raise RuntimeError(f"No server config found for host {host}")
 
@@ -154,10 +153,7 @@ class DeploymentRunner:
                 )
                 print(f"[{node_type}] Remote {host}, logs -> {log_file}")
             else:
-                remote_cmd = (
-                    f"cd {str(base_dir)} && "
-                    + " ".join(cmd)
-                )
+                remote_cmd = f"cd {str(base_dir)} && " + " ".join(cmd)
                 print(remote_cmd)
                 print(f"[{node_type}] Remote {host}, streaming logs to terminal")
 
@@ -166,6 +162,7 @@ class DeploymentRunner:
 
         else:  # local
             if self.log_to_file:
+                self.log_dir.mkdir(parents=True, exist_ok=True)
                 with open(log_file, "w") as log_handle:
                     print(f"[{node_type}] Local logs -> {log_file}")
                     proc = subprocess.Popen(
@@ -224,7 +221,7 @@ class DeploymentRunner:
 
     def run_source_nodes(self):
         print("Starting source nodes...")
-        for source_node in self.config.source_nodes:
+        for i, source_node in enumerate(self.config.source_nodes):
             processing_nodes = ",".join(source_node.processing_nodes)
 
             host = source_node.deployment_server
@@ -254,7 +251,7 @@ class DeploymentRunner:
                 cmd.append(source_node.generator_executable)
 
             self._spawn_process(
-                "source", source_node.stream, cmd, base_dir=base_dir, host=host
+                "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
             )
 
     def cleanup(self):
