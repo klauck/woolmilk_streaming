@@ -15,6 +15,8 @@ class RemoteServerConfig:
     username: str
     base_dir: str
     python_env: str
+    ssh_host: Optional[str] = None
+    ssh_port: Optional[int] = None
 
 
 @dataclass
@@ -132,6 +134,7 @@ class DeploymentRunner:
         base_dir: Path,
         host: Optional[str] = None,
     ) -> None:
+        log_file = None
         if self.log_to_file:
             self.log_dir = base_dir / self.log_dir
             log_file = (
@@ -143,7 +146,7 @@ class DeploymentRunner:
             if not server_config:
                 raise RuntimeError(f"No server config found for host {host}")
 
-            if self.log_to_file:
+            if self.log_to_file and log_file is not None:
                 remote_cmd = (
                     f"mkdir -p {self.log_dir} && "
                     f"cd {str(base_dir)} && "
@@ -157,11 +160,17 @@ class DeploymentRunner:
                 print(remote_cmd)
                 print(f"[{node_type}] Remote {host}, streaming logs to terminal")
 
-            ssh_cmd = ["ssh", f"{server_config.username}@{host}", remote_cmd]
+            ssh_cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+            if server_config.ssh_port:
+                ssh_cmd.extend(["-p", str(server_config.ssh_port)])
+
+            ssh_host = server_config.ssh_host if server_config.ssh_host else host
+
+            ssh_cmd.extend([f"{server_config.username}@{ssh_host}", remote_cmd])
             proc = subprocess.Popen(ssh_cmd)
 
         else:  # local
-            if self.log_to_file:
+            if self.log_to_file and log_file is not None:
                 self.log_dir.mkdir(parents=True, exist_ok=True)
                 with open(log_file, "w") as log_handle:
                     print(f"[{node_type}] Local logs -> {log_file}")
@@ -225,6 +234,9 @@ class DeploymentRunner:
             processing_nodes = ",".join(source_node.processing_nodes)
 
             host = source_node.deployment_server
+            
+            assert host is not None, "Source node must have a deployment_server specified"
+
             base_dir = self.get_base_dir(host)
 
             cmd = [
@@ -261,7 +273,13 @@ class DeploymentRunner:
             if self.mode == "remote":
                 if node_type in ["sink", "processing"]:
                     host, port = node_identifier.split(":")
-                    ssh_cmd = ["ssh", f"picocluster@{host}", f"fuser -k {port}/tcp"]
+                    server_config = self.get_remote_server_config(host)
+                    ssh_cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+                    if server_config.ssh_port:
+                        ssh_cmd.extend(["-p", str(server_config.ssh_port)])
+
+                    ssh_host = server_config.ssh_host if server_config.ssh_host else host
+                    ssh_cmd.extend([f"{server_config.username}@{ssh_host}", f"fuser -k {port}/tcp"])
                     print(ssh_cmd)
                     subprocess.run(ssh_cmd, check=True)
             try:
