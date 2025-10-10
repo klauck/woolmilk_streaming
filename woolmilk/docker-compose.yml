@@ -1,0 +1,30 @@
+services:
+   source-node:
+      image: woolmilk-streaming:latest
+      container_name: woolmilk-source
+      ports:
+         - "2201:22"
+      networks:
+         - woolmilk-net
+
+   processing-node:
+      image: woolmilk-streaming:latest
+      container_name: woolmilk-processing
+      ports:
+         - "2202:22"
+         - "8017:8017"
+      networks:
+         - woolmilk-net
+
+   sink-node:
+      image: woolmilk-streaming:latest
+      container_name: woolmilk-sink
+      ports:
+         - "2203:22"
+         - "8027:8027"
+      networks:
+         - woolmilk-net
+
+networks:
+   woolmilk-net:
+      driver: bridge
