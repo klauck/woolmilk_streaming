@@ -4,13 +4,12 @@ import threading
 import time
 
 import pyarrow as pa
-import pyarrow.compute as pc
 import pyarrow.flight
 from datafusion import SessionContext
 
 
 class ProcessingNode(pa.flight.FlightServerBase):
-    def __init__(self, location, forward_node, sql_query, schema_json, enable_windowing, window_size):
+    def __init__(self, location, forward_node, sql_query, schema_json, enable_windowing, window_size, window_slide=None):
         super().__init__(location)
         self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
         self.query = sql_query
@@ -27,8 +26,10 @@ class ProcessingNode(pa.flight.FlightServerBase):
         self.state = {}
         self.enable_windowing = enable_windowing
         self.window_size = window_size * 1000
+        self.window_slide = (window_slide * 1000) if window_slide else self.window_size
 
         self.lock = threading.Lock()
+        
         if self.enable_windowing:
             self.flusher_thread = threading.Thread(target=self.flusher, daemon=True)
             self.flusher_thread.start()
@@ -67,6 +68,21 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         else:
             raise NotImplementedError
+
+    def assign_windows(self, timestamp):
+        windows = []
+        latest_start = (timestamp // self.window_slide) * self.window_slide
+
+        current_start = latest_start
+        while current_start >= 0:
+            window_end = current_start + self.window_size
+            if current_start <= timestamp < window_end:
+                windows.append(current_start)
+                current_start -= self.window_slide
+            else:
+                break
+
+        return windows
 
     def flush_window(self, batches):
         if not batches:
@@ -119,23 +135,32 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
                 # Get timestamps (Unix timestamps in ms)
                 timestamps = batch.column("date_time").cast(pa.int64())
-                window_size_scalar = pa.scalar(self.window_size, pa.int64())
-                # Get window start timestamps by rounding down to nearest window size multiple
-                window_starts = pc.multiply(pc.floor(pc.divide(timestamps, window_size_scalar)), window_size_scalar)
+                timestamps_list = timestamps.to_pylist()
 
-                # Split the batch into contiguous slices per window using run-end encoding
-                ree = pc.run_end_encode(window_starts)
-                run_ends = ree.run_ends.to_pylist()
-                run_values = ree.values.to_pylist()
-
-                start = 0
-                for end, w_start_val in zip(run_ends, run_values):
-                    end = int(end)
-                    w_start_val = int(w_start_val)
-                    sub_batch = batch.slice(start, end - start)
+                # Group consecutive events with the same set of windows
+                current_windows = None
+                start_idx = 0
+                
+                for idx, ts in enumerate(timestamps_list):
+                    event_windows = self.assign_windows(ts)
+                    
+                    # If windows changed, flush the previous group
+                    if current_windows is not None and event_windows != current_windows:
+                        sub_batch = batch.slice(start_idx, idx - start_idx)
+                        # Add this sub_batch to all its windows
+                        with self.lock:
+                            for win_start in current_windows:
+                                self.state.setdefault(win_start, []).append(sub_batch)
+                        start_idx = idx
+                    
+                    current_windows = event_windows
+                
+                # Handle the last group
+                if current_windows is not None and start_idx < len(timestamps_list):
+                    sub_batch = batch.slice(start_idx, len(timestamps_list) - start_idx)
                     with self.lock:
-                        self.state.setdefault(w_start_val, []).append(sub_batch)
-                    start = end
+                        for win_start in current_windows:
+                            self.state.setdefault(win_start, []).append(sub_batch)
 
         else:
             ctx = SessionContext()
@@ -229,6 +254,12 @@ if __name__ == "__main__":
         default=3,
         help="Window size to use (in seconds)",
     )
+    parser.add_argument(
+        "--window-slide",
+        type=int,
+        default=None,
+        help="Slide interval for windows (in seconds). If not specified, defaults to window-size (tumbling).",
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -238,6 +269,11 @@ if __name__ == "__main__":
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
     print(f" Schema         : {args.query_result_schema}")
+    print(f" Windowing      : {args.enable_windowing}")
+    if args.enable_windowing:
+        print(f" Window Size    : {args.window_size}s")
+        slide = args.window_slide if args.window_slide else args.window_size
+        print(f" Window Slide   : {slide}s")
     print("=" * 40 + "\n")
 
     port = args.port
@@ -246,9 +282,16 @@ if __name__ == "__main__":
     schema_json = args.query_result_schema
     enable_windowing = args.enable_windowing
     window_size = args.window_size
+    window_slide = args.window_slide
 
     processing_node = ProcessingNode(
-        f"grpc://0.0.0.0:{port}", forward_node, sql_query, schema_json, enable_windowing, window_size
+        f"grpc://0.0.0.0:{port}", 
+        forward_node, 
+        sql_query, 
+        schema_json, 
+        enable_windowing, 
+        window_size,
+        window_slide=window_slide
     )
     print(f"WoolMilk processing node running on port {port}")
     processing_node.serve()
