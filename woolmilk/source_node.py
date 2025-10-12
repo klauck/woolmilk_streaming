@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -49,11 +50,19 @@ def generate_table(
 
 
 def send_data(thread_id, schema, batches, processing_nodes):
+    source_id = f"{socket.gethostname()}:{thread_id}".encode('utf-8')
+
+    clients = []
     writers = []
+
     for processing_node in processing_nodes:
         client = pa.flight.FlightClient(
             f"grpc://{processing_node[0]}:{processing_node[1]}"
         )
+        clients.append(client)
+
+        client.do_action(pa.flight.Action("register", source_id))
+
         writer, _ = client.do_put(
             pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
         )
@@ -62,15 +71,19 @@ def send_data(thread_id, schema, batches, processing_nodes):
     start = time.time()
     send_times = []
     total_bytes = 0
+
     for i, batch in enumerate(batches):
         send_start = time.time()
-        writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
+        writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, source_id)
         total_bytes += batch.nbytes
         send_end = time.time()
         send_times.append((send_start, send_end))
 
     for writer in writers:
         writer.done_writing()
+
+    for client in clients:
+        client.do_action(pa.flight.Action("completed", source_id))
 
     end = time.time()
 

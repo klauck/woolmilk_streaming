@@ -22,12 +22,14 @@ class ProcessingNode(pa.flight.FlightServerBase):
         self.predefined_schema = self._parse_schema(schema_json)
         print(self.predefined_schema)
 
+        self.active_sources = {}
+
         self.state = {}
         self.enable_windowing = enable_windowing
         self.window_size = window_size * 1000
 
+        self.lock = threading.Lock()
         if self.enable_windowing:
-            self.lock = threading.Lock()
             self.flusher_thread = threading.Thread(target=self.flusher, daemon=True)
             self.flusher_thread.start()
 
@@ -50,6 +52,21 @@ class ProcessingNode(pa.flight.FlightServerBase):
             fields.append(pa.field(field_name, pa_type))
 
         return pa.schema(fields)
+
+    def do_action(self, context, action):
+        source_id = action.body.to_pybytes().decode('utf-8')
+        if action.type == "register":
+            with self.lock:
+                self.active_sources[source_id] = {"watermark": 0, "is_finished": False}
+            yield pa.flight.Result(b"registered")
+
+        elif action.type == "complete":
+            with self.lock:
+                self.active_sources[source_id]["is_finished"] = True
+            yield pa.flight.Result(b"completed")
+
+        else:
+            raise NotImplementedError
 
     def flush_window(self, batches):
         if not batches:
@@ -74,19 +91,31 @@ class ProcessingNode(pa.flight.FlightServerBase):
     def flusher(self):
         while True:
             to_flush = []
-            now_ms = time.time() * 1000
+
             with self.lock:
-                for window_start, batches in list(self.state.items()):
-                    if now_ms >= window_start + self.window_size:
-                        to_flush.append(self.state.pop(window_start))
+                active_watermarks = [src["watermark"] for src in self.active_sources.values() if not src["is_finished"]]
+
+                if active_watermarks:
+                    global_watermark = min(active_watermarks)
+
+                    for window_start in list(self.state.keys()):
+                        window_end = window_start + self.window_size
+                        if window_end <= global_watermark:
+                            to_flush.append((self.state.pop(window_start)))
+
             for batches in to_flush:
                 self.flush_window(batches)
+
             time.sleep(0.1)
 
     def do_put(self, context, descriptor, reader, writer):
         if self.enable_windowing:
             for chunk in reader:
+                source_id = chunk.app_metadata.decode("utf-8")
                 batch = chunk.data
+                watermark = batch.column("date_time")[-1].as_py()
+                with self.lock:
+                    self.active_sources[source_id]["watermark"] = watermark
 
                 # Get timestamps (Unix timestamps in ms)
                 timestamps = batch.column("date_time").cast(pa.int64())
