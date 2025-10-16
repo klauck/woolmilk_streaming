@@ -160,7 +160,7 @@ class DeploymentRunner:
                 print(remote_cmd)
                 print(f"[{node_type}] Remote {host}, streaming logs to terminal")
 
-            ssh_cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+            ssh_cmd = ["ssh"]
             if server_config.ssh_port:
                 ssh_cmd.extend(["-p", str(server_config.ssh_port)])
 
@@ -274,7 +274,7 @@ class DeploymentRunner:
                 if node_type in ["sink", "processing"]:
                     host, port = node_identifier.split(":")
                     server_config = self.get_remote_server_config(host)
-                    ssh_cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+                    ssh_cmd = ["ssh"]
                     if server_config.ssh_port:
                         ssh_cmd.extend(["-p", str(server_config.ssh_port)])
 
