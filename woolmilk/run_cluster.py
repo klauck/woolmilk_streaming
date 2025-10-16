@@ -91,13 +91,14 @@ def parse_config(json_path: Path) -> Config:
 
 class DeploymentRunner:
     def __init__(
-        self, config: Config, log_dir: str, mode: str = "local", log_to_file: bool = False
+        self, config: Config, log_dir: str, mode: str = "local", log_to_file: bool = False, local_log_dir: Optional[str] = None
     ):
         self.config = config
         self.mode = mode
         self.processes = []
 
         self.log_to_file = log_to_file
+        self.local_log_dir = Path(local_log_dir) if local_log_dir else None
         if log_to_file:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.log_dir = Path(log_dir) / timestamp
@@ -150,7 +151,6 @@ class DeploymentRunner:
                 remote_cmd = (
                     f"mkdir -p {self.log_dir} && "
                     f"cd {str(base_dir)} && "
-                    f"source {server_config.python_env}/bin/activate && "
                     + " ".join(cmd)
                     + f" > {log_file} 2>&1"
                 )
@@ -160,13 +160,9 @@ class DeploymentRunner:
                 print(remote_cmd)
                 print(f"[{node_type}] Remote {host}, streaming logs to terminal")
 
-            ssh_cmd = ["ssh"]
-            if server_config.ssh_port:
-                ssh_cmd.extend(["-p", str(server_config.ssh_port)])
+            ssh_cmd = self.get_ssh_connection_command(server_config, host)
 
-            ssh_host = server_config.ssh_host if server_config.ssh_host else host
-
-            ssh_cmd.extend([f"{server_config.username}@{ssh_host}", remote_cmd])
+            ssh_cmd.extend([remote_cmd])
             proc = subprocess.Popen(ssh_cmd)
 
         else:  # local
@@ -266,6 +262,52 @@ class DeploymentRunner:
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
             )
 
+    def get_ssh_connection_command(self, config: RemoteServerConfig, legacy_host: str) -> List[str]:
+        ssh_cmd = ["ssh"]
+        if config.ssh_port:
+            ssh_cmd.extend(["-p", str(config.ssh_port)])
+        ssh_host = config.ssh_host if config.ssh_host else legacy_host
+        ssh_cmd.append(f"{config.username}@{ssh_host}")
+        return ssh_cmd
+
+    def copy_remote_logs(self):
+        assert self.mode == "remote" and self.log_to_file and self.local_log_dir is not None, "can only copy logs in remote mode with log_to_file enabled and local_log_dir specified"
+        
+        print("\nCopying logs from remote servers...")
+        self.local_log_dir.mkdir(parents=True, exist_ok=True)
+
+        hosts = set(self.config.remote_servers.keys())
+        
+        for host in hosts:
+            try:
+                server_config = self.get_remote_server_config(host)
+                remote_log_dir = self.get_base_dir(host) / self.log_dir
+                
+                # get list of log files
+                ssh_cmd = self.get_ssh_connection_command(server_config, host)
+                ssh_cmd.extend([
+                    f"ls {remote_log_dir}/*.log 2>/dev/null"
+                ])
+                
+                print(f"    Copying logs from {host}...")
+                result = subprocess.run(ssh_cmd, capture_output=True, text=True)
+                if result.returncode == 0 and result.stdout.strip():
+                    log_files = result.stdout.strip().split('\n')
+                    for log_file in log_files:
+                        if log_file.strip():
+                            filename = Path(log_file).name
+                            cat_cmd = self.get_ssh_connection_command(server_config, host)
+                            cat_cmd.extend([f"cat {log_file}"])
+                            with open(self.local_log_dir / filename, "w") as f:
+                                subprocess.run(cat_cmd, stdout=f, text=True)
+                            print(f"      Copied {filename}")
+                else:
+                    print(f"    No logs found on {host}")
+            except Exception as e:
+                print(f"    Warning: failed to copy logs from {host}: {e}")
+        
+        print(f"    Logs copied to: {self.local_log_dir}")
+
     def cleanup(self):
         print("\nCleaning up processes...")
         for node_type, node_identifier, proc in self.processes:
@@ -274,12 +316,8 @@ class DeploymentRunner:
                 if node_type in ["sink", "processing"]:
                     host, port = node_identifier.split(":")
                     server_config = self.get_remote_server_config(host)
-                    ssh_cmd = ["ssh"]
-                    if server_config.ssh_port:
-                        ssh_cmd.extend(["-p", str(server_config.ssh_port)])
-
-                    ssh_host = server_config.ssh_host if server_config.ssh_host else host
-                    ssh_cmd.extend([f"{server_config.username}@{ssh_host}", f"fuser -k {port}/tcp"])
+                    ssh_cmd = self.get_ssh_connection_command(server_config, host)
+                    ssh_cmd.extend([f"fuser -k {port}/tcp"])
                     print(ssh_cmd)
                     subprocess.run(ssh_cmd, check=True)
             try:
@@ -294,6 +332,8 @@ class DeploymentRunner:
                         proc.kill()
                 except Exception as kill_err:
                     print(f"    Error: could not kill {proc} ({kill_err})")
+                    
+        self.copy_remote_logs()
 
     def deploy(self):
         """Deploy the entire system"""
@@ -323,7 +363,16 @@ if __name__ == "__main__":
         action="store_true",
         help="Redirect logs to files instead of terminal",
     )
+    parser.add_argument(
+        "--local-log-dir",
+        help="Local log dir where logs are stored when in remote mode",
+    )
+    
     args = parser.parse_args()
+
+    if args.log_to_file and args.mode == "remote" and not args.local_log_dir:
+        print("Error: --local-log-dir must be specified when using --log-to-file in remote mode")
+        sys.exit(1)
 
     config_path = Path(args.config)
     if not config_path.exists():
@@ -332,7 +381,8 @@ if __name__ == "__main__":
 
     config = parse_config(args.config)
     runner = DeploymentRunner(
-        config, args.log_dir, mode=args.mode, log_to_file=args.log_to_file
+        config, args.log_dir, mode=args.mode, log_to_file=args.log_to_file,
+        local_log_dir=args.local_log_dir if args.local_log_dir else None
     )
     runner.deploy()
 
