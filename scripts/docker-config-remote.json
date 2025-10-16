@@ -2,22 +2,22 @@
    "config": {
       "remote_servers": {
          "woolmilk-source": {
-            "username": "root",
-            "base_dir": "/app/woolmilk",
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
             "python_env": "/usr/local",
             "ssh_host": "localhost",
             "ssh_port": 2201
          },
          "woolmilk-processing": {
-            "username": "root",
-            "base_dir": "/app/woolmilk",
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
             "python_env": "/usr/local",
             "ssh_host": "localhost",
             "ssh_port": 2202
          },
          "woolmilk-sink": {
-            "username": "root",
-            "base_dir": "/app/woolmilk",
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
             "python_env": "/usr/local",
             "ssh_host": "localhost",
             "ssh_port": 2203
