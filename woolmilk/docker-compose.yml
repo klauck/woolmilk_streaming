@@ -12,7 +12,7 @@ services:
       container_name: woolmilk-processing
       ports:
          - "2202:22"
-         - "8917:8917"
+         - "9017:9017"
       networks:
          - woolmilk-net
 
@@ -21,7 +21,7 @@ services:
       container_name: woolmilk-sink
       ports:
          - "2203:22"
-         - "8927:8927"
+         - "9027:9027"
       networks:
          - woolmilk-net
 
