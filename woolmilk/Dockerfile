@@ -23,20 +23,21 @@ RUN mkdir -p /home/picocluster/.ssh && \
     chmod 700 /home/picocluster/.ssh && \
     chmod 600 /home/picocluster/.ssh/authorized_keys
 
-RUN cat > /etc/ssh/sshd_config << 'EOF'
-Port 22
-PermitRootLogin no
-PasswordAuthentication no
-PubkeyAuthentication yes
-AuthorizedKeysFile .ssh/authorized_keys
-AllowUsers picocluster
-ChallengeResponseAuthentication no
-UsePAM yes
-HostKey /etc/ssh/ssh_host_rsa_key
-HostKey /etc/ssh/ssh_host_ecdsa_key
-HostKey /etc/ssh/ssh_host_ed25519_key
-StrictModes no
-EOF
+RUN mkdir -p /etc/ssh/sshd_config.d && \
+    printf "%s\n" \
+      "Port 22" \
+      "PermitRootLogin no" \
+      "PasswordAuthentication no" \
+      "PubkeyAuthentication yes" \
+      "AuthorizedKeysFile .ssh/authorized_keys" \
+      "AllowUsers picocluster" \
+      "ChallengeResponseAuthentication no" \
+      "UsePAM yes" \
+      "HostKey /etc/ssh/ssh_host_rsa_key" \
+      "HostKey /etc/ssh/ssh_host_ecdsa_key" \
+      "HostKey /etc/ssh/ssh_host_ed25519_key" \
+      "StrictModes yes" \
+    > /etc/ssh/sshd_config.d/picocluster.conf
 
 # set again the permissions every time container starts
 RUN echo '#!/bin/bash\n\

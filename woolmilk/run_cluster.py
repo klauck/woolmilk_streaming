@@ -234,7 +234,6 @@ class DeploymentRunner:
             processing_nodes = ",".join(source_node.processing_nodes)
 
             host = source_node.deployment_server
-            
             assert host is not None, "Source node must have a deployment_server specified"
 
             base_dir = self.get_base_dir(host)
