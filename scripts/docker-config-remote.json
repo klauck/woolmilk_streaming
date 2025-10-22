@@ -26,13 +26,13 @@
    },
    "sink_nodes": [
       {
-         "server_address": "woolmilk-sink:8027"
+         "server_address": "woolmilk-sink:9027"
       }
    ],
    "processing_nodes": [
       {
-         "server_address": "woolmilk-processing:8017",
-         "forward_node": "woolmilk-sink:8027",
+         "server_address": "woolmilk-processing:9017",
+         "forward_node": "woolmilk-sink:9027",
          "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
          "query_result_schema": {
             "fields": [
@@ -50,7 +50,7 @@
    ],
    "source_nodes": [
       {
-         "processing_nodes": ["woolmilk-processing:8017"],
+         "processing_nodes": ["woolmilk-processing:9017"],
          "stream": "nexmark.person",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,

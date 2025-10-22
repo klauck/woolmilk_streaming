@@ -40,7 +40,7 @@ class SourceNode:
     overall_tuples: int
     tuples_per_batch: int
     thread_count: int = 1
-    deployment_server: Optional[str] = None
+    deployment_server: Optional[str] = "127.0.0.1"
     store_input: Optional[str] = None
     generator_executable: Optional[str] = None
 
@@ -68,18 +68,7 @@ def parse_config(json_path: Path) -> Config:
 
     source_nodes = []
     for sn in data.get("source_nodes", []):
-        source_nodes.append(
-            SourceNode(
-                processing_nodes=sn.get("processing_nodes"),
-                stream=sn.get("stream"),
-                overall_tuples=sn.get("overall_tuples"),
-                tuples_per_batch=sn.get("tuples_per_batch"),
-                thread_count=sn.get("thread_count", 1),
-                deployment_server=sn.get("deployment_server"),
-                store_input=sn.get("store_input"),
-                generator_executable=sn.get("generator_executable"),
-            )
-        )
+        source_nodes.append(SourceNode(**sn))
 
     return Config(
         sink_nodes=sink_nodes,
@@ -230,7 +219,6 @@ class DeploymentRunner:
             processing_nodes = ",".join(source_node.processing_nodes)
 
             host = source_node.deployment_server
-            
             assert host is not None, "Source node must have a deployment_server specified"
 
             base_dir = self.get_base_dir(host)
