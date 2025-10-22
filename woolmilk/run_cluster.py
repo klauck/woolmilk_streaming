@@ -92,18 +92,18 @@ class DeploymentRunner:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.log_dir = Path(log_dir) / timestamp
 
-    def get_python(self, host: str) -> str:
+    def get_python(self, host: Optional[str]) -> str:
         if self.mode == "local":
             return "python"
         else:
-            assert self.mode == "remote"
+            assert self.mode == "remote" and host is not None
             return self.get_remote_server_config(host).python_env + "/bin/python"
 
-    def get_base_dir(self, host: str) -> Path:
+    def get_base_dir(self, host: Optional[str]) -> Path:
         if self.mode == "local":
             return Path(__file__).resolve().parent
         else:
-            assert self.mode == "remote"
+            assert self.mode == "remote" and host is not None
             return Path(self.get_remote_server_config(host).base_dir)
 
     def get_remote_server_config(self, host: str) -> RemoteServerConfig:
@@ -125,12 +125,13 @@ class DeploymentRunner:
         host: Optional[str] = None,
     ) -> None:
         log_file = None
+        log_dir: Optional[Path] = None
         if self.log_to_file:
-            self.log_dir = base_dir / self.log_dir
+            log_dir = base_dir / self.log_dir
             log_file = (
-                self.log_dir / f"{node_type}__{node_identifier.replace(':', '_')}.log"
+                log_dir / f"{node_type}__{node_identifier.replace(':', '_')}.log"
             )
-
+    
         if self.mode == "remote" and host:
             server_config = self.get_remote_server_config(host)
             if not server_config:
@@ -138,7 +139,7 @@ class DeploymentRunner:
 
             if self.log_to_file and log_file is not None:
                 remote_cmd = (
-                    f"mkdir -p {self.log_dir} && "
+                    f"mkdir -p {log_dir} && "
                     f"cd {str(base_dir)} && "
                     + " ".join(cmd)
                     + f" > {log_file} 2>&1"
@@ -155,8 +156,8 @@ class DeploymentRunner:
             proc = subprocess.Popen(ssh_cmd)
 
         else:  # local
-            if self.log_to_file and log_file is not None:
-                self.log_dir.mkdir(parents=True, exist_ok=True)
+            if self.log_to_file and log_file is not None and log_dir is not None:
+                log_dir.mkdir(parents=True, exist_ok=True)
                 with open(log_file, "w") as log_handle:
                     print(f"[{node_type}] Local logs -> {log_file}")
                     proc = subprocess.Popen(
@@ -219,7 +220,6 @@ class DeploymentRunner:
             processing_nodes = ",".join(source_node.processing_nodes)
 
             host = source_node.deployment_server
-            assert host is not None, "Source node must have a deployment_server specified"
 
             base_dir = self.get_base_dir(host)
 
@@ -271,26 +271,20 @@ class DeploymentRunner:
                 server_config = self.get_remote_server_config(host)
                 remote_log_dir = self.get_base_dir(host) / self.log_dir
                 
-                # get list of log files
-                ssh_cmd = self.get_ssh_connection_command(server_config, host)
-                ssh_cmd.extend([
-                    f"ls {remote_log_dir}/*.log 2>/dev/null"
-                ])
+                scp_cmd = ["scp", "-r"]
+                if server_config.ssh_port:
+                    scp_cmd.extend(["-P", str(server_config.ssh_port)])
+                
+                ssh_host = server_config.ssh_host if server_config.ssh_host else host
+                remote_path = f"{server_config.username}@{ssh_host}:{remote_log_dir}"
+                scp_cmd.extend([remote_path, str(self.local_log_dir)])
                 
                 print(f"    Copying logs from {host}...")
-                result = subprocess.run(ssh_cmd, capture_output=True, text=True)
-                if result.returncode == 0 and result.stdout.strip():
-                    log_files = result.stdout.strip().split('\n')
-                    for log_file in log_files:
-                        if log_file.strip():
-                            filename = Path(log_file).name
-                            cat_cmd = self.get_ssh_connection_command(server_config, host)
-                            cat_cmd.extend([f"cat {log_file}"])
-                            with open(self.local_log_dir / filename, "w") as f:
-                                subprocess.run(cat_cmd, stdout=f, text=True)
-                            print(f"      Copied {filename}")
+                result = subprocess.run(scp_cmd, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"      Copied logs successfully")
                 else:
-                    print(f"    No logs found on {host}")
+                    print(f"    Error copying from {host}: {result.stderr}")
             except Exception as e:
                 print(f"    Warning: failed to copy logs from {host}: {e}")
         
@@ -321,7 +315,8 @@ class DeploymentRunner:
                 except Exception as kill_err:
                     print(f"    Error: could not kill {proc} ({kill_err})")
                     
-        self.copy_remote_logs()
+        if self.mode == "remote" and self.log_to_file:
+            self.copy_remote_logs()
 
     def deploy(self):
         """Deploy the entire system"""

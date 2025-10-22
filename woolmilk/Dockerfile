@@ -37,6 +37,7 @@ RUN mkdir -p /etc/ssh/sshd_config.d && \
       "HostKey /etc/ssh/ssh_host_ecdsa_key" \
       "HostKey /etc/ssh/ssh_host_ed25519_key" \
       "StrictModes yes" \
+      "Subsystem sftp /usr/lib/openssh/sftp-server" \
     > /etc/ssh/sshd_config.d/picocluster.conf
 
 # set again the permissions every time container starts
