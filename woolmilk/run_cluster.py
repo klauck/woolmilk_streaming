@@ -267,7 +267,9 @@ class DeploymentRunner:
                         ssh_cmd.extend(["-p", str(server_config.ssh_port)])
 
                     ssh_host = server_config.ssh_host if server_config.ssh_host else host
-                    ssh_cmd.extend([f"{server_config.username}@{ssh_host}", f"fuser -k {port}/tcp"])
+                    ssh_cmd.extend(
+                        [f"{server_config.username}@{ssh_host}", f"fuser -k {port}/tcp"]
+                    )
                     print(ssh_cmd)
                     subprocess.run(ssh_cmd, check=True)
             try:
