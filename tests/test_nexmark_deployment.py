@@ -55,9 +55,7 @@ class TestNexmarkDeployment(unittest.TestCase):
 
         # Calculate expected result
         ctx = datafusion.SessionContext()
-        ctx.register_parquet(
-            "bid", self.test_dir / "input" / "test_Q1_bid.parquet"
-        )
+        ctx.register_parquet("bid", self.test_dir / "input" / "test_Q1_bid.parquet")
         expected = ctx.sql(
             "SELECT auction, price * 0.85 AS price, bidder, date_time FROM Bid"
         ).collect()

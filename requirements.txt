@@ -1,4 +1,5 @@
-datafusion
+datafusion==46.0.0
+pyarrow==20.0.0
 
 # remote deployment
 paramiko

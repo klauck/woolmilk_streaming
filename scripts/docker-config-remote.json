@@ -1,0 +1,61 @@
+{
+   "config": {
+      "remote_servers": {
+         "woolmilk-source": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
+            "python_env": "/usr/local",
+            "ssh_host": "localhost",
+            "ssh_port": 2201
+         },
+         "woolmilk-processing": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
+            "python_env": "/usr/local",
+            "ssh_host": "localhost",
+            "ssh_port": 2202
+         },
+         "woolmilk-sink": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
+            "python_env": "/usr/local",
+            "ssh_host": "localhost",
+            "ssh_port": 2203
+         }
+      }
+   },
+   "sink_nodes": [
+      {
+         "server_address": "woolmilk-sink:9027"
+      }
+   ],
+   "processing_nodes": [
+      {
+         "server_address": "woolmilk-processing:9017",
+         "forward_node": "woolmilk-sink:9027",
+         "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+         "query_result_schema": {
+            "fields": [
+               { "name": "id", "type": "int64" },
+               { "name": "name", "type": "string" },
+               { "name": "email_address", "type": "string" },
+               { "name": "credit_card", "type": "string" },
+               { "name": "city", "type": "string" },
+               { "name": "state", "type": "string" },
+               { "name": "date_time", "type": "int64" },
+               { "name": "extra", "type": "string" }
+            ]
+         }
+      }
+   ],
+   "source_nodes": [
+      {
+         "processing_nodes": ["woolmilk-processing:9017"],
+         "stream": "nexmark.person",
+         "overall_tuples": 1000,
+         "tuples_per_batch": 100,
+         "thread_count": 1,
+         "deployment_server": "woolmilk-source"
+      }
+   ]
+}
