@@ -10,11 +10,12 @@ from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.flight
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 
 def generate_table(
-    num_rows=10**6, event_type="person", generator_executable="nexmark", offset=0, step=1
+    num_rows=10**4, event_type="person", generator_executable="nexmark", offset=0, step=1
 ):
     cmd = [
         generator_executable,
@@ -49,41 +50,31 @@ def generate_table(
     return pa.Table.from_pylist(records)
 
 
-def send_data(thread_id, schema, batches, processing_nodes):
-    source_id = f"{socket.gethostname()}:{thread_id}".encode('utf-8')
-
-    clients = []
+def send_data(thread_id, schema, batches, processing_nodes, event_type="person"):
     writers = []
-
     for processing_node in processing_nodes:
         client = pa.flight.FlightClient(
             f"grpc://{processing_node[0]}:{processing_node[1]}"
         )
-        clients.append(client)
-
-        client.do_action(pa.flight.Action("register", source_id))
-
         writer, _ = client.do_put(
-            pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
+            pa.flight.FlightDescriptor.for_path(event_type, f"{socket.gethostname()}:{thread_id}"), schema
         )
         writers.append(writer)
 
     start = time.time()
     send_times = []
     total_bytes = 0
-
     for i, batch in enumerate(batches):
         send_start = time.time()
-        writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, source_id)
+        max_timestamp = pc.max(batch.column("date_time"))
+        watermark = str(max_timestamp).encode("utf-8")
+        writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, watermark)
         total_bytes += batch.nbytes
         send_end = time.time()
         send_times.append((send_start, send_end))
 
     for writer in writers:
         writer.done_writing()
-
-    for client in clients:
-        client.do_action(pa.flight.Action("completed", source_id))
 
     end = time.time()
 
@@ -156,6 +147,7 @@ if __name__ == "__main__":
     print(f" Processing Nodes           : {args.processing_nodes}")
     print(f" Thread Count               : {args.thread_count}")
     print(f" Store Input                : {args.store_input}")
+    print(f" Generator Executable       : {args.generator_executable}")
     print("=" * 40 + "\n")
 
     processing_nodes = []
@@ -171,10 +163,10 @@ if __name__ == "__main__":
 
     table = generate_table(
         num_rows=args.overall_tuples,
-        event_type=event_type,
         generator_executable=args.generator_executable,
         offset=args.offset,
         step=args.step,
+        event_type=event_type
     )
     batches = table.to_batches(max_chunksize=args.tuples_per_batch)
 
@@ -195,6 +187,7 @@ if __name__ == "__main__":
                 table.schema,
                 batches[thread_id :: args.thread_count],
                 processing_nodes,
+                event_type
             ),
         )
         threads.append(t)
