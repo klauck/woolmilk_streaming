@@ -20,7 +20,7 @@ docker build -t woolmilk-streaming:latest .
 rm id_rsa.pub
 
 echo "Starting WoolMilk Docker containers..."
-docker-compose up -d
+docker compose up -d
 
 echo "Waiting for 5 seconds for containers to start..."
 sleep 5

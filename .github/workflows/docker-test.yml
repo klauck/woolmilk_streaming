@@ -30,4 +30,4 @@ jobs:
            if: always()
            run: |
               cd woolmilk
-              docker-compose down
+              docker compose down
