@@ -80,8 +80,12 @@ def parse_config(json_path: Path) -> Config:
 
 class DeploymentRunner:
     def __init__(
-        self, config: Config, log_dir: str, mode: str = "local", 
-        log_to_file: bool = False, local_log_dir: Optional[str] = None,
+        self,
+        config: Config,
+        log_dir: str,
+        mode: str = "local",
+        log_to_file: bool = False,
+        local_log_dir: Optional[str] = None,
         local_results_dir: Optional[str] = None,
     ):
         self.config = config
@@ -131,10 +135,8 @@ class DeploymentRunner:
         log_dir: Optional[Path] = None
         if self.log_to_file:
             log_dir = base_dir / self.log_dir
-            log_file = (
-                log_dir / f"{node_type}__{node_identifier.replace(':', '_')}.log"
-            )
-    
+            log_file = log_dir / f"{node_type}__{node_identifier.replace(':', '_')}.log"
+
         if self.mode == "remote" and host:
             server_config = self.get_remote_server_config(host)
             if not server_config:
@@ -143,9 +145,7 @@ class DeploymentRunner:
             if self.log_to_file and log_file is not None:
                 remote_cmd = (
                     f"mkdir -p {log_dir} && "
-                    f"cd {str(base_dir)} && "
-                    + " ".join(cmd)
-                    + f" > {log_file} 2>&1"
+                    f"cd {str(base_dir)} && " + " ".join(cmd) + f" > {log_file} 2>&1"
                 )
                 print(f"[{node_type}] Remote {host}, logs -> {log_file}")
             else:
@@ -253,17 +253,23 @@ class DeploymentRunner:
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
             )
 
-    def get_ssh_connection_command(self, config: RemoteServerConfig, legacy_host: str) -> List[str]:
+    def get_ssh_connection_command(
+        self, config: RemoteServerConfig, legacy_host: str
+    ) -> List[str]:
         ssh_cmd = ["ssh"]
         if config.ssh_port:
-            ssh_cmd.extend(["-p", str(config.ssh_port)])
+            ssh_cmd.extend(["-o", "StrictHostKeyChecking=no", "-p", str(config.ssh_port)])
         ssh_host = config.ssh_host if config.ssh_host else legacy_host
         ssh_cmd.append(f"{config.username}@{ssh_host}")
         return ssh_cmd
 
     def build_scp_command(
-            self, config: RemoteServerConfig, remote_path: str, local_path: str, legacy_host: str
-        ) -> List[str]:
+        self,
+        config: RemoteServerConfig,
+        remote_path: str,
+        local_path: str,
+        legacy_host: str,
+    ) -> List[str]:
         scp_cmd = ["scp", "-r"]
 
         if config.ssh_port:
@@ -276,7 +282,9 @@ class DeploymentRunner:
         return scp_cmd
 
     def copy_remote_results(self):
-        assert self.mode == "remote" and self.local_results_dir is not None, "can only copy results in remote mode with local_results_dir specified"
+        assert (
+            self.mode == "remote" and self.local_results_dir is not None
+        ), "can only copy results in remote mode with local_results_dir specified"
 
         print("\nCopying results from sink nodes...")
         self.local_results_dir.mkdir(parents=True, exist_ok=True)
@@ -286,7 +294,9 @@ class DeploymentRunner:
             try:
                 server_config = self.get_remote_server_config(host)
 
-                assert sink.result_folder is not None, "sink result_folder must be specified to copy results"
+                assert (
+                    sink.result_folder is not None
+                ), "sink result_folder must be specified to copy results"
 
                 remote_result_folder = self.get_base_dir(host) / Path(sink.result_folder)
 
@@ -294,37 +304,35 @@ class DeploymentRunner:
                     server_config,
                     str(remote_result_folder),
                     str(self.local_results_dir),
-                    host
+                    host,
                 )
 
                 print(f"    Copying results from {host}...")
                 result = subprocess.run(scp_cmd, capture_output=True, text=True)
                 if result.returncode == 0:
-                    print(f"      Copied results successfully")
+                    print("      Copied results successfully")
                 else:
                     print(f"    Error copying from {host}: {result.stderr}")
             except Exception as e:
                 print(f"    Warning: failed to copy results from {host}: {e}")
-        
 
     def copy_remote_logs(self):
-        assert self.mode == "remote" and self.log_to_file and self.local_log_dir is not None, "can only copy logs in remote mode with log_to_file enabled and local_log_dir specified"
-        
+        assert (
+            self.mode == "remote" and self.log_to_file and self.local_log_dir is not None
+        ), "can only copy logs in remote mode with log_to_file enabled and local_log_dir specified"
+
         print("\nCopying logs from remote servers...")
         self.local_log_dir.mkdir(parents=True, exist_ok=True)
 
         hosts = set(self.config.remote_servers.keys())
-        
+
         for host in hosts:
             try:
                 server_config = self.get_remote_server_config(host)
                 remote_log_dir = self.get_base_dir(host) / self.log_dir
 
                 scp_cmd = self.build_scp_command(
-                    server_config,
-                    str(remote_log_dir),
-                    str(self.local_log_dir),
-                    host
+                    server_config, str(remote_log_dir), str(self.local_log_dir), host
                 )
 
                 print(f"    Copying logs from {host}...")
@@ -335,7 +343,7 @@ class DeploymentRunner:
                     print(f"    Error copying from {host}: {result.stderr}")
             except Exception as e:
                 print(f"    Warning: failed to copy logs from {host}: {e}")
-        
+
         print(f"    Logs copied to: {self.local_log_dir}")
 
     def cleanup(self):
@@ -362,7 +370,7 @@ class DeploymentRunner:
                         proc.kill()
                 except Exception as kill_err:
                     print(f"    Error: could not kill {proc} ({kill_err})")
-                    
+
         if self.mode == "remote":
             if self.log_to_file and self.local_log_dir is not None:
                 self.copy_remote_logs()
@@ -384,6 +392,7 @@ class DeploymentRunner:
             print(f"Error during deployment: {e}")
             self.cleanup()
             sys.exit(1)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Streaming Deployment")
@@ -410,7 +419,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.log_to_file and args.mode == "remote" and not args.local_log_dir:
-        print("Error: --local-log-dir must be specified when using --log-to-file in remote mode")
+        print(
+            "Error: --local-log-dir must be specified when using --log-to-file in remote mode"
+        )
         sys.exit(1)
 
     config_path = Path(args.config)
@@ -420,9 +431,12 @@ if __name__ == "__main__":
 
     config = parse_config(args.config)
     runner = DeploymentRunner(
-        config, args.log_dir, mode=args.mode, log_to_file=args.log_to_file,
+        config,
+        args.log_dir,
+        mode=args.mode,
+        log_to_file=args.log_to_file,
         local_log_dir=args.local_log_dir if args.local_log_dir else None,
-        local_results_dir=args.local_results_dir if args.local_results_dir else None
+        local_results_dir=args.local_results_dir if args.local_results_dir else None,
     )
     runner.deploy()
 

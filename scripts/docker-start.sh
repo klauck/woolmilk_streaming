@@ -26,9 +26,9 @@ echo "Waiting for 5 seconds for containers to start..."
 sleep 5
 
 echo "Pre accepting host keys to avoid SSH prompt..."
-ssh-keyscan -p 2201 localhost >> ~/.ssh/known_hosts 2>/dev/null
-ssh-keyscan -p 2202 localhost >> ~/.ssh/known_hosts 2>/dev/null
-ssh-keyscan -p 2203 localhost >> ~/.ssh/known_hosts 2>/dev/null
+ssh-keyscan -p 2201 localhost >> ~/.ssh/known_hosts 2>/dev/null || true
+ssh-keyscan -p 2202 localhost >> ~/.ssh/known_hosts 2>/dev/null || true
+ssh-keyscan -p 2203 localhost >> ~/.ssh/known_hosts 2>/dev/null || true
 chmod 644 ~/.ssh/known_hosts
 
 echo "Completed!"

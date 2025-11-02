@@ -1,0 +1,33 @@
+name: Docker Remote Tests
+
+on:
+   push:
+      branches: [main, remote-docker-test]
+   pull_request:
+      branches: [main]
+
+jobs:
+   docker-remote-test:
+      runs-on: ubuntu-latest
+
+      steps:
+         - uses: actions/checkout@v3
+
+         - name: Generate SSH key
+           run: |
+              ssh-keygen -t rsa -f ~/.ssh/id_rsa -N ""
+
+         - name: Build and start Docker containers
+           run: |
+              cd scripts
+              bash docker-start.sh
+
+         - name: Run remote tests
+           run: |
+              python -m unittest tests.test_remote.TestRemote
+
+         - name: Stop Docker containers
+           if: always()
+           run: |
+              cd woolmilk
+              docker-compose down
