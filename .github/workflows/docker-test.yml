@@ -2,7 +2,7 @@ name: Docker Remote Tests
 
 on:
    push:
-      branches: [main, remote-docker-test]
+      branches: [main, remote-docker-tests]
    pull_request:
       branches: [main]
 
