@@ -264,7 +264,10 @@ class DeploymentRunner:
     def copy_remote_logs(self):
         assert (
             self.mode == "remote" and self.log_to_file and self.local_log_dir is not None
-        ), "can only copy logs in remote mode with log_to_file enabled and local_log_dir specified"
+        ), (
+            "can only copy logs in remote mode with log_to_file enabled "
+            "and local_log_dir specified"
+        )
 
         print("\nCopying logs from remote servers...")
         self.local_log_dir.mkdir(parents=True, exist_ok=True)
@@ -287,7 +290,7 @@ class DeploymentRunner:
                 print(f"    Copying logs from {host}...")
                 result = subprocess.run(scp_cmd, capture_output=True, text=True)
                 if result.returncode == 0:
-                    print(f"      Copied logs successfully")
+                    print("      Copied logs successfully")
                 else:
                     print(f"    Error copying from {host}: {result.stderr}")
             except Exception as e:
@@ -360,7 +363,8 @@ if __name__ == "__main__":
 
     if args.log_to_file and args.mode == "remote" and not args.local_log_dir:
         print(
-            "Error: --local-log-dir must be specified when using --log-to-file in remote mode"
+            "Error: --local-log-dir must be specified "
+            "when using --log-to-file in remote mode"
         )
         sys.exit(1)
 

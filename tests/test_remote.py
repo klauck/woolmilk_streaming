@@ -7,7 +7,9 @@ from pathlib import Path
 from woolmilk.run_cluster import DeploymentRunner, parse_config
 
 
-@unittest.skipUnless(os.getenv("WOOLMILK_DOCKER") == "true", "Skipping unless WOOLMILK_DOCKER is set")
+@unittest.skipUnless(
+    os.getenv("WOOLMILK_DOCKER") == "true", "Skipping unless WOOLMILK_DOCKER is set"
+)
 class TestRemote(unittest.TestCase):
 
     def setUp(self):
