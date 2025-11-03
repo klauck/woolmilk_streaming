@@ -1,3 +1,4 @@
+import os
 import shutil
 import time
 import unittest
@@ -6,7 +7,7 @@ from pathlib import Path
 from woolmilk.run_cluster import DeploymentRunner, parse_config
 
 
-@unittest.skip("Ignoring in workflow runs")
+@unittest.skipUnless(os.getenv("WOOLMILK_DOCKER") == "true", "Skipping unless WOOLMILK_DOCKER is set")
 class TestRemote(unittest.TestCase):
 
     def setUp(self):
