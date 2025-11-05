@@ -83,6 +83,43 @@ A configuration is specified in JSON: [config.json](https://github.com/klauck/wo
 python woolmilk/run_cluster.py --config scripts/config.json
 ```
 
+## Build and start docker image
+
+Docker setup is required to build and run the docker image. Start by making the [docker-start.sh](./scripts/docker-start.sh) executable by running `chmod +x ./scripts/docker-start.sh` in the root directory and run the below command to build and start the docker container.
+
+```bash
+cd scripts
+./docker-start.sh
+```
+
+By running `./docker-start.sh`, the script will first build the docker image using [Dockerfile](./woolmilk/Dockerfile) and after building the docker image the script will start the container using the docker compose [file](./woolmilk/docker-compose.yml).
+
+### Running remote example
+
+After starting the docker container, run
+
+```bash
+python woolmilk/run_cluster.py --config docker-config-remote.json --mode remote --log-to-file --local-log-dir ./local-logs --local-results-dir ./results
+```
+
+This command will run all of the nodes inside the docker container and get the logs and results in `./local-logs` and `./results` directories respectively.
+
+### Running remote tests
+
+```bash
+WOOLMILK_DOCKER=true python -m unittest discover
+```
+
+`WOOLMILK_DOCKER=true` is required to run the remote tests inside the Docker container. This option is implemented to avoid running remote tests in the GitHub workflow.
+
+### Stopping docker containers
+
+Run the command below to stop the docker container.
+
+```bash
+cd woolmilk
+docker compose down
+```
 
 ## Resources
 
