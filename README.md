@@ -95,6 +95,7 @@ To build and start the Docker container, run:
 ```bash
 cd scripts
 ./docker-start.sh
+cd ..
 ```
 
 The `docker-start.sh script` will:
@@ -109,14 +110,13 @@ Once the container is running, execute:
 
 ```bash
 python woolmilk/run_cluster.py \
-  --config docker-config-remote.json \
+  --config scripts/docker-config-remote.json \
   --mode remote \
   --log-to-file \
-  --local-log-dir ./local-logs \
-  --local-results-dir ./results
+  --local-log-dir ./local-logs
 ```
 
-This command launches all nodes inside Docker containers and collects logs and results in the `./local-logs` and `./results` directories.
+This command launches all nodes inside Docker containers and collects logs in the `./local-logs` directory.
 
 ### Running remote tests
 
@@ -139,6 +139,7 @@ To stop and remove the running containers, run:
 ```bash
 cd woolmilk
 docker compose down
+cd ..
 ```
 
 ## Resources
