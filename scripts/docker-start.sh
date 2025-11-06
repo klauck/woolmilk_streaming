@@ -33,4 +33,4 @@ chmod 644 ~/.ssh/known_hosts
 
 echo "Completed!"
 echo "Run your cluster with:"
-echo "python ../woolmilk/run_cluster.py --config docker-config-remote.json --mode remote"
+echo "python woolmilk/run_cluster.py --config scripts/docker-config-remote.json --mode remote"
