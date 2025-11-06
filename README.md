@@ -40,7 +40,7 @@ python -m unittest discover
 ```
 
 
-## Run local example step-by-step
+## Run Local Example Step-by-step
 
 **1. Start the sink server**
 
@@ -75,7 +75,7 @@ python woolmilk/processing_node.py \
 python woolmilk/source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017
 ```
 
-## Run local example in one command
+## Run Local Example in One Command
 
 A configuration is specified in JSON: [config.json](https://github.com/klauck/woolmilk_streaming/blob/main/scripts/config.json)
 
@@ -83,38 +83,58 @@ A configuration is specified in JSON: [config.json](https://github.com/klauck/wo
 python woolmilk/run_cluster.py --config scripts/config.json
 ```
 
-## Build and start docker image
+## Docker Setup for Remote Execution Emulation
 
-Docker setup is required to build and run the docker image. Start by making the [docker-start.sh](./scripts/docker-start.sh) executable by running `chmod +x ./scripts/docker-start.sh` in the root directory and run the below command to build and start the docker container.
+You can run multi-procross experiements locally without Docker.
+However, to test remote deployment, logging, and result collection via SSH, you can use the provided Docker-based environment to mimic remote execution.
+
+### Build and start docker environment
+
+To build and start the Docker container, run:
 
 ```bash
 cd scripts
 ./docker-start.sh
 ```
 
-By running `./docker-start.sh`, the script will first build the docker image using [Dockerfile](./woolmilk/Dockerfile) and after building the docker image the script will start the container using the docker compose [file](./woolmilk/docker-compose.yml).
+The `docker-start.sh script` will:
 
-### Running remote example
+1. Build the Docker image using the [Dockerfile](./woolmilk/Dockerfile)
 
-After starting the docker container, run
+2. Start the containers using the Docker Compose configuration [file](./woolmilk/docker-compose.yml)
+
+### Running a remote example
+
+Once the container is running, execute:
 
 ```bash
-python woolmilk/run_cluster.py --config docker-config-remote.json --mode remote --log-to-file --local-log-dir ./local-logs --local-results-dir ./results
+python woolmilk/run_cluster.py \
+  --config docker-config-remote.json \
+  --mode remote \
+  --log-to-file \
+  --local-log-dir ./local-logs \
+  --local-results-dir ./results
 ```
 
-This command will run all of the nodes inside the docker container and get the logs and results in `./local-logs` and `./results` directories respectively.
+This command launches all nodes inside Docker containers and collects logs and results in the `./local-logs` and `./results` directories.
 
 ### Running remote tests
+
+Docker-based tests are disabled by default, including in the GitHub workflow.
+
+To enable and run tests using the Docker setup:
+
+1. Build and start the Docker container (as shown above).
+
+2. Run:
 
 ```bash
 WOOLMILK_DOCKER=true python -m unittest discover
 ```
 
-`WOOLMILK_DOCKER=true` is required to run the remote tests inside the Docker container. This option is implemented to avoid running remote tests in the GitHub workflow.
-
 ### Stopping docker containers
 
-Run the command below to stop the docker container.
+To stop and remove the running containers, run:
 
 ```bash
 cd woolmilk
