@@ -113,10 +113,11 @@ python woolmilk/run_cluster.py \
   --config scripts/docker-config-remote.json \
   --mode remote \
   --log-to-file \
-  --local-log-dir ./local-logs
+  --local-log-dir ./local-logs \
+  --local-results-dir ./results
 ```
 
-This command launches all nodes inside Docker containers and collects logs in the `./local-logs` directory.
+This command launches all nodes inside Docker containers and collects logs and results in the `./local-logs` and `./results` directories respectively.
 
 ### Running remote tests
 
