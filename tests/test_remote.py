@@ -47,3 +47,20 @@ class TestRemote(unittest.TestCase):
 
         log_files = list(self.logs_dir.glob("**/*.log"))
         self.assertGreater(len(log_files), 0)
+
+    def test_remote_deployment_with_results(self):
+        config = parse_config(self.config_path)
+        runner = DeploymentRunner(
+            config,
+            "results",
+            mode="remote",
+            log_to_file=True,
+            local_results_dir=str(self.results_dir),
+        )
+
+        runner.deploy()
+        time.sleep(5)
+        runner.cleanup()
+
+        result_files = list(self.results_dir.glob("**/*"))
+        self.assertGreater(len(result_files), 0)
