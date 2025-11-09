@@ -95,17 +95,20 @@ class ProcessingNode(pa.flight.FlightServerBase):
         with self.lock:
             active_watermarks = [src["watermark"] for src in self.active_sources.values() if not src["is_finished"]]
             if not active_watermarks:
-                return
-
-            global_watermark = min(active_watermarks)
-
-            window_starts = list(self.window_buffer.keys())
-            for window_start in window_starts:
-                window_end = window_start + self.window_size
-                if window_end <= global_watermark:
+                # All sources are finished; flush all remaining windows
+                window_starts = list(self.window_buffer.keys())
+                for window_start in window_starts:
                     batches = self.window_buffer.pop(window_start)
                     to_flush.append(batches)
+            else:
+                global_watermark = min(active_watermarks)
 
+                window_starts = list(self.window_buffer.keys())
+                for window_start in window_starts:
+                    window_end = window_start + self.window_size
+                    if window_end <= global_watermark:
+                        batches = self.window_buffer.pop(window_start)
+                        to_flush.append(batches)
         for batches in to_flush:
             self._flush_window(batches, forward_writer)
 
