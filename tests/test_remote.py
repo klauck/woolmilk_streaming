@@ -22,7 +22,7 @@ class TestRemote(unittest.TestCase):
         self.test_dir.mkdir(parents=True)
 
         self.config_path = (
-            Path(__file__).parent.parent / "scripts" / "docker-config-remote.json"
+            current_dir / "configurations" / "docker-config-remote.json"
         )
         self.logs_dir = self.test_dir / "logs"
         self.results_dir = self.test_dir / "results"
@@ -52,7 +52,7 @@ class TestRemote(unittest.TestCase):
         config = parse_config(self.config_path)
         runner = DeploymentRunner(
             config,
-            "results",
+            log_dir="logs",
             mode="remote",
             log_to_file=True,
             local_results_dir=str(self.results_dir),
