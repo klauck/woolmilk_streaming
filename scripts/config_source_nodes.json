@@ -1,0 +1,20 @@
+{
+   "source_nodes": {
+      "stream": "nexmark.person",
+      "overall_tuples": 1000000,
+      "tuples_per_batch": 100000,
+      "nodes": [
+         {
+            "processing_nodes": ["127.0.0.1:8017"],
+            "overall_tuples": 99999,
+            "thread_count": 1,
+            "deployment_server": "127.0.0.1"
+         },
+         {
+            "processing_nodes": ["127.0.0.1:8017"],
+            "thread_count": 1,
+            "deployment_server": "127.0.0.1"
+         }
+      ]
+   }
+}

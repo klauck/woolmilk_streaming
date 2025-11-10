@@ -67,8 +67,38 @@ def parse_config(json_path: Path) -> Config:
     processing_nodes = [ProcessingNode(**pn) for pn in data.get("processing_nodes", [])]
 
     source_nodes = []
-    for sn in data.get("source_nodes", []):
-        source_nodes.append(SourceNode(**sn))
+    source_nodes_data = data.get("source_nodes", None)
+
+    if isinstance(source_nodes_data, dict):
+        stream = source_nodes_data.get("stream")
+        overall_tuples = source_nodes_data.get("overall_tuples")
+        tuples_per_batch = source_nodes_data.get("tuples_per_batch")
+        processing_nodes_list = source_nodes_data.get("processing_nodes", [])
+        thread_count = source_nodes_data.get("thread_count", 1)
+        deployment_server = source_nodes_data.get("deployment_server", None)
+
+        nodes = source_nodes_data.get("nodes", [])
+
+        for node in nodes:
+            node_stream = node.get("stream", stream)
+            node_overall_tuples = node.get("overall_tuples", overall_tuples)
+            node_tuples_per_batch = node.get("tuples_per_batch", tuples_per_batch)
+            node_processing_nodes = node.get("processing_nodes", processing_nodes_list)
+            node_thread_count = node.get("thread_count", thread_count)
+            node_deployment_server = node.get("deployment_server", deployment_server)
+
+            source_nodes.append(SourceNode(
+                processing_nodes=node_processing_nodes,
+                stream=node_stream,
+                overall_tuples=node_overall_tuples,
+                tuples_per_batch=node_tuples_per_batch,
+                thread_count=node_thread_count,
+                deployment_server=node_deployment_server
+            ))
+        
+    elif isinstance(source_nodes_data, list):
+        for sn in source_nodes_data:
+            source_nodes.append(SourceNode(**sn))
 
     return Config(
         sink_nodes=sink_nodes,
