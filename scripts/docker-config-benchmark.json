@@ -1,0 +1,45 @@
+{
+   "config": {
+      "remote_servers": {
+         "woolmilk-source": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
+            "python_env": "/usr/local",
+            "ssh_host": "localhost",
+            "ssh_port": 2201
+         },
+         "woolmilk-processing": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
+            "python_env": "/usr/local",
+            "ssh_host": "localhost",
+            "ssh_port": 2202
+         },
+         "woolmilk-sink": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk",
+            "python_env": "/usr/local",
+            "ssh_host": "localhost",
+            "ssh_port": 2203
+         }
+      }
+   },
+   "source_node_experiments": {
+      "stream": "nexmark.person",
+      "overall_tuples": 100000,
+      "tuples_per_batch": 100000,
+      "experiments": [
+         {
+            "processing_nodes": ["woolmilk-processing:9017"],
+            "overall_tuples": 100000,
+            "thread_count": 1,
+            "deployment_server": "woolmilk-source"
+         },
+         {
+            "processing_nodes": ["woolmilk-processing:9017"],
+            "thread_count": 2,
+            "deployment_server": "woolmilk-source"
+         }
+      ]
+   }
+}
