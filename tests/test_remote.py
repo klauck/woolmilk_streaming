@@ -7,8 +7,8 @@ from pathlib import Path
 import datafusion
 import pyarrow
 
-from woolmilk.run_cluster import DeploymentRunner, parse_config
 import woolmilk.source_node
+from woolmilk.run_cluster import DeploymentRunner, parse_config
 
 
 @unittest.skipUnless(
@@ -26,9 +26,7 @@ class TestRemote(unittest.TestCase):
 
         self.test_dir.mkdir(parents=True)
 
-        self.config_path = (
-            current_dir / "configurations" / "docker-config-remote.json"
-        )
+        self.config_path = current_dir / "configurations" / "docker-config-remote.json"
         self.logs_dir = self.test_dir / "logs"
         self.results_dir = self.test_dir / "results"
 
@@ -52,7 +50,7 @@ class TestRemote(unittest.TestCase):
         )
 
         runner.deploy()
-        time.sleep(5)
+        time.sleep(2)
         runner.cleanup()
 
         log_files = list(self.logs_dir.glob("**/*.log"))
@@ -60,7 +58,7 @@ class TestRemote(unittest.TestCase):
 
     def test_remote_deployment_with_results(self):
         config = parse_config(self.config_path)
-        
+
         runner = DeploymentRunner(
             config,
             log_dir="logs",
@@ -70,17 +68,17 @@ class TestRemote(unittest.TestCase):
         )
 
         runner.deploy()
-        time.sleep(5)
+        time.sleep(2)
         runner.cleanup()
 
         result_files = list(self.results_dir.glob("**/*.parquet"))
         self.assertGreater(len(result_files), 0)
-        
+
         ctx = datafusion.SessionContext()
-        ctx.register_parquet("actual", str(self.results_dir / "results"))
+        ctx.register_parquet("actual", str(self.results_dir / "results_test_docker"))
         actual_batches = ctx.sql("SELECT * FROM actual").collect()
         actual_table = pyarrow.Table.from_batches(actual_batches)
-        
+
         expected_table = pyarrow.Table.from_batches(self.expected_result)
-        
+
         self.assertEqual(actual_table.num_rows, expected_table.num_rows)

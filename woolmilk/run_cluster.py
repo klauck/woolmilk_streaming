@@ -86,7 +86,7 @@ class DeploymentRunner:
         mode: str = "local",
         log_to_file: bool = False,
         local_log_dir: Optional[str] = None,
-        local_results_dir: Optional[str] = None
+        local_results_dir: Optional[str] = None,
     ):
         self.config = config
         self.mode = mode
@@ -101,8 +101,12 @@ class DeploymentRunner:
             self.log_dir = Path(log_dir) / timestamp
 
     def build_scp_command(
-            self, config: RemoteServerConfig, remote_path: str, local_path: str, legacy_host: str
-        ) -> List[str]:
+        self,
+        config: RemoteServerConfig,
+        remote_path: str,
+        local_path: str,
+        legacy_host: str,
+    ) -> List[str]:
         scp_cmd = ["scp", "-r"]
 
         if config.ssh_port:
@@ -115,7 +119,9 @@ class DeploymentRunner:
         return scp_cmd
 
     def copy_remote_results(self):
-        assert self.mode == "remote" and self.local_results_dir is not None, "can only copy results in remote mode with local_results_dir specified"
+        assert (
+            self.mode == "remote" and self.local_results_dir is not None
+        ), "can only copy results in remote mode with local_results_dir specified"
 
         print("\nCopying results from sink nodes...")
         self.local_results_dir.mkdir(parents=True, exist_ok=True)
@@ -125,7 +131,9 @@ class DeploymentRunner:
             try:
                 server_config = self.get_remote_server_config(host)
 
-                assert sink.result_folder is not None, "sink result_folder must be specified to copy results"
+                assert (
+                    sink.result_folder is not None
+                ), "sink result_folder must be specified to copy results"
 
                 remote_result_folder = self.get_base_dir(host) / Path(sink.result_folder)
 
@@ -133,13 +141,13 @@ class DeploymentRunner:
                     server_config,
                     str(remote_result_folder),
                     str(self.local_results_dir),
-                    host
+                    host,
                 )
 
                 print(f"    Copying results from {host}...")
                 result = subprocess.run(scp_cmd, capture_output=True, text=True)
                 if result.returncode == 0:
-                    print(f"      Copied results successfully")
+                    print("      Copied results successfully")
                 else:
                     print(f"    Error copying from {host}: {result.stderr}")
             except Exception as e:
@@ -328,10 +336,7 @@ class DeploymentRunner:
                 remote_log_dir = self.get_base_dir(host) / self.log_dir
 
                 scp_cmd = self.build_scp_command(
-                    server_config,
-                    str(remote_log_dir),
-                    str(self.local_log_dir),
-                    host
+                    server_config, str(remote_log_dir), str(self.local_log_dir), host
                 )
 
                 print(f"    Copying logs from {host}...")
@@ -435,7 +440,7 @@ if __name__ == "__main__":
         mode=args.mode,
         log_to_file=args.log_to_file,
         local_log_dir=args.local_log_dir if args.local_log_dir else None,
-        local_results_dir=args.local_results_dir if args.local_results_dir else None
+        local_results_dir=args.local_results_dir if args.local_results_dir else None,
     )
     runner.deploy()
 

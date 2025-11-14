@@ -27,7 +27,7 @@
    "sink_nodes": [
       {
          "server_address": "woolmilk-sink:9027",
-         "result_folder": "results"
+         "result_folder": "results_test_docker"
       }
    ],
    "processing_nodes": [
