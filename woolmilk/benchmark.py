@@ -6,7 +6,6 @@ from typing import Dict, List
 
 from run_cluster import Config, DeploymentRunner, RemoteServerConfig, SourceNode
 
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
@@ -45,6 +44,7 @@ def parse_benchmark_config(config_file: Path):
             selected_source_nodes = [config.source_nodes[i - 1] for i in include_nodes]
             not_selected_source_nodes = [node for node in config.source_nodes if node not in selected_source_nodes]
 
+            # here we add experiments for not selected source nodes with 1 iteration each
             for node in not_selected_source_nodes:
                 experiments.append(ExperimentConfig(iterations=1, source_nodes=[node]))
 
@@ -84,8 +84,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             for iteration in range(experiment.iterations):
                 print(f"            Starting iteration {iteration + 1}/{experiment.iterations}")
                 current_experiment_dir = Path(experiment_dir) / f"benchmark_{benchmark_id + 1}_exp_{experiment_id + 1}_iter_{iteration + 1}"
-                current_experiment_dir.mkdir(parents=True, exist_ok=True)
-
+                
                 current_config = Config(
                     remote_servers=remote_servers,
                     sink_nodes=[],
