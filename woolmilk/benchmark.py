@@ -48,10 +48,14 @@ def parse_benchmark_config(config_file: Path):
                 include_nodes, list
             ), "include_nodes must be a list of integers"
 
-            selected_source_nodes = [config.source_nodes[i - 1] for i in include_nodes]
-            not_selected_source_nodes = [
-                node for node in config.source_nodes if node not in selected_source_nodes
-            ]
+            selected_source_nodes = []
+            not_selected_source_nodes = []
+
+            for idx, source_node in enumerate(config.source_nodes):
+                if (idx + 1) in include_nodes:
+                    selected_source_nodes.append(source_node)
+                else:
+                    not_selected_source_nodes.append(source_node)
 
             # here we add experiments for not selected source nodes with 1 iteration each
             for node in not_selected_source_nodes:
