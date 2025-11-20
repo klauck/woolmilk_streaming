@@ -1,21 +1,24 @@
 import argparse
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
 from typing import Dict, List
 
-from run_cluster import Config, DeploymentRunner, RemoteServerConfig, SourceNode
+from run_cluster import (
+    Config,
+    DeploymentRunner,
+    RemoteServerConfig,
+    SourceNode,
+    parse_config,
+)
 
-from dataclasses import dataclass
-from pathlib import Path
-from typing import List
-from run_cluster import SourceNode, parse_config
-import json
 
 @dataclass
 class ExperimentConfig:
     iterations: int
     source_nodes: List[SourceNode]
+
 
 @dataclass
 class BenchmarkConfig:
@@ -33,16 +36,22 @@ def parse_benchmark_config(config_file: Path):
     if source_nodes_exp:
         for exp in source_nodes_exp:
             experiments: List[ExperimentConfig] = []
-            
+
             include_nodes = exp["include_nodes"]
             iterations = exp["iterations"]
 
-            assert isinstance(iterations, int) and iterations > 0, "Iterations must be a positive integer"
+            assert (
+                isinstance(iterations, int) and iterations > 0
+            ), "Iterations must be a positive integer"
 
-            assert isinstance(include_nodes, list), "include_nodes must be a list of integers"
+            assert isinstance(
+                include_nodes, list
+            ), "include_nodes must be a list of integers"
 
             selected_source_nodes = [config.source_nodes[i - 1] for i in include_nodes]
-            not_selected_source_nodes = [node for node in config.source_nodes if node not in selected_source_nodes]
+            not_selected_source_nodes = [
+                node for node in config.source_nodes if node not in selected_source_nodes
+            ]
 
             # here we add experiments for not selected source nodes with 1 iteration each
             for node in not_selected_source_nodes:
@@ -50,20 +59,24 @@ def parse_benchmark_config(config_file: Path):
 
             for override in exp["overridden_params"]:
                 # create a copy of the source node
-                local_source_nodes = [SourceNode(**node.__dict__) for node in selected_source_nodes]
+                local_source_nodes = [
+                    SourceNode(**node.__dict__) for node in selected_source_nodes
+                ]
 
                 for i, node in enumerate(local_source_nodes):
                     for key, value in override.items():
                         setattr(node, key, value)
 
-                experiments.append(ExperimentConfig(iterations=iterations, source_nodes=local_source_nodes))
-    
+                experiments.append(
+                    ExperimentConfig(
+                        iterations=iterations, source_nodes=local_source_nodes
+                    )
+                )
+
             benchmarks.append(BenchmarkConfig(experiments=experiments))
 
-    return {
-        "benchmarks": benchmarks,
-        "remote_servers": config.remote_servers
-    }
+    return {"benchmarks": benchmarks, "remote_servers": config.remote_servers}
+
 
 def benchmark(config_path: Path, experiment_dir: str, mode: str):
     combined_config = parse_benchmark_config(config_path)
@@ -77,19 +90,26 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
         print(f"    Number of experiments: {len(benchmark_config.experiments)}")
 
         for experiment_id, experiment in enumerate(benchmark_config.experiments):
-            print(f"        Starting experiment {experiment_id + 1}/{len(benchmark_config.experiments)}")
+            print(
+                f"        Starting experiment {experiment_id + 1}/{len(benchmark_config.experiments)}"
+            )
             print(f"        Number of source nodes: {len(experiment.source_nodes)}")
             print(f"        Iterations: {experiment.iterations}")
 
             for iteration in range(experiment.iterations):
-                print(f"            Starting iteration {iteration + 1}/{experiment.iterations}")
-                current_experiment_dir = Path(experiment_dir) / f"benchmark_{benchmark_id + 1}_exp_{experiment_id + 1}_iter_{iteration + 1}"
-                
+                print(
+                    f"            Starting iteration {iteration + 1}/{experiment.iterations}"
+                )
+                current_experiment_dir = (
+                    Path(experiment_dir)
+                    / f"benchmark_{benchmark_id + 1}_exp_{experiment_id + 1}_iter_{iteration + 1}"
+                )
+
                 current_config = Config(
                     remote_servers=remote_servers,
                     sink_nodes=[],
                     processing_nodes=[],
-                    source_nodes=experiment.source_nodes
+                    source_nodes=experiment.source_nodes,
                 )
 
                 runner = DeploymentRunner(
@@ -101,9 +121,11 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 )
 
                 runner.deploy()
-                sleep(5) 
+                sleep(5)
                 runner.cleanup()
-                print(f"            Completed iteration {iteration + 1}/{experiment.iterations}")
+                print(
+                    f"            Completed iteration {iteration + 1}/{experiment.iterations}"
+                )
 
 
 if __name__ == "__main__":
