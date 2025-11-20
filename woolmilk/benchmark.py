@@ -2,97 +2,109 @@ import argparse
 import json
 from pathlib import Path
 from time import sleep
-from typing import List
+from typing import Dict, List
 
 from run_cluster import Config, DeploymentRunner, RemoteServerConfig, SourceNode
 
 
-def parse_source_nodes_experiments(config_file: str) -> dict:
-    source_nodes: List[SourceNode] = []
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List
+from run_cluster import SourceNode, parse_config
+import json
 
-    with open(config_file, "r") as f:
-        config_data = json.load(f)
+@dataclass
+class ExperimentConfig:
+    iterations: int
+    source_nodes: List[SourceNode]
 
-    servers = {}
-    if "config" in config_data and "remote_servers" in config_data["config"]:
-        for host, server_data in config_data["config"]["remote_servers"].items():
-            servers[host] = RemoteServerConfig(**server_data)
-
-    source_nodes_data = config_data.get("source_node_experiments", None)
-
-    assert isinstance(
-        source_nodes_data, dict
-    ), "source_node_experiments must be a dictionary."
-
-    stream = source_nodes_data.get("stream")
-    overall_tuples = source_nodes_data.get("overall_tuples")
-    tuples_per_batch = source_nodes_data.get("tuples_per_batch")
-    processing_nodes_list = source_nodes_data.get("processing_nodes", [])
-    thread_count = source_nodes_data.get("thread_count", 1)
-    deployment_server = source_nodes_data.get("deployment_server", None)
-    experiments = source_nodes_data.get("experiments", [])
-
-    for experiment in experiments:
-        node_stream = experiment.get("stream", stream)
-        node_overall_tuples = experiment.get("overall_tuples", overall_tuples)
-        node_tuples_per_batch = experiment.get("tuples_per_batch", tuples_per_batch)
-        node_processing_nodes = experiment.get("processing_nodes", processing_nodes_list)
-        node_thread_count = experiment.get("thread_count", thread_count)
-        node_deployment_server = experiment.get("deployment_server", deployment_server)
-
-        source_nodes.append(
-            SourceNode(
-                processing_nodes=node_processing_nodes,
-                stream=node_stream,
-                overall_tuples=node_overall_tuples,
-                tuples_per_batch=node_tuples_per_batch,
-                thread_count=node_thread_count,
-                deployment_server=node_deployment_server,
-            )
-        )
-
-    return {"servers": servers, "experiments": source_nodes}
+@dataclass
+class BenchmarkConfig:
+    experiments: List[ExperimentConfig]
 
 
-def benchmark(config_file: str, experiment_dir: str, mode: str):
-    configuration = parse_source_nodes_experiments(config_file)
-    exprs = configuration["experiments"]
-    remote_servers = configuration["servers"]
+def parse_benchmark_config(config_file: Path):
+    config = parse_config(config_file)
 
-    print(f"Parsed {len(exprs)} experiments from configuration in {mode} mode.")
+    benchmark_config = json.loads(config_file.read_text())
+    source_nodes_exp = benchmark_config.get("source_nodes_exp", None)
 
-    for expr in exprs:
-        print("=" * 40)
-        print("Running experiment with configuration:")
-        print(f"Processing Nodes: {expr.processing_nodes}")
-        print(f"Stream: {expr.stream}")
-        print(f"Overall Tuples: {expr.overall_tuples}")
-        print(f"Tuples per Batch: {expr.tuples_per_batch}")
-        print(f"Thread Count: {expr.thread_count}")
-        print(f"Deployment Server: {expr.deployment_server}")
-        print("=" * 40)
+    benchmarks: List[BenchmarkConfig] = []
 
-        config: Config = Config(
-            source_nodes=[expr],
-            remote_servers=remote_servers,
-            processing_nodes=[],
-            sink_nodes=[],
-        )
+    if source_nodes_exp:
+        for exp in source_nodes_exp:
+            experiments: List[ExperimentConfig] = []
+            
+            include_nodes = exp["include_nodes"]
+            iterations = exp["iterations"]
 
-        # on remote mode, logs are stored in a common logs/ directory,
-        # and then copied to local experiment_dir
-        log_dir = "logs" if mode == "remote" else experiment_dir
+            assert isinstance(iterations, int) and iterations > 0, "Iterations must be a positive integer"
 
-        runner = DeploymentRunner(
-            config,
-            mode=mode,
-            log_dir=log_dir,
-            log_to_file=True,
-            local_log_dir=experiment_dir,
-        )
-        runner.deploy()
-        sleep(5)
-        runner.cleanup()
+            assert isinstance(include_nodes, list), "include_nodes must be a list of integers"
+
+            selected_source_nodes = [config.source_nodes[i - 1] for i in include_nodes]
+            not_selected_source_nodes = [node for node in config.source_nodes if node not in selected_source_nodes]
+
+            for node in not_selected_source_nodes:
+                experiments.append(ExperimentConfig(iterations=1, source_nodes=[node]))
+
+            for override in exp["overridden_params"]:
+                # create a copy of the source node
+                local_source_nodes = [SourceNode(**node.__dict__) for node in selected_source_nodes]
+
+                for i, node in enumerate(local_source_nodes):
+                    for key, value in override.items():
+                        setattr(node, key, value)
+
+                experiments.append(ExperimentConfig(iterations=iterations, source_nodes=local_source_nodes))
+    
+            benchmarks.append(BenchmarkConfig(experiments=experiments))
+
+    return {
+        "benchmarks": benchmarks,
+        "remote_servers": config.remote_servers
+    }
+
+def benchmark(config_path: Path, experiment_dir: str, mode: str):
+    combined_config = parse_benchmark_config(config_path)
+    benchmarks: List[BenchmarkConfig] = combined_config["benchmarks"]
+    remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
+
+    print("Starting benchmark...")
+
+    for benchmark_id, benchmark_config in enumerate(benchmarks):
+        print(f"    Starting bechmark {benchmark_id + 1}/{len(benchmarks)}")
+        print(f"    Number of experiments: {len(benchmark_config.experiments)}")
+
+        for experiment_id, experiment in enumerate(benchmark_config.experiments):
+            print(f"        Starting experiment {experiment_id + 1}/{len(benchmark_config.experiments)}")
+            print(f"        Number of source nodes: {len(experiment.source_nodes)}")
+            print(f"        Iterations: {experiment.iterations}")
+
+            for iteration in range(experiment.iterations):
+                print(f"            Starting iteration {iteration + 1}/{experiment.iterations}")
+                current_experiment_dir = Path(experiment_dir) / f"benchmark_{benchmark_id + 1}_exp_{experiment_id + 1}_iter_{iteration + 1}"
+                current_experiment_dir.mkdir(parents=True, exist_ok=True)
+
+                current_config = Config(
+                    remote_servers=remote_servers,
+                    sink_nodes=[],
+                    processing_nodes=[],
+                    source_nodes=experiment.source_nodes
+                )
+
+                runner = DeploymentRunner(
+                    config=current_config,
+                    log_dir=str(current_experiment_dir) if mode == "local" else "logs",
+                    mode=mode,
+                    log_to_file=True,
+                    local_log_dir=str(current_experiment_dir),
+                )
+
+                runner.deploy()
+                sleep(5) 
+                runner.cleanup()
+                print(f"            Completed iteration {iteration + 1}/{experiment.iterations}")
 
 
 if __name__ == "__main__":
@@ -118,4 +130,4 @@ if __name__ == "__main__":
 
     assert config_path.exists(), f"Config file {args.config_file} does not exist."
 
-    benchmark(str(config_path), experiment_dir=args.experiment_dir, mode=args.mode)
+    benchmark(config_path, experiment_dir=args.experiment_dir, mode=args.mode)
