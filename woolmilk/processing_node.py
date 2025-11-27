@@ -4,17 +4,15 @@ import threading
 import time
 
 import pyarrow as pa
-import pyarrow.compute as pc
 import pyarrow.flight
 from datafusion import SessionContext
 
 
 class ProcessingNode(pa.flight.FlightServerBase):
-    def __init__(self, location, forward_node, sql_query, query_id, schema_json):
+    def __init__(self, location, forward_node, sql_query, schema_json, stateful, column_filter, window_size, window_slide):
         super().__init__(location)
         self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
         self.query = sql_query
-        self.query_id = query_id
         self.default_table_name = "nexmark_data"
 
         if not schema_json:
@@ -23,21 +21,27 @@ class ProcessingNode(pa.flight.FlightServerBase):
         self.predefined_schema = self._parse_schema(schema_json)
         print(self.predefined_schema)
 
-        self.lock = threading.Lock()
+        self.stateful = stateful
+        self.column_filter = column_filter
+        self.window_size = window_size * 1e3 # convert to ms
+        self.window_slide = window_slide * 1e3 # convert to ms
+
+        if not self.stateful and (self.window_size > 0 or self.window_slide > 0):
+            raise ValueError("Window parameters require --stateful mode.")
+
+        if self.window_size == 0 and self.window_slide > 0:
+            raise ValueError("Non-zero window-slide requires non-zero window-size.")
 
         self.person_buffer = []
         self.auction_buffer = []
 
         self.active_sources = {}
         self.window_buffer = {}
-        if query_id == 5:
-            self.window_size = 4_000
-        else:
-            self.window_size = 1_000
-        self.window_slide = 1_000
+
+        self.lock = threading.Lock()
 
 
-    def _parse_schema(self, schema_json):
+    def _parse_schema(self, schema_json: str) -> pa.Schema:
         schema_dict = json.loads(schema_json)
         fields = []
         for field in schema_dict.get("fields", []):
@@ -58,7 +62,21 @@ class ProcessingNode(pa.flight.FlightServerBase):
         return pa.schema(fields)
 
 
-    def _assign_windows_to_timestamp(self, timestamp):
+    def _apply_column_filter(self, stream_name: str, batch:pa.RecordBatch) -> pa.RecordBatch:
+        cols = self.column_filter.get(stream_name)
+        if not cols:
+            return batch
+
+        # Check for invalid columns
+        existing = [c for c in cols if c in batch.schema.names]
+        if not existing:
+            return batch
+
+        filtered = pa.Table.from_batches([batch]).select(existing)
+        return filtered.to_batches()[0]
+
+
+    def _assign_windows_to_timestamp(self, timestamp:int) -> list[int]:
         windows = []
 
         latest_start = (timestamp // self.window_slide) * self.window_slide
@@ -74,7 +92,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
         return windows
 
 
-    def _flush_window(self, batches, forward_writer):
+    def _flush_window(self, batches: list[pa.RecordBatch], forward_writer):
         if not batches:
             return
 
@@ -113,7 +131,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
             self._flush_window(batches, forward_writer)
 
 
-    def process_q1_q2(self, reader, forward_writer):
+    def process_default(self, reader, forward_writer):
         ctx = SessionContext()
 
         total_bytes = 0
@@ -164,30 +182,24 @@ class ProcessingNode(pa.flight.FlightServerBase):
         print("forward_times = ", forwarding_times)
 
 
-    def process_q3(self, descriptor, reader, forward_writer):
+    def process_join(self, descriptor, reader, forward_writer):
         ctx = SessionContext()
-        stream_type = descriptor.path[0].decode("utf-8")
+        stream_type = descriptor.path[0].decode("utf-8")  if len(descriptor.path) > 0 else None
 
         for chunk in reader:
             batch = chunk.data
+            if stream_type:
+                batch = self._apply_column_filter(stream_type, batch)
 
             if stream_type == "person":
-                mask = pc.is_in(batch.column("state"), value_set=pa.array(["or", "id", "ca"]))
-                filtered = batch.filter(mask)
-                if filtered.num_rows == 0:
-                    continue
-                self.person_buffer.append(filtered)
-                ctx.register_record_batches("person_table", [[filtered]])
+                self.person_buffer.append(batch)
+                ctx.register_record_batches("person_table", [[batch]])
                 if self.auction_buffer:
                     ctx.register_record_batches("auction_table", [self.auction_buffer])
 
             elif stream_type == "auction":
-                mask = pc.equal(batch.column("category"), pa.scalar(10))
-                filtered = batch.filter(mask)
-                if filtered.num_rows == 0:
-                    continue
-                self.auction_buffer.append(filtered)
-                ctx.register_record_batches("auction_table", [[filtered]])
+                self.auction_buffer.append(batch)
+                ctx.register_record_batches("auction_table", [[batch]])
                 if self.person_buffer:
                     ctx.register_record_batches("person_table", [self.person_buffer])
 
@@ -206,13 +218,17 @@ class ProcessingNode(pa.flight.FlightServerBase):
         forward_writer.done_writing()
 
 
-    def process_q5_q7(self, descriptor, reader, forward_writer):
+    def process_windowed(self, descriptor, reader, forward_writer):
         source_id = descriptor.path[1].decode("utf-8")
         with self.lock:
             self.active_sources[source_id] = {"watermark": 0, "is_finished": False}
+        stream_type = descriptor.path[0].decode("utf-8")  if len(descriptor.path) > 0 else None
 
         for chunk in reader:
             batch = chunk.data
+            if stream_type:
+                batch = self._apply_column_filter(stream_type, batch)
+
             bytes_meta = chunk.app_metadata.to_pybytes()
             watermark = int(bytes_meta.decode("utf-8"))
 
@@ -257,20 +273,14 @@ class ProcessingNode(pa.flight.FlightServerBase):
             self.predefined_schema,
         )
 
-        if self.query_id == 1 or self.query_id == 2:
-            self.process_q1_q2(reader, forward_writer)
+        if not self.stateful:
+            self.process_default(reader, forward_writer)
 
-        elif self.query_id == 3:
-            self.process_q3(descriptor, reader, forward_writer)
-
-        elif self.query_id == 5:
-            self.process_q5_q7(descriptor, reader, forward_writer)
-
-        elif self.query_id == 7:
-            self.process_q5_q7(descriptor, reader, forward_writer)
+        elif self.window_size == 0:
+            self.process_join(descriptor, reader, forward_writer)
 
         else:
-            raise NotImplementedError
+            self.process_windowed(descriptor,reader, forward_writer)
 
 
 if __name__ == "__main__":
@@ -294,17 +304,33 @@ if __name__ == "__main__":
         help="SQL query to run on incoming batches",
     )
     parser.add_argument(
-        "--query-id",
-        type=int,
-        default=1,
-        help="Query ID in order to run NEXMark queries 3, 5 or 7",
-    )
-    parser.add_argument(
         "--query-result-schema",
         type=str,
         required=True,
         help="JSON schema definition for the data (required)",
     )
+    parser.add_argument(
+        "--stateful",
+        action="store_true",
+        help="Set to keep state of the incoming streams",
+    )
+    parser.add_argument(
+        "--filter",
+        type=str,
+        help="JSON mapping of stream name -> list of columns to keep, "
+             'e.g. \'{"person": ["id", "state"], "auction": ["id", "category"]}\''
+    )
+    parser.add_argument(
+        "--window-size",
+        type=int,
+        default=0
+    )
+    parser.add_argument(
+        "--window-slide",
+        type=int,
+        default=0
+    )
+
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -313,18 +339,33 @@ if __name__ == "__main__":
     print(f" Port           : {args.port}")
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
-    print(f" Query-ID       : {args.query_id}")
     print(f" Schema         : {args.query_result_schema}")
+    print(f" Stateful       : {args.stateful}")
+    print(f" Filter         : {args.filter}")
+    print(f" Window Size    : {args.window_size}")
+    print(f" Window Slide   : {args.window_slide}")
     print("=" * 40 + "\n")
 
     port = args.port
     forward_node = args.forward_node
     sql_query = args.query
-    query_id = args.query_id
     schema_json = args.query_result_schema
+    stateful = args.stateful
+    window_size = args.window_size
+    window_slide = args.window_slide
+
+    if args.filter:
+        try:
+            column_filter = json.loads(args.filter)
+            if not isinstance(column_filter, dict):
+                raise ValueError("Parsed filter must be a JSON object.")
+        except Exception as e:
+            raise ValueError(f"Invalid --filter JSON: {e}")
+    else:
+        column_filter = None
 
     processing_node = ProcessingNode(
-        f"grpc://0.0.0.0:{port}", forward_node, sql_query, query_id, schema_json
+        f"grpc://0.0.0.0:{port}", forward_node, sql_query, schema_json, stateful, column_filter, window_size, window_slide
     )
     print(f"WoolMilk processing node running on port {port}")
     processing_node.serve()
