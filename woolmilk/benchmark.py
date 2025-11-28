@@ -40,14 +40,6 @@ def parse_benchmark_config(config_file: Path):
             include_nodes = exp["include_nodes"]
             iterations = exp["iterations"]
 
-            assert (
-                isinstance(iterations, int) and iterations > 0
-            ), "Iterations must be a positive integer"
-
-            assert isinstance(
-                include_nodes, list
-            ), "include_nodes must be a list of integers"
-
             selected_source_nodes = []
             not_selected_source_nodes = []
 
@@ -152,7 +144,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config_path = Path(args.config_file)
-
-    assert config_path.exists(), f"Config file {args.config_file} does not exist."
 
     benchmark(config_path, experiment_dir=args.experiment_dir, mode=args.mode)
