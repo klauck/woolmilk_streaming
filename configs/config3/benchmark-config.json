@@ -19,7 +19,7 @@
    ],
    "source_nodes_exp": [
       {
-         "include_nodes": [1, 2],
+         "include_nodes": [0, 1],
          "iterations": 2,
          "overridden_params": [
             {
