@@ -43,7 +43,7 @@ def parse_benchmark_config(config_file: Path):
             selected_source_nodes = []
 
             for idx, source_node in enumerate(config.source_nodes):
-                if (idx + 1) in include_nodes:
+                if idx in include_nodes:
                     selected_source_nodes.append(source_node)
 
             for override in exp["overridden_params"]:
