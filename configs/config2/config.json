@@ -1,0 +1,44 @@
+{
+   "sink_nodes": [
+      {
+         "server_address": "127.0.0.1:8037",
+         "result_folder": "results"
+      }
+   ],
+   "processing_nodes": [
+      {
+         "server_address": "127.0.0.1:8017",
+         "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+         "forward_node": "127.0.0.1:8027",
+         "query_result_schema": {
+            "fields": [
+               { "name": "id", "type": "int64" },
+               { "name": "name", "type": "string" },
+               { "name": "email_address", "type": "string" },
+               { "name": "credit_card", "type": "string" },
+               { "name": "city", "type": "string" },
+               { "name": "state", "type": "string" },
+               { "name": "date_time", "type": "int64" },
+               { "name": "extra", "type": "string" }
+            ]
+         }
+      },
+      {
+         "server_address": "127.0.0.1:8027",
+         "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+         "forward_node": "127.0.0.1:8037",
+         "query_result_schema": {
+            "fields": [
+               { "name": "id", "type": "int64" },
+               { "name": "name", "type": "string" },
+               { "name": "email_address", "type": "string" },
+               { "name": "credit_card", "type": "string" },
+               { "name": "city", "type": "string" },
+               { "name": "state", "type": "string" },
+               { "name": "date_time", "type": "int64" },
+               { "name": "extra", "type": "string" }
+            ]
+         }
+      }
+   ]
+}

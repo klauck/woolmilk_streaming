@@ -1,0 +1,46 @@
+{
+   "source_nodes": [
+      {
+         "processing_nodes": ["127.0.0.1:8017"],
+         "tuples_per_batch": 10000,
+         "overall_tuples": 100000,
+         "stream": "nexmark.person",
+         "deployment_server": "127.0.0.1",
+         "generator_executable": "nexmark"
+      },
+      {
+         "processing_nodes": ["127.0.0.1:8017"],
+         "tuples_per_batch": 10000,
+         "overall_tuples": 100000,
+         "stream": "nexmark.person",
+         "deployment_server": "127.0.0.1",
+         "generator_executable": "nexmark"
+      }
+   ],
+   "source_nodes_exp": [
+      {
+         "include_nodes": [1, 2],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "stream": "nexmark.person",
+               "overall_tuples": 100000,
+               "tuples_per_batch": 10000,
+               "thread_count": 1
+            },
+            {
+               "stream": "nexmark.person",
+               "overall_tuples": 200000,
+               "tuples_per_batch": 10000,
+               "thread_count": 2
+            },
+            {
+               "stream": "nexmark.person",
+               "overall_tuples": 500000,
+               "tuples_per_batch": 10000,
+               "thread_count": 5
+            }
+         ]
+      }
+   ]
+}
