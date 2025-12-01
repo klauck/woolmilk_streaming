@@ -41,17 +41,10 @@ def parse_benchmark_config(config_file: Path):
             iterations = exp["iterations"]
 
             selected_source_nodes = []
-            not_selected_source_nodes = []
 
             for idx, source_node in enumerate(config.source_nodes):
                 if (idx + 1) in include_nodes:
                     selected_source_nodes.append(source_node)
-                else:
-                    not_selected_source_nodes.append(source_node)
-
-            # here we add experiments for not selected source nodes with 1 iteration each
-            for node in not_selected_source_nodes:
-                experiments.append(ExperimentConfig(iterations=1, source_nodes=[node]))
 
             for override in exp["overridden_params"]:
                 # create a copy of the source node
