@@ -1,6 +1,8 @@
 import argparse
+import copy
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from time import sleep
 from typing import Dict, List
@@ -20,101 +22,82 @@ class ExperimentConfig:
     source_nodes: List[SourceNode]
 
 
-@dataclass
-class BenchmarkConfig:
-    experiments: List[ExperimentConfig]
-
-
 def parse_benchmark_config(config_file: Path):
     config = parse_config(config_file)
 
     benchmark_config = json.loads(config_file.read_text())
-    source_nodes_exp = benchmark_config.get("source_nodes_exp", None)
+    source_experiments = benchmark_config.get("source_nodes_experiments", None)
+    if not source_experiments:
+        print('No experiments specified, expected list "source_nodes_experiments"')
+        exit(1)
 
-    benchmarks: List[BenchmarkConfig] = []
+    experiments: List[ExperimentConfig] = []
 
-    if source_nodes_exp:
-        for exp in source_nodes_exp:
-            experiments: List[ExperimentConfig] = []
+    for experiment in source_experiments:
+        experiment_source_nodes = []
 
-            include_nodes = exp["include_nodes"]
-            iterations = exp["iterations"]
+        for i, source_node_offset in enumerate(experiment["included_nodes"]):
+            included_source_node = copy.deepcopy(config.source_nodes[source_node_offset])
 
-            selected_source_nodes = []
+            if "overridden_params" in experiment:
+                assert(len(experiment["overridden_params"]) == len(experiment["included_nodes"]))
+                for key, value in experiment["overridden_params"][i].items():
+                    setattr(included_source_node, key, value)
 
-            for idx, source_node in enumerate(config.source_nodes):
-                if idx in include_nodes:
-                    selected_source_nodes.append(source_node)
+            experiment_source_nodes.append(included_source_node)
 
-            for override in exp["overridden_params"]:
-                # create a copy of the source node
-                local_source_nodes = [
-                    SourceNode(**node.__dict__) for node in selected_source_nodes
-                ]
-
-                for i, node in enumerate(local_source_nodes):
-                    for key, value in override.items():
-                        setattr(node, key, value)
-
-                experiments.append(
-                    ExperimentConfig(
-                        iterations=iterations, source_nodes=local_source_nodes
-                    )
+        experiments.append(
+            ExperimentConfig(
+                iterations=experiment["iterations"], source_nodes=experiment_source_nodes
                 )
+            )
 
-            benchmarks.append(BenchmarkConfig(experiments=experiments))
-
-    return {"benchmarks": benchmarks, "remote_servers": config.remote_servers}
+    return {"experiments": experiments, "remote_servers": config.remote_servers}
 
 
 def benchmark(config_path: Path, experiment_dir: str, mode: str):
     combined_config = parse_benchmark_config(config_path)
-    benchmarks: List[BenchmarkConfig] = combined_config["benchmarks"]
+    experiments: List[ExperimentConfig] = combined_config["experiments"]
     remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
 
     print("Starting benchmark...")
 
-    for benchmark_id, benchmark_config in enumerate(benchmarks):
-        print(f"    Starting bechmark {benchmark_id + 1}/{len(benchmarks)}")
-        print(f"    Number of experiments: {len(benchmark_config.experiments)}")
+    for experiment_id, experiment in enumerate(experiments):
+        print(f"    Starting experiment {experiment_id + 1}/{len(experiments)}")
+        print(f"        Number of source nodes: {len(experiment.source_nodes)}")
+        print(f"        Iterations: {experiment.iterations}")
 
-        for experiment_id, experiment in enumerate(benchmark_config.experiments):
+        for iteration in range(experiment.iterations):
             print(
-                f"        Starting experiment {experiment_id + 1}/{len(benchmark_config.experiments)}"
+                f"            Starting iteration {iteration + 1}/{experiment.iterations}"
             )
-            print(f"        Number of source nodes: {len(experiment.source_nodes)}")
-            print(f"        Iterations: {experiment.iterations}")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            current_experiment_dir = (
+                Path(experiment_dir)
+                / f"{timestamp}__experiment_{experiment_id}_iter_{iteration}"
+            )
 
-            for iteration in range(experiment.iterations):
-                print(
-                    f"            Starting iteration {iteration + 1}/{experiment.iterations}"
-                )
-                current_experiment_dir = (
-                    Path(experiment_dir)
-                    / f"benchmark_{benchmark_id + 1}_exp_{experiment_id + 1}_iter_{iteration + 1}"
-                )
+            current_config = Config(
+                remote_servers=remote_servers,
+                sink_nodes=[],
+                processing_nodes=[],
+                source_nodes=experiment.source_nodes,
+            )
 
-                current_config = Config(
-                    remote_servers=remote_servers,
-                    sink_nodes=[],
-                    processing_nodes=[],
-                    source_nodes=experiment.source_nodes,
-                )
+            runner = DeploymentRunner(
+                config=current_config,
+                log_dir=str(current_experiment_dir) if mode == "local" else "logs",
+                mode=mode,
+                log_to_file=True,
+                local_log_dir=str(current_experiment_dir),
+            )
 
-                runner = DeploymentRunner(
-                    config=current_config,
-                    log_dir=str(current_experiment_dir) if mode == "local" else "logs",
-                    mode=mode,
-                    log_to_file=True,
-                    local_log_dir=str(current_experiment_dir),
-                )
-
-                runner.deploy()
-                sleep(5)
-                runner.cleanup()
-                print(
-                    f"            Completed iteration {iteration + 1}/{experiment.iterations}"
-                )
+            runner.deploy()
+            sleep(5)
+            runner.cleanup()
+            print(
+                f"            Completed iteration {iteration + 1}/{experiment.iterations}"
+            )
 
 
 if __name__ == "__main__":

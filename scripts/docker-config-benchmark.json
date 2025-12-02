@@ -33,22 +33,19 @@
          "deployment_server": "woolmilk-source"
       }
    ],
-   "source_nodes_exp": [
+   "source_nodes_experiments": [
       {
-         "include_nodes": [1],
+         "included_nodes": [0, 1],
+         "iterations": 2
+      },
+      {
+         "included_nodes": [1],
          "iterations": 2,
          "overridden_params": [
             {
                "stream": "nexmark.person",
-               "overall_tuples": 100000,
-               "tuples_per_batch": 10000,
+               "overall_tuples": 200000,
                "thread_count": 2
-            },
-            {
-               "stream": "nexmark.person",
-               "overall_tuples": 1000,
-               "tuples_per_batch": 10000,
-               "thread_count": 1
             }
          ]
       }
