@@ -40,7 +40,9 @@ def parse_benchmark_config(config_file: Path):
             included_source_node = copy.deepcopy(config.source_nodes[source_node_offset])
 
             if "overridden_params" in experiment:
-                assert(len(experiment["overridden_params"]) == len(experiment["included_nodes"]))
+                assert len(experiment["overridden_params"]) == len(
+                    experiment["included_nodes"]
+                )
                 for key, value in experiment["overridden_params"][i].items():
                     setattr(included_source_node, key, value)
 
@@ -49,8 +51,8 @@ def parse_benchmark_config(config_file: Path):
         experiments.append(
             ExperimentConfig(
                 iterations=experiment["iterations"], source_nodes=experiment_source_nodes
-                )
             )
+        )
 
     return {"experiments": experiments, "remote_servers": config.remote_servers}
 
