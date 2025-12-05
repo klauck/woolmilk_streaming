@@ -9,24 +9,25 @@
    "processing_nodes": [
       {
          "server_address": "127.0.0.1:8917",
-         "query": "SELECT auction, price * 0.85 as price, bidder FROM nexmark_data",
+         "query": "SELECT auction, price * 0.85 as price, bidder, date_time FROM nexmark_data",
          "forward_node": "127.0.0.1:8927",
-         "query_result_schema": {"fields":[{"name":"auction","type":"int64"},{"name":"price","type":"float64"},{"name":"bidder","type":"int64"}]}
+         "query_result_schema": {"fields":[{"name":"auction","type":"int64"},{"name":"price","type":"float64"},{"name":"bidder","type":"int64"},{"name":"date_time","type":"int64"}]}
       },
       {
          "server_address": "127.0.0.1:8918",
-         "query": "SELECT auction, price * 0.85 as price, bidder FROM nexmark_data",
+         "query": "SELECT auction, price * 0.85 as price, bidder, date_time FROM nexmark_data",
          "forward_node": "127.0.0.1:8927",
-         "query_result_schema": {"fields":[{"name":"auction","type":"int64"},{"name":"price","type":"float64"},{"name":"bidder","type":"int64"}]}
+         "query_result_schema": {"fields":[{"name":"auction","type":"int64"},{"name":"price","type":"float64"},{"name":"bidder","type":"int64"},{"name":"date_time","type":"int64"}]}
       }
    ],
    "source_nodes": [
       {
-         "processing_nodes": ["127.0.0.1:8917", "127.0.0.1:8917"],
+         "processing_nodes": ["127.0.0.1:8917", "127.0.0.1:8918"],
          "stream": "nexmark.bid",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,
-         "thread_count": 2
+         "thread_count": 2,
+         "store_input": "../tests/input/test_Q1_bid.parquet"
       }
    ]
 }

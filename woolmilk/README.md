@@ -3,18 +3,14 @@
 Optionally create a virtual environment
 
 ```
-cd py_arrow_flight
-python3 -m venv woolmilk
-source woolmilk/bin/activate
+python3 -m venv woolmilk_env
+source woolmilk_env/bin/activate
 ```
 
-Install the Python library for DataFusion and numpy
+Install the requirements including DataFusion and PyArrow
 
 ```
-pip install datafusion
-pip install numpy
-pip install pyarrow
-pip install paramiko
+pip install -r requirements.txt
 ```
 
 ## Start local example
@@ -22,19 +18,34 @@ pip install paramiko
 **1. Start the sink server**
 
 ```
-python flight_server.py --server-address 127.0.0.1:8820
+python sink_node.py --port 8027
 ```
 
-**2. Start the processing node**
+**2. Start the processing node (in another terminal)**
 
 ```
-python flight_processing_node.py --server-address 127.0.0.1:8815 --exit_node 127.0.0.1:8820
+python processing_node.py \
+  --port 8017 \
+  --forward-node 127.0.0.1:8027 \
+  --query "SELECT * FROM nexmark_data WHERE name > 'H'" \
+  --query-result-schema '{
+    "fields": [
+      {"name": "id", "type": "int64"},
+      {"name": "name", "type": "string"},
+      {"name": "email_address", "type": "string"},
+      {"name": "credit_card", "type": "string"},
+      {"name": "city", "type": "string"},
+      {"name": "state", "type": "string"},
+      {"name": "date_time", "type": "int64"},
+      {"name": "extra", "type": "string"}
+    ]
+  }'
 ```
 
-**3. Start the source client**
+**3. Start the source client (in another terminal)**
 
 ```
-python flight_client.py --stream nexmark.bid --processing-servers 127.0.0.1:8815
+python source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017
 ```
 
 ## Multiple processing servers
@@ -42,137 +53,86 @@ python flight_client.py --stream nexmark.bid --processing-servers 127.0.0.1:8815
 Start multiple processing nodes on different ports
 
 ```
-python flight_processing_node.py --server-address 127.0.0.1:8815 --exit_node 127.0.0.1:8820
-python flight_processing_node.py --server-address 127.0.0.1:8816 --exit_node 127.0.0.1:8820
+python processing_node.py \
+  --port 8017 \
+  --forward-node 127.0.0.1:8027 \
+  --query "SELECT * FROM nexmark_data WHERE name > 'H'" \
+  --query-result-schema '{
+    "fields": [
+      {"name": "id", "type": "int64"},
+      {"name": "name", "type": "string"},
+      {"name": "email_address", "type": "string"},
+      {"name": "credit_card", "type": "string"},
+      {"name": "city", "type": "string"},
+      {"name": "state", "type": "string"},
+      {"name": "date_time", "type": "int64"},
+      {"name": "extra", "type": "string"}
+    ]
+  }'
+
+python processing_node.py \
+  --port 8018 \
+  --forward-node 127.0.0.1:8027 \
+  --query "SELECT * FROM nexmark_data WHERE name > 'H'" \
+  --query-result-schema '{
+    "fields": [
+      {"name": "id", "type": "int64"},
+      {"name": "name", "type": "string"},
+      {"name": "email_address", "type": "string"},
+      {"name": "credit_card", "type": "string"},
+      {"name": "city", "type": "string"},
+      {"name": "state", "type": "string"},
+      {"name": "date_time", "type": "int64"},
+      {"name": "extra", "type": "string"}
+    ]
+  }'
 ```
 
-Client can send to multiple processing servers
+Clients can send to multiple processing servers
 
 ```
-python flight_client.py --stream nexmark.bid --processing-servers 127.0.0.1:8815,127.0.0.1:8816
-```
-
-## Query processing
-
-Add SQL queries to filter data
-
-```
-python flight_processing_node.py --server-address 127.0.0.1:8815 --exit_node 127.0.0.1:8820 --query "SELECT * FROM nexmark_data WHERE price > 100"
+python source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017,127.0.0.1:8018
 ```
 
 ## Command Line Options
 
-### flight_server.py (Sink Node)
+### sink_node.py (Sink Node)
 
 ```
---server-address    Server address to bind to (default: 0.0.0.0:8820)
+--port PORT                     Port to run the WoolMilk sink node
+--result-folder RESULT_FOLDER   Folder to store Parquet results
 ```
 
-### flight_processing_node.py (Processing Node)
+### processing_node.py (Processing Node)
 
 ```
---server-address    Address to run the processing node on (default: localhost:8815)
---exit_node         Address of the exit/sink node (default: localhost:8820)
---query             SQL query to run on incoming data (default: SELECT * FROM nexmark_data)
+--port PORT                                    Port to run the WoolMilk processing node
+--forward-node FORWARD_NODE                    Address of the node to forward data to (host:port)
+--query QUERY                                  SQL query to run on incoming batches
+--query-result-schema QUERY_RESULT_SCHEMA      JSON schema definition for the data (required)
 ```
 
-### flight_client.py (Client Node)
+### source_node.py (Source Node)
 
 ```
---stream            Stream type: nexmark.bid, nexmark.auction, nexmark.person (default: nexmark.bid)
---tuples-per-batch  Number of records per batch (default: 10000)
---overall-tuples    Total number of records to send (default: 1000000)
---processing-servers Comma-separated list of processing servers (default: localhost:8815)
---thread-count      Number of threads for parallel sending (default: 1)
+--stream {nexmark.bid,nexmark.auction,nexmark.person}       Stream type
+--generator-executable GENERATOR_EXECUTABLE                 Executable to generate data
+--overall-tuples OVERALL_TUPLES                             Total number of tuples needs to be sent.
+--tuples-per-batch TUPLES_PER_BATCH                         Number of tuples per batch
+--offset OFFSET                                             Offset to start data generation
+--step STEP                                                 Step for next tuple to generate
+--processing-nodes PROCESSING_NODES                         Flight server address (host:port,host:port)
+--thread-count THREAD_COUNT                                 Number of threads to use for sending data
+--store-input STORE_INPUT                                   Folder to store generated data
 ```
 
 ## Deployment
 
-**Local deployment**
+**Run all nodes in one command**
+
+A configuration is specified in JSON: [config.json](https://github.com/klauck/woolmilk_streaming/blob/main/scripts/config.json)
 
 ```
-cd scripts
-python3 deployment.py local
+python woolmilk/run_cluster.py --config scripts/config.json
 ```
 
-**Remote deployment**
-
-```
-cd scripts
-python3 deployment.py deploy
-```
-
-### deployment.py options
-
-```
-mode                local or deploy
---config            Configuration file path (default: config.json)
---src-dir           Source directory path (default: ../src)
---log-dir           Log directory path (default: logs)
-```
-
-## Configuration (config.json)
-
-**Server configuration**
-
-```json
-"config": {
-  "servers": {
-    "192.168.1.10": {
-      "username": "user",
-      "password": "password",
-      "base_dir": "arrow-flight",
-      "python_env": "/path/to/python3"
-    }
-  }
-}
-```
-
-**Sink nodes** - receive final data
-
-```json
-"sinkNodes": [
-  {"serverAddress": "192.168.1.10:8820"}
-]
-```
-
-**Processing nodes** - apply queries and forward to sinks
-
-```json
-"processingNodes": [
-  {
-    "serverAddress": "192.168.1.11:8815",
-    "query": "SELECT * FROM nexmark_data WHERE price > 100",
-    "forwardNode": "192.168.1.10:8820"
-  }
-]
-```
-
-**Client nodes** - generate data streams
-
-```json
-"sourceNodes": [
-  {
-    "processingNodes": [{"address": "192.168.1.11:8815"}],
-    "stream": "nexmark.bid",
-    "overall_tuples": 100000,
-    "tuples_per_batch": 10000,
-    "thread_count": 1,
-    "deployment_server": "192.168.1.12"
-  }
-]
-```
-
-### Config options explained
-
--  **username/password**: SSH credentials for remote deployment
--  **base_dir**: Directory on remote server to store files
--  **python_env**: Path to Python executable on remote server
--  **serverAddress**: Host:port where service runs
--  **query**: Optional SQL query for processing nodes
--  **sinkNode**: Where processing node forwards data
--  **deployment_server**: Where to deploy the client (required)
--  **stream**: Data stream type (nexmark.bid, nexmark.auction, nexmark.person)
--  **overall_tuples**: Total tuples to generate
--  **tuples_per_batch**: Tuples per batch
--  **thread_count**: Parallel threads for data sending
