@@ -1,6 +1,6 @@
 ## Ansible Deployment for Distributed Execution
 
-WoolMilk can be run on multiple remote machines using the `run_cluster.py` script with the `--mode remote` flag and a configuration for the remote cluster (see `scripts/config_remote.json`).
+WoolMilk can be run on multiple remote machines using the `run_cluster.py` script with the `--mode remote` flag and a configuration for the remote cluster (see [`scripts/config_remote.json`](https://github.com/klauck/woolmilk_streaming/blob/main/scripts/config_remote.json)).
 The `run_cluster.py` script uses SSH to start WoolMilk processes on remote nodes and assumes that all required dependencies are already installed. In the cluster configuration, you need to specify:
 
 - `username` — the SSH user on the remote machines  
@@ -15,7 +15,7 @@ We provide an **Ansible script** to deploy WoolMilk sources and set up the Pytho
 
 The script requires:
 
-- A **host inventory file** (see `scripts/inventory_example.ini`)  
+- A **host inventory file** (see [`scripts/inventory_example.ini`](https://github.com/klauck/woolmilk_streaming/blob/main/scripts/inventory_example.ini))  
 - SSH authentication configured for the remote hosts  
 
 Example SSH key setup for two nodes:
