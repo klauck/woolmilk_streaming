@@ -3,9 +3,9 @@
   hosts: rpi_cluster
   become: yes   # escalate privileges for package installation
   vars:
-    project_src: ~/woolmilk_streaming          # local path on control machine
+    project_src: "{{ lookup('env', 'HOME') }}/woolmilk_streaming"    # local path on control machine
     project_dest: /home/picocluster/woolmilk   # destination path on Raspberry Pis
-    venv_path: /home/picocluster/woolmilk/venv # virtual environment location
+    venv_path: "{{ project_dest }}/venv"    # virtual environment location
 
   tasks:
     - name: Create project directory
@@ -27,16 +27,18 @@
       command: python3 -m venv "{{ venv_path }}"
       args:
         creates: "{{ venv_path }}/bin/activate"
+      become_user: picocluster
 
     - name: Upgrade pip inside venv
       pip:
         name: pip
         state: latest
         virtualenv: "{{ venv_path }}"
+      become_user: picocluster
 
     - name: Install requirements if present
       pip:
         requirements: "{{ project_dest }}/requirements.txt"
         virtualenv: "{{ venv_path }}"
-      ignore_errors: yes   # skips if no requirements.txt
-  
+      ignore_errors: yes    # skips if no requirements.txt
+      become_user: picocluster
