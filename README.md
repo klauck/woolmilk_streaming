@@ -143,6 +143,12 @@ docker compose down
 cd ..
 ```
 
+## Ansible Deployment for Distributed Execution
+
+See [WoolMilk Ansible Deployment](https://github.com/klauck/woolmilk_streaming/blob/main/docs/woolmilk_ansible_deployment.md)
+
+
+
 ## Resources
 
 ### Composable Data Management Systems
