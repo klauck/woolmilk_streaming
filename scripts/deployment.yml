@@ -27,18 +27,15 @@
       command: python3 -m venv "{{ venv_path }}"
       args:
         creates: "{{ venv_path }}/bin/activate"
-      become_user: picocluster
 
     - name: Upgrade pip inside venv
       pip:
         name: pip
         state: latest
         virtualenv: "{{ venv_path }}"
-      become_user: picocluster
 
     - name: Install requirements if present
       pip:
         requirements: "{{ project_dest }}/requirements.txt"
         virtualenv: "{{ venv_path }}"
       ignore_errors: yes    # skips if no requirements.txt
-      become_user: picocluster
