@@ -5,17 +5,25 @@ import time
 
 import pyarrow as pa
 import pyarrow.flight
+
+from queue import Queue
 from datafusion import SessionContext
-from pyarrow import flight
+from pyarrow import flight, RecordBatch
 
-from tools.metrics import str2bool, LogType, MonitorService, LIMIT, MetricConfig, UNDEFINED_MONITOR, HealthResult, \
-    LogObject
+from tools.metrics import (str2bool, LogType, MonitorService, LIMIT, MetricConfig, UNDEFINED_MONITOR,
+                           HealthResult, LogObject, RawProcessingMetric, RawTransferMetric)
 
+
+class ForwardClient:
+    def __init__(self, url: str):
+        self.url = url
+        self.client = flight.FlightClient(f"grpc://{url}")
 
 class ProcessingNode(pa.flight.FlightServerBase):
     def __init__(self, location, advertised_host: str, forward_node: str, sql_query, schema_json, monitor: MonitorService = None):
         super().__init__(location)
-        self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
+        self.forwarding_clients: list[ForwardClient] = [ForwardClient(forward_node)]
+
         self.query = sql_query
         self.default_table_name = "nexmark_data"
 
@@ -59,6 +67,13 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 payload: HealthResult = self.monitor.check_health()
                 yield flight.Result(json.dumps(payload.to_dict()).encode("utf-8"))
 
+        elif t == "metrics":
+            if self.monitor is None:
+                raise flight.FlightServerError(UNDEFINED_MONITOR)
+            with self.monitor.lock:
+                metrics = self.monitor.parse_metrics()
+                yield flight.Result(json.dumps(metrics).encode("utf-8"))
+
         elif t == "logs" or t == "all_logs":
             #TODO
             if self.monitor is None:
@@ -89,64 +104,123 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
     def do_put(self, context: flight.ServerCallContext, descriptor: flight.FlightDescriptor,
                reader: flight.MetadataRecordBatchReader, writer: flight.MetadataRecordBatchWriter):
-        client_id: str = context.peer()
 
-        self.handle_batch(reader, self.forwarding_client)
+        source_id: str = context.peer()
 
-    def handle_batch(self, reader, client: flight.FlightClient):
-        ctx = SessionContext()
+        #### Forward Clients run as Threads for non blocking the processing ####
+        fw_queues: list[Queue] = []
+        fw_workers: list[threading.Thread] = []
 
-        forward_writer, _ = client.do_put(
-            pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
-            schema=self.predefined_schema,
+        for fw_client in self.forwarding_clients:
+            fw_writer, _ = fw_client.client.do_put(
+                flight.FlightDescriptor.for_path(self.query or self.default_table_name),
+                self.predefined_schema
+            )
+
+            q = Queue()
+            fw_queues.append(q)
+
+            t = threading.Thread(
+                target=self.forward_worker,
+                args=(fw_writer, q, source_id, fw_client.url),
+                daemon=True
+            )
+            t.start()
+            fw_workers.append(t)
+
+
+
+        #### Process Batch first (Metrices are recorder here first) ###
+
+        self.handle_batch(
+            reader,
+            fw_queues,
+            source_id,
         )
 
-        total_bytes = 0
-        forwarding_times = []
-        cost_break_down = {"receiving": [], "querying": [], "sending": []}
-        forward_start = start = time.time()
+        ### Clean all threads and Queues
+        for q in fw_queues:
+            q.put(None)
+
+        for t in fw_workers:
+            t.join()
+
+
+    def handle_batch(self, reader: flight.MetadataRecordBatchReader, fw_queues: list[Queue], source_id: str):
+        """
+            Processes given batch (and takes metrices of the processing) and stores to forward_queue
+        """
+
+        ctx = SessionContext()
 
         for chunk in reader:
             batch = chunk.data
 
             processing_start = time.time()
             ctx.register_record_batches(self.default_table_name, [[batch]])
-
             result_df = ctx.sql(self.query)
-
-            result = result_df.collect()
+            result_batches = result_df.collect()
+            ctx.deregister_table(self.default_table_name)
             processing_end = time.time()
 
-            for result_batch in result:
-                forward_writer.write_batch(result_batch)
-                total_bytes += result_batch.nbytes
+            self.store_processing_metric(
+                source_id,
+                processing_end, #timestamp
+                processing_end - processing_start, #processing-time
+                batch.nbytes #batch-size
+            )
 
-            ctx.deregister_table(self.default_table_name)
+            for qu in fw_queues:
+                qu.put(result_batches)
 
-            forward_end = time.time()
-            forwarding_times.append((forward_start, forward_end))
 
-            cost_break_down["receiving"].append(processing_start - forward_start)
-            cost_break_down["querying"].append(processing_end - processing_start)
-            cost_break_down["sending"].append(forward_end - processing_end)
 
-            forward_start = forward_end
+    def store_processing_metric(self, source: str, timestamp:float, duration:float, size: int):
+        if self.monitor:
+            with self.monitor.lock:
+                print(f"Storing Processing Metric: {source}, {timestamp}, {duration}, {size}")
+                self.monitor.raw_processing_metrics.append(RawProcessingMetric(
+                    source,
+                    duration,
+                    size,
+                    timestamp
+                ))
 
-        forward_writer.done_writing()
-        end = time.time()
 
-        duration = end - start
-        gbps = (total_bytes * 8) / (duration * 1000**3)
-        mbps = total_bytes / (duration * 1000**2)
+    def forward_worker(self, writer: flight.FlightStreamWriter, queue: Queue[list[RecordBatch]], from_id: str, to_id: str):
+        """
+            Reads batches from the queue and forwards it to given client
+        """
+        while True:
+            records: list[RecordBatch] = queue.get()
+            if records is None:
+                break
 
-        print(
-            f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start},'
-            f' "duration": {duration}, "MBps": {mbps:.2f}, "Gbps": {gbps:.4f}}}'
-        )
-        print("  receiving: ", sum(cost_break_down["receiving"]))
-        print("  querying: ", sum(cost_break_down["querying"]))
-        print("  sending: ", sum(cost_break_down["sending"]))
-        #print("forward_times = ", forwarding_times)
+            send_start = time.time()
+            bytes_sent: int = 0
+
+            for rb in records:
+                writer.write_batch(rb)
+                bytes_sent += rb.nbytes
+
+            send_end = time.time()
+            self.store_forward_metric(from_id, to_id, send_end, send_end - send_start, bytes_sent)
+
+        writer.done_writing()
+
+
+
+    def store_forward_metric(self, source: str, client: str, timestamp: float, duration: float, size: int):
+        if self.monitor:
+            with self.monitor.lock:
+                print(f"Storing Transfering Metric: {source}, {client}, {timestamp}, {duration}, {size}")
+                self.monitor.raw_transfer_metrics.append(RawTransferMetric(
+                    source,
+                    client,
+                    duration,
+                    size,
+                    timestamp
+                ))
 
 
 if __name__ == "__main__":
@@ -166,15 +240,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--query",
         type=str,
-        default="SELECT * FROM nexmark_data",
+        default="SELECT id FROM nexmark_data",
         help="SQL query to run on incoming batches",
     )
     parser.add_argument(
         "--query-result-schema",
         type=str,
-        default='{"fields": [{"name": "id", "type": "int64"}, {"name": "name", "type": "string"},{"name": "email_address", "type": "string"}, {"name": "credit_card", "type": "string"}, {"name": "city", "type": "string"}, {"name": "state", "type": "string"}, {"name": "extra", "type": "string"}]}',
+        default='{"fields": [{"name": "id", "type": "int64"}]}',
         help="JSON schema definition for the data (required)",
-    ) #TODO: Do not require result-shema
+    )
 
     parser.add_argument(
         "--monitor", type=str2bool, default=True, help="Allow Monitor?"
