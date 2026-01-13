@@ -6,6 +6,9 @@ import pyarrow.flight
 from datafusion import SessionContext, column, literal
 
 
+QUERY_API = 'DATAFRAME'  # {'DATAFRAME' | 'SQL'}
+
+
 class ProcessingNode(pa.flight.FlightServerBase):
     def __init__(self, location, forward_node):
         super().__init__(location)
@@ -39,15 +42,17 @@ class ProcessingNode(pa.flight.FlightServerBase):
         for chunk in reader:
             batch = chunk.data
 
-            # Option 1: Dataframe API
-            # df = ctx.create_dataframe([[batch]])
-            # df.filter(column("column") < literal(0.5))
-
             processing_start = time.time()
-            # Option 2: SQL
-            ctx.register_record_batches("values", [[batch]])
 
-            df = ctx.sql("SELECT * FROM values")
+            if QUERY_API == 'DATAFRAME':
+                df = ctx.create_dataframe([[batch]])
+                df.filter(column("id") > literal(17))
+
+            else:
+                assert QUERY_API == 'SQL'
+                ctx.register_record_batches("values", [[batch]])
+                df = ctx.sql("SELECT * FROM values")
+
             # df.show()
 
             result = df.collect()
@@ -93,4 +98,5 @@ if __name__ == "__main__":
     forward_node = sys.argv[2]
     server = ProcessingNode(f"grpc://0.0.0.0:{port}", forward_node)
     print(f"Flight processing node running on port {port}")
+    print(f"Using {QUERY_API} API")
     server.serve()
