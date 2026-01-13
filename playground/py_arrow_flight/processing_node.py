@@ -5,8 +5,7 @@ import pyarrow as pa
 import pyarrow.flight
 from datafusion import SessionContext, column, literal
 
-
-QUERY_API = 'DATAFRAME'  # {'DATAFRAME' | 'SQL'}
+QUERY_API = "DATAFRAME"  # {"DATAFRAME" | "SQL"}
 
 
 class ProcessingNode(pa.flight.FlightServerBase):
@@ -44,12 +43,12 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
             processing_start = time.time()
 
-            if QUERY_API == 'DATAFRAME':
+            if QUERY_API == "DATAFRAME":
                 df = ctx.create_dataframe([[batch]])
                 df.filter(column("id") > literal(17))
 
             else:
-                assert QUERY_API == 'SQL'
+                assert QUERY_API == "SQL"
                 ctx.register_record_batches("values", [[batch]])
                 df = ctx.sql("SELECT * FROM values")
 
