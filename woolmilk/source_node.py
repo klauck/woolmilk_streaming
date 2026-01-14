@@ -94,6 +94,7 @@ def batch_streamer(stream_generator: Iterator[pa.RecordBatch], batch_per_second:
     start_time = time.time()
     current_second = int(start_time)
     batches_sent_this_second = 0
+    counter = -1
 
     try:
         while not SHUTDOWN_FLAG:
@@ -117,16 +118,15 @@ def batch_streamer(stream_generator: Iterator[pa.RecordBatch], batch_per_second:
                 print("Sent all Batches provided by generator")
                 break
 
-
-            for writer in writers:
-                if SHUTDOWN_FLAG:
-                    return
-                try:
-                    writer.write_batch(batch)
-                except Exception as e:
-                    print(f"Got exception while trying to send batch: {e}")
-                    SHUTDOWN_FLAG = True
-                    break
+            counter = (counter + 1) % len(writers)
+            if SHUTDOWN_FLAG:
+                return
+            try:
+                writers[counter].write_batch(batch)
+            except Exception as e:
+                print(f"Got exception while trying to send batch: {e}")
+                SHUTDOWN_FLAG = True
+                break
 
             batches_sent_this_second += 1
 
