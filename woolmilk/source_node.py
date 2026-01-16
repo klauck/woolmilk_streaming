@@ -1,192 +1,159 @@
 import argparse
-import json
-import os
-import subprocess
-import sys
-import threading
 import time
-from pathlib import Path
+from typing import Iterator
 
 import pyarrow as pa
-import pyarrow.flight
+import pyarrow.flight as pf
 import pyarrow.parquet as pq
 
+SHUTDOWN_FLAG = False
 
-def generate_table(
-    num_rows=10**6, event_type="person", generator_executable="nexmark", offset=0, step=1
-):
-    cmd = [
-        generator_executable,
-        "-n",
-        str(num_rows),
-        "--offset",
-        str(offset),
-        "--step",
-        str(step),
-        "--type",
-        event_type,
-        "--no-wait",
-    ]
-    print("Generate data..")
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-    records = []
-
-    try:
-        for line in proc.stdout:
-            try:
-                record = json.loads(line)
-                key = event_type.capitalize()
-                records.append(record[key])
-            except json.JSONDecodeError:
-                continue
-    finally:
-        proc.stdout.close()
-        proc.kill()
-        proc.wait()
-
-    print("Done.")
-    return pa.Table.from_pylist(records)
-
-
-def send_data(thread_id, schema, batches, processing_nodes):
-    writers = []
-    for processing_node in processing_nodes:
-        client = pa.flight.FlightClient(
-            f"grpc://{processing_node[0]}:{processing_node[1]}"
-        )
-        writer, _ = client.do_put(
-            pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
-        )
-        writers.append(writer)
-
-    start = time.time()
-    send_times = []
-    total_bytes = 0
-    for i, batch in enumerate(batches):
-        send_start = time.time()
-        writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
-        total_bytes += batch.nbytes
-        send_end = time.time()
-        send_times.append((send_start, send_end))
-
-    for writer in writers:
-        writer.done_writing()
-
-    end = time.time()
-
-    duration = end - start
-    gbps = (total_bytes * 8) / (duration * 1000**3)
-    mbps = total_bytes / (duration * 1000**2)
-
-    print(f"[Thread {thread_id}] Start: {start}")
-    print("send_times = ", send_times)
-    print(
-        f"{thread_id}: Sent {total_bytes / 1000 ** 2} MB in {duration:.7f} seconds; "
-        f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
-    )
-
-
-if __name__ == "__main__":
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="WoolMilk Source Node")
-    parser.add_argument(
-        "--stream",
-        choices=["nexmark.bid", "nexmark.auction", "nexmark.person"],
-        default="nexmark.person",
-        help="Stream type",
-    )
-    parser.add_argument(
-        "--generator-executable", default="nexmark", help="Executable to generate data"
-    )
-    parser.add_argument(
-        "--overall-tuples",
-        type=int,
-        default=10**5,
-        help="Total number of tuples needs to be sent.",
-    )
-    parser.add_argument(
-        "--tuples-per-batch", type=int, default=10**4, help="Number of tuples per batch"
-    )
-    parser.add_argument(
-        "--offset", type=int, default=0, help="Offset to start data generation"
-    )
-    parser.add_argument(
-        "--step", type=int, default=1, help="Step for next tuple to generate"
-    )
     parser.add_argument(
         "--processing-nodes",
         help="Flight server address (host:port,host:port)",
         type=str,
         default="localhost:8010",
     )
+
     parser.add_argument(
-        "--thread-count",
+        "--tuple-per-batch",
         type=int,
-        help="Number of threads to use for sending data",
-        default=1,
+        help="Number of Tuples to send per Batch",
+        default=10**4,
     )
+
     parser.add_argument(
-        "--store-input",
-        type=str,
-        help="Folder to store generated data",
-        default="",
+        "--batch-per-second",
+        type=int,
+        help="Number of Batches to send per second (Limit, -1 if uncapped)",
+        default=-1,
     )
-    args = parser.parse_args()
+
+    parser.add_argument(
+        "--overall_batches",
+        type=int,
+        help="Number of overall batches to send (Limit, -1 if uncapped)",
+        default=-1,
+    )
+
+    parser.add_argument(
+        "--file-path",
+        type=str,
+        default="data/test.parquet",
+        help="Path to the Parquet file containing Nexmark data",
+    )
+    args: argparse.Namespace = parser.parse_args()
 
     print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
     print("=" * 40)
-    print(f" Stream Type                : {args.stream}")
-    print(f" Overall Tuples             : {args.overall_tuples}")
-    print(f" Tuples Per Batch           : {args.tuples_per_batch}")
-    print(f" Offset                     : {args.offset}")
-    print(f" Step                       : {args.step}")
     print(f" Processing Nodes           : {args.processing_nodes}")
-    print(f" Thread Count               : {args.thread_count}")
-    print(f" Store Input                : {args.store_input}")
-    print(f" Generator Executable       : {args.generator_executable}")
+    print(f" Overall Batches            : {args.overall_batches}")
+    print(f" Batch per Second           : {args.batch_per_second}")
+    print(f" Tuple per Batch            : {args.tuple_per_batch}")
+    print(f" Parquet File               : {args.file_path}")
     print("=" * 40 + "\n")
+    return args
 
-    processing_nodes = []
-    for address in args.processing_nodes.split(","):
-        host, port = address.split(":")
-        processing_nodes.append((host, int(port)))
+def add_timestamp(batch: pa.RecordBatch) -> pa.RecordBatch:
+    now = time.time()
+    timestamps = pa.array([now] * batch.num_rows, type=pa.int64())
+    return batch.append_column("timestamp", timestamps)
 
-    if len(processing_nodes) == 0:
-        print("No server addresses for processing nodes provided. Exiting.")
-        sys.exit(1)
+def parse_parquet_file(parquet_file: pq.ParquetFile, overall_batches: int, tuple_per_batch: int) -> Iterator[pa.RecordBatch]:
+    global SHUTDOWN_FLAG
+    current_batch_count = 0
+    while not SHUTDOWN_FLAG:
+        for batch in parquet_file.iter_batches(batch_size=tuple_per_batch):
+            if SHUTDOWN_FLAG:
+                return
 
-    event_type = args.stream.split(".")[1]
+            if overall_batches != -1:
+                if current_batch_count >= overall_batches:
+                    SHUTDOWN_FLAG = True
+                    return
+                current_batch_count += 1
 
-    table = generate_table(
-        num_rows=args.overall_tuples,
-        event_type=event_type,
-        generator_executable=args.generator_executable,
-        offset=args.offset,
-        step=args.step,
-    )
-    batches = table.to_batches(max_chunksize=args.tuples_per_batch)
+            yield add_timestamp(batch)
 
-    if args.store_input != "":
-        input_file = Path(args.store_input)
-        input_folder = input_file.parent
-        os.makedirs(input_folder, exist_ok=True)
-        table = pa.Table.from_batches(batches)
-        pq.write_table(table, f"{input_file}")
-        print(f"Wrote .. {input_file}")
+def get_writers(nodes: str, schema: pa.Schema) -> list[pf.FlightStreamWriter]:
+    writers: list[pf.FlightStreamWriter] = []
+    for address in nodes.split(","):
+        client = pf.FlightClient(f"grpc://{address}")
+        writer, _ = client.do_put(pf.FlightDescriptor.for_path("bandwidth-test"), schema)
+        writers.append(writer)
+    return writers
 
-    threads = []
-    for thread_id in range(args.thread_count):
-        t = threading.Thread(
-            target=send_data,
-            args=(
-                thread_id,
-                table.schema,
-                batches[thread_id :: args.thread_count],
-                processing_nodes,
-            ),
-        )
-        threads.append(t)
-        t.start()
+def batch_streamer(stream_generator: Iterator[pa.RecordBatch], batch_per_second: int,
+                   writers: list[pf.FlightStreamWriter]):
 
-    for t in threads:
-        t.join()
+    global SHUTDOWN_FLAG
+
+    start_time = time.time()
+    current_second = int(start_time)
+    batches_sent_this_second = 0
+    counter = -1
+
+    try:
+        while not SHUTDOWN_FLAG:
+
+            now = int(time.time())
+
+            if now != current_second:
+                print(f"{batches_sent_this_second} were sent in a second.")
+                current_second = now
+                batches_sent_this_second = 0
+
+
+
+            if batch_per_second != -1 and batches_sent_this_second >= batch_per_second:
+                time.sleep(0.005)
+                continue
+
+            try:
+                batch: pa.RecordBatch = next(stream_generator)
+            except StopIteration:
+                print("Sent all Batches provided by generator")
+                break
+
+            counter = (counter + 1) % len(writers)
+            if SHUTDOWN_FLAG:
+                return
+            try:
+                writers[counter].write_batch(batch)
+            except Exception as e:
+                print(f"Got exception while trying to send batch: {e}")
+                SHUTDOWN_FLAG = True
+                break
+
+            batches_sent_this_second += 1
+
+    finally:
+        for writer in writers:
+            writer.done_writing()
+        end_time = time.time()
+        print(f"Start: {start_time} and End: {end_time} with total duration: {end_time - start_time} seconds")
+
+if __name__ == "__main__":
+    args = parse_arguments()
+
+    parquet_file: pq.ParquetFile = pq.ParquetFile(args.file_path)
+    schema: pa.Schema = parquet_file.schema_arrow
+    schema = schema.append(pa.field("timestamp", pa.int64()))
+    print(schema)
+
+    gen = parse_parquet_file(parquet_file, args.overall_batches, args.tuple_per_batch)
+    writers: list[pf.FlightStreamWriter] = get_writers(args.processing_nodes, schema)
+
+    try:
+        batch_streamer(gen, args.batch_per_second, writers)
+    except KeyboardInterrupt:
+        SHUTDOWN_FLAG = True
+        for writer in writers:
+            writer.done_writing()
+
+
+
+
