@@ -50,7 +50,7 @@ def generate_table(
     return pa.Table.from_pylist(records)
 
 
-def send_data(thread_id, schema, batches, processing_nodes, event_type="person"):
+def send_data(thread_id, schema, batches, processing_nodes, event_type="person", broadcast=False):
     writers = []
     for processing_node in processing_nodes:
         client = pa.flight.FlightClient(
@@ -68,8 +68,15 @@ def send_data(thread_id, schema, batches, processing_nodes, event_type="person")
         send_start = time.time()
         max_timestamp = pc.max(batch.column("date_time"))
         watermark = str(max_timestamp).encode("utf-8")
-        writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, watermark)
-        total_bytes += batch.nbytes
+
+        if broadcast:
+            for writer in writers:
+                writer.write_with_metadata(batch, watermark)
+            total_bytes += batch.nbytes * len(writers)
+        else:
+            writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, watermark)
+            total_bytes += batch.nbytes
+
         send_end = time.time()
         send_times.append((send_start, send_end))
 
@@ -134,6 +141,11 @@ if __name__ == "__main__":
         help="Folder to store generated data",
         default="",
     )
+    parser.add_argument(
+        "--broadcast",
+        action="store_true",
+        help="Broadcast every batch to ALL processing nodes (writers) instead of round-robin partitioning.",
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -148,6 +160,7 @@ if __name__ == "__main__":
     print(f" Thread Count               : {args.thread_count}")
     print(f" Store Input                : {args.store_input}")
     print(f" Generator Executable       : {args.generator_executable}")
+    print(f" Broadcast                  : {args.broadcast}")
     print("=" * 40 + "\n")
 
     processing_nodes = []
@@ -187,7 +200,8 @@ if __name__ == "__main__":
                 table.schema,
                 batches[thread_id :: args.thread_count],
                 processing_nodes,
-                event_type
+                event_type,
+                args.broadcast
             ),
         )
         threads.append(t)

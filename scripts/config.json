@@ -1,26 +1,34 @@
 {
-   "sink_nodes": [
-      {
-         "server_address": "127.0.0.1:8027",
-         "result_folder": "results"
-      }
-   ],
-   "processing_nodes": [
-      {
-         "server_address": "127.0.0.1:8017",
-         "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
-         "forward_node": "127.0.0.1:8027",
-         "query_result_schema": {"fields":[{"name":"id","type":"int64"},{"name":"name","type":"string"},{"name":"email_address","type":"string"},{"name":"credit_card","type":"string"},{"name":"city","type":"string"},{"name":"state","type":"string"},{"name":"date_time","type":"int64"},{"name":"extra","type":"string"}]}
-      }
-   ],
-   "source_nodes": [
-      {
-         "processing_nodes": ["127.0.0.1:8017"],
-         "stream": "nexmark.person",
-         "overall_tuples": 1000000,
-         "tuples_per_batch": 100000,
-         "thread_count": 1,
-         "deployment_server": "127.0.0.1"
-      }
-   ]
+  "sink_nodes": [
+    {
+      "server_address": "127.0.0.1:8027",
+      "result_folder": "results",
+      "mode": "windowed",
+      "merge_query": "SELECT MAX(price) FROM partial_results",
+      "expected_senders": 1
+    }
+  ],
+  "processing_nodes": [
+    {
+      "server_address": "127.0.0.1:8017",
+      "forward_node": "127.0.0.1:8027",
+      "stateful": true,
+      "window_size": 10,
+      "window_slide": 2,
+      "query": "SELECT MAX(price) FROM window_table",
+      "query_result_schema": { "fields": [{"name":"auction","type":"int64"},{"name":"price","type":"int64"}] }
+    }
+  ],
+  "source_nodes": [
+    {
+      "processing_nodes": ["127.0.0.1:8017"],
+      "stream": "nexmark.bid",
+      "overall_tuples": 100000,
+      "tuples_per_batch": 10000,
+      "thread_count": 1,
+      "offset": 0,
+      "step": 1,
+      "broadcast": false
+    }
+  ]
 }

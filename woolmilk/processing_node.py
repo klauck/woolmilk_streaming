@@ -32,11 +32,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
         if self.window_size == 0 and self.window_slide > 0:
             raise ValueError("Non-zero window-slide requires non-zero window-size.")
 
-        self.person_buffer = []
-        self.auction_buffer = []
-
+        # Track sources with their status and watermarks
         self.active_sources = {}
-        self.window_buffer = {}
+        self.state = {}
 
         self.lock = threading.Lock()
 
@@ -77,6 +75,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
 
     def _assign_windows_to_timestamp(self, timestamp:int) -> list[int]:
+        # Compute all windows an event belongs to
         windows = []
 
         latest_start = (timestamp // self.window_slide) * self.window_slide
@@ -92,7 +91,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
         return windows
 
 
-    def _flush_window(self, batches: list[pa.RecordBatch], forward_writer):
+    def _flush_window(self, window_start: int, batches: list[pa.RecordBatch], forward_writer):
+        # Run query on materialized window once it's ready and forward the results
         if not batches:
             return
 
@@ -101,37 +101,45 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         df = ctx.sql(self.query)
 
+        # Add metadata for the sink node
+        window_end = int(window_start + self.window_size)
+        meta_bytes = json.dumps(
+            {"window_start": int(window_start), "window_end": window_end}
+        ).encode("utf-8")
+
         for batch in df.collect():
-            forward_writer.write_batch(batch)
+            forward_writer.write_with_metadata(batch, meta_bytes)
 
         ctx.deregister_table("window_table")
 
-
     def _collect_windows_to_flush(self, forward_writer):
+        # Get completed windows by comparing to the global watermark
         to_flush = []
 
         with self.lock:
             active_watermarks = [src["watermark"] for src in self.active_sources.values() if not src["is_finished"]]
             if not active_watermarks:
                 # All sources are finished; flush all remaining windows
-                window_starts = list(self.window_buffer.keys())
+                window_starts = list(self.state.keys())
                 for window_start in window_starts:
-                    batches = self.window_buffer.pop(window_start)
-                    to_flush.append(batches)
+                    batches = self.state.pop(window_start)
+                    to_flush.append((window_start, batches))
             else:
                 global_watermark = min(active_watermarks)
 
-                window_starts = list(self.window_buffer.keys())
+                window_starts = list(self.state.keys())
                 for window_start in window_starts:
                     window_end = window_start + self.window_size
                     if window_end <= global_watermark:
-                        batches = self.window_buffer.pop(window_start)
-                        to_flush.append(batches)
-        for batches in to_flush:
-            self._flush_window(batches, forward_writer)
+                        batches = self.state.pop(window_start)
+                        to_flush.append((window_start, batches))
+
+        for window_start, batches in to_flush:
+            self._flush_window(window_start, batches, forward_writer)
 
 
     def process_default(self, reader, forward_writer):
+        # Stateless mode
         ctx = SessionContext()
 
         total_bytes = 0
@@ -183,55 +191,58 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
 
     def process_join(self, descriptor, reader, forward_writer):
+        # Stateful mode with no windowing (only buffering for joins etc.), all batches are kept
         ctx = SessionContext()
-        stream_type = descriptor.path[0].decode("utf-8")  if len(descriptor.path) > 0 else None
+        stream_type = descriptor.path[0].decode("utf-8") if len(descriptor.path) > 0 else None
+
+        if not stream_type:
+            raise ValueError("Please provide the stream type via the descriptor.")
 
         for chunk in reader:
             batch = chunk.data
-            if stream_type:
-                batch = self._apply_column_filter(stream_type, batch)
+            batch = self._apply_column_filter(stream_type, batch)
 
-            if stream_type == "person":
-                self.person_buffer.append(batch)
-                ctx.register_record_batches("person_table", [[batch]])
-                if self.auction_buffer:
-                    ctx.register_record_batches("auction_table", [self.auction_buffer])
+            self.state.setdefault(stream_type, []).append(batch)
+            ctx.register_record_batches(f"{stream_type}_table", [[batch]])
 
-            elif stream_type == "auction":
-                self.auction_buffer.append(batch)
-                ctx.register_record_batches("auction_table", [[batch]])
-                if self.person_buffer:
-                    ctx.register_record_batches("person_table", [self.person_buffer])
+            for other_stream, other_batches in self.state.items():
+                if other_stream == stream_type:
+                    continue
+                ctx.register_record_batches(f"{other_stream}_table", [other_batches])
 
-            else:
-                continue
-
-            if ctx.table_exist("person_table") and ctx.table_exist("auction_table"):
+            table_names = [f"{name}_table" for name in self.state.keys()]
+            if all(ctx.table_exist(table_name) for table_name in table_names):
                 result_df = ctx.sql(self.query)
 
                 for result_batch in result_df.collect():
                     forward_writer.write_batch(result_batch)
 
-            ctx.deregister_table("person_table")
-            ctx.deregister_table("auction_table")
+            for table_name in table_names:
+                ctx.deregister_table(table_name)
 
         forward_writer.done_writing()
 
 
     def process_windowed(self, descriptor, reader, forward_writer):
+        # Slice batches into windows, store as state and flush when ready
         source_id = descriptor.path[1].decode("utf-8")
+        if not source_id:
+            raise ValueError("Please provide a source ID via the descriptor.")
         with self.lock:
             self.active_sources[source_id] = {"watermark": 0, "is_finished": False}
-        stream_type = descriptor.path[0].decode("utf-8")  if len(descriptor.path) > 0 else None
+
+        stream_type = descriptor.path[0].decode("utf-8") if len(descriptor.path) > 0 else None
+        if not stream_type:
+            raise ValueError("Please provide the stream type via the descriptor.")
 
         for chunk in reader:
             batch = chunk.data
-            if stream_type:
-                batch = self._apply_column_filter(stream_type, batch)
+            batch = self._apply_column_filter(stream_type, batch)
 
             bytes_meta = chunk.app_metadata.to_pybytes()
             watermark = int(bytes_meta.decode("utf-8"))
 
+            # Event-timestamp is used to calculate windows
             timestamps = batch.column("date_time").cast(pa.int64())
             timestamps_list = timestamps.to_pylist()
 
@@ -239,6 +250,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
             current_windows = None
             start_idx = 0
 
+            # Split the batch into sub-batches whenever the set of target windows changes
             for idx, ts in enumerate(timestamps_list):
                 event_windows = self._assign_windows_to_timestamp(ts)
 
@@ -257,7 +269,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
             with self.lock:
                 self.active_sources[source_id]["watermark"] = watermark
                 for win_start, sub_batches in to_append.items():
-                    self.window_buffer.setdefault(win_start, []).extend(sub_batches)
+                    self.state.setdefault(win_start, []).extend(sub_batches)
 
             self._collect_windows_to_flush(forward_writer)
 
