@@ -43,8 +43,31 @@ class ProcessingNode(pa.flight.FlightServerBase):
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
 
+        path_info = {"path": self.query or self.default_table_name}
+        
+        experiment_id = None
+        iteration_id = None
+        source_node_id = None
+        thread_id = None
+
+        try:
+            incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
+            if isinstance(incoming_path_info, dict):
+                experiment_id = incoming_path_info.get("experiment_id")
+                iteration_id = incoming_path_info.get("iteration_id")
+                source_node_id = incoming_path_info.get("source_node_id")
+                thread_id = incoming_path_info.get("thread_id")
+                path_info["experiment_id"] = experiment_id
+                path_info["iteration_id"] = iteration_id
+                path_info["source_node_id"] = source_node_id
+                path_info["thread_id"] = thread_id
+        except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+            pass
+
+        encoded_path = json.dumps(path_info)
+
         forward_writer, _ = self.forwarding_client.do_put(
-            pa.flight.FlightDescriptor.for_path(self.query or self.default_table_name),
+            pa.flight.FlightDescriptor.for_path(encoded_path),
             schema=self.predefined_schema,
         )
 
@@ -86,14 +109,23 @@ class ProcessingNode(pa.flight.FlightServerBase):
         gbps = (total_bytes * 8) / (duration * 1000**3)
         mbps = total_bytes / (duration * 1000**2)
 
-        print(
-            f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start},'
-            f' "duration": {duration}, "MBps": {mbps:.2f}, "Gbps": {gbps:.4f}}}'
-        )
-        print("  receiving: ", sum(cost_break_down["receiving"]))
-        print("  querying: ", sum(cost_break_down["querying"]))
-        print("  sending: ", sum(cost_break_down["sending"]))
-        print("forward_times = ", forwarding_times)
+        log = {
+            "experiment_id": experiment_id,
+            "iteration_id": iteration_id,
+            "source_node_id": source_node_id,
+            "thread_id": thread_id,
+            "received_bytes": total_bytes,
+            "start_time": start,
+            "duration": duration,
+            "MBps": f"{mbps:.2f}",
+            "Gbps": f"{gbps:.4f}",
+            "receiving": sum(cost_break_down["receiving"]),
+            "querying": sum(cost_break_down["querying"]),
+            "sending": sum(cost_break_down["sending"]),
+            "forward_times": forwarding_times,
+        }
+        log_str = json.dumps(log, indent=4)
+        print(f'WM_LOG= {log_str}')
 
 
 if __name__ == "__main__":

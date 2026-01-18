@@ -8,3 +8,4 @@ local_node_setup
 datafusion-physical-plan-python/*.pb
 logs
 *.parquet
+woolmilk/experiments/*

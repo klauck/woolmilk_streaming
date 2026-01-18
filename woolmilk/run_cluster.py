@@ -43,6 +43,9 @@ class SourceNode:
     deployment_server: Optional[str] = "127.0.0.1"
     store_input: Optional[str] = None
     generator_executable: Optional[str] = None
+    experiment_id: Optional[str] = None
+    iteration_id: Optional[str] = None
+    id: Optional[str] = None
 
 
 @dataclass
@@ -302,6 +305,18 @@ class DeploymentRunner:
             if source_node.generator_executable:
                 cmd.append("--generator-executable")
                 cmd.append(source_node.generator_executable)
+
+            if source_node.experiment_id is not None:
+                cmd.append("--experiment-id")
+                cmd.append(str(source_node.experiment_id))
+
+            if source_node.iteration_id is not None:
+                cmd.append("--iteration-id")
+                cmd.append(str(source_node.iteration_id))
+
+            if source_node.id is not None:
+                cmd.append("--source-node-id")
+                cmd.append(str(source_node.id))
 
             self._spawn_process(
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
