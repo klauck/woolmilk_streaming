@@ -13,12 +13,18 @@ import pyarrow.parquet as pq
 
 
 def generate_table(
-    num_rows=10**6, event_type="person", generator_executable="nexmark", offset=0, step=1
+    number_of_tuples=10**6,
+    stream="nexmark_person",
+    generator_executable="nexmark",
+    offset=0,
+    step=1,
 ):
+    assert len(stream.split("_")) == 2 and stream.split("_")[0] == "nexmark"
+    event_type = stream.split("_")[1]
     cmd = [
         generator_executable,
         "-n",
-        str(num_rows),
+        str(number_of_tuples),
         "--offset",
         str(offset),
         "--step",
@@ -28,6 +34,9 @@ def generate_table(
         "--no-wait",
     ]
     print("Generate data..")
+    print(
+        f"  {event_type} \t number of tuples: {number_of_tuples} \t offset: {offset} \t step: {step}"
+    )
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     records = []
 
@@ -48,29 +57,55 @@ def generate_table(
     return pa.Table.from_pylist(records)
 
 
-def send_data(thread_id, schema, batches, processing_nodes):
-    writers = []
-    for processing_node in processing_nodes:
-        client = pa.flight.FlightClient(
-            f"grpc://{processing_node[0]}:{processing_node[1]}"
+def stream_data(
+    client_id,
+    input_folder,
+    stream,
+    generator_executable,
+    offset,
+    step,
+    processing_node,
+    number_of_tuples,
+    tuples_per_batch,
+    store_input,
+):
+    # generate (cached) Parquet file for input
+    path = Path(input_folder) / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
+    if not path.exists():
+        table = generate_table(
+            number_of_tuples, stream, generator_executable, offset, step
         )
-        writer, _ = client.do_put(
-            pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
-        )
-        writers.append(writer)
+        if store_input:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            print(f"Wrote .. {path}")
+            pq.write_table(
+                table, path, row_group_size=tuples_per_batch, compression="snappy"
+            )
+        schema = table.schema
+    else:
+        parquet_file = pq.ParquetFile(path)
+        schema = parquet_file.schema_arrow
+        table = parquet_file.read()
+
+    # table = table.drop_columns(["date_time"])
+    # schema = schema.append(pa.field("timestamp", pa.int64()))
+
+    client = pa.flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
+    writer, _ = client.do_put(
+        pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
+    )
 
     start = time.time()
     send_times = []
     total_bytes = 0
-    for i, batch in enumerate(batches):
+    for i, batch in enumerate(table.to_batches(max_chunksize=args.tuples_per_batch)):
         send_start = time.time()
-        writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
+        writer.write_batch(batch)
         total_bytes += batch.nbytes
         send_end = time.time()
         send_times.append((send_start, send_end))
 
-    for writer in writers:
-        writer.done_writing()
+    writer.done_writing()
 
     end = time.time()
 
@@ -78,10 +113,10 @@ def send_data(thread_id, schema, batches, processing_nodes):
     gbps = (total_bytes * 8) / (duration * 1000**3)
     mbps = total_bytes / (duration * 1000**2)
 
-    print(f"[Thread {thread_id}] Start: {start}")
+    print(f"[Client {client_id}] Start: {start}")
     print("send_times = ", send_times)
     print(
-        f"{thread_id}: Sent {total_bytes / 1000 ** 2} MB in {duration:.7f} seconds; "
+        f"{client_id}: Sent {total_bytes / 1000 ** 2} MB in {duration:.7f} seconds; "
         f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
     )
 
@@ -89,9 +124,14 @@ def send_data(thread_id, schema, batches, processing_nodes):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Source Node")
     parser.add_argument(
+        "--input-folder",
+        default="input_data",
+        help="Input Parquet files or folder to store generated data",
+    )
+    parser.add_argument(
         "--stream",
-        choices=["nexmark.bid", "nexmark.auction", "nexmark.person"],
-        default="nexmark.person",
+        choices=["nexmark_bid", "nexmark_auction", "nexmark_person"],
+        default="nexmark_person",
         help="Stream type",
     )
     parser.add_argument(
@@ -110,7 +150,7 @@ if __name__ == "__main__":
         "--offset", type=int, default=0, help="Offset to start data generation"
     )
     parser.add_argument(
-        "--step", type=int, default=1, help="Step for next tuple to generate"
+        "--step", type=int, default=-1, help="Step for next tuple to generate"
     )
     parser.add_argument(
         "--processing-nodes",
@@ -119,70 +159,56 @@ if __name__ == "__main__":
         default="localhost:8010",
     )
     parser.add_argument(
-        "--thread-count",
-        type=int,
-        help="Number of threads to use for sending data",
-        default=1,
-    )
-    parser.add_argument(
-        "--store-input",
-        type=str,
-        help="Folder to store generated data",
+        "-store-input",
+        action="store_true",
+        help="Store generated data",
         default="",
     )
     args = parser.parse_args()
-
-    print("\n" + "=" * 40)
-    print(" WoolMilk Source Node Parameters")
-    print("=" * 40)
-    print(f" Stream Type                : {args.stream}")
-    print(f" Overall Tuples             : {args.overall_tuples}")
-    print(f" Tuples Per Batch           : {args.tuples_per_batch}")
-    print(f" Offset                     : {args.offset}")
-    print(f" Step                       : {args.step}")
-    print(f" Processing Nodes           : {args.processing_nodes}")
-    print(f" Thread Count               : {args.thread_count}")
-    print(f" Store Input                : {args.store_input}")
-    print(f" Generator Executable       : {args.generator_executable}")
-    print("=" * 40 + "\n")
 
     processing_nodes = []
     for address in args.processing_nodes.split(","):
         host, port = address.split(":")
         processing_nodes.append((host, int(port)))
 
+    if args.step == -1:
+        args.step = len(processing_nodes)
+
+    print("\n" + "=" * 40)
+    print(" WoolMilk Source Node Parameters")
+    print("=" * 40)
+    print(f" Input Folder               : {args.input_folder}")
+    print(f" Stream Type                : {args.stream}")
+    print(f" Overall Tuples             : {args.overall_tuples}")
+    print(f" Tuples Per Batch           : {args.tuples_per_batch}")
+    print(f" Offset                     : {args.offset}")
+    print(f" Step                       : {args.step}")
+    print(f" Store Input                : {args.store_input}")
+    print(f" Processing Nodes           : {args.processing_nodes}")
+    print(f" Generator Executable       : {args.generator_executable}")
+    print("=" * 40 + "\n")
+
     if len(processing_nodes) == 0:
         print("No server addresses for processing nodes provided. Exiting.")
         sys.exit(1)
 
-    event_type = args.stream.split(".")[1]
-
-    table = generate_table(
-        num_rows=args.overall_tuples,
-        event_type=event_type,
-        generator_executable=args.generator_executable,
-        offset=args.offset,
-        step=args.step,
-    )
-    batches = table.to_batches(max_chunksize=args.tuples_per_batch)
-
-    if args.store_input != "":
-        input_file = Path(args.store_input)
-        input_folder = input_file.parent
-        os.makedirs(input_folder, exist_ok=True)
-        table = pa.Table.from_batches(batches)
-        pq.write_table(table, f"{input_file}")
-        print(f"Wrote .. {input_file}")
+    assert args.overall_tuples % (args.tuples_per_batch * len(processing_nodes)) == 0
 
     threads = []
-    for thread_id in range(args.thread_count):
+    for client_id in range(len(processing_nodes)):
         t = threading.Thread(
-            target=send_data,
+            target=stream_data,
             args=(
-                thread_id,
-                table.schema,
-                batches[thread_id :: args.thread_count],
-                processing_nodes,
+                client_id,
+                args.input_folder,
+                args.stream,
+                args.generator_executable,
+                args.offset + client_id,
+                args.step,
+                processing_nodes[client_id],
+                args.overall_tuples // len(processing_nodes),
+                args.tuples_per_batch,
+                args.store_input,
             ),
         )
         threads.append(t)

@@ -23,10 +23,10 @@
    "source_nodes": [
       {
          "processing_nodes": ["127.0.0.1:8917", "127.0.0.1:8917"],
-         "stream": "nexmark.bid",
+         "stream": "nexmark_bid",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,
-         "thread_count": 2
+         "input_folder": "../tests/input"
       }
    ]
 }
