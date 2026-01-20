@@ -84,7 +84,7 @@ class TestQueries(unittest.TestCase):
                 "--tuples-per-batch",
                 "100",
                 "--input-folder",
-                "../test/input",
+                "../tests/input",
             ]
         )
         source.wait()
@@ -115,6 +115,8 @@ class TestQueries(unittest.TestCase):
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
+                "--input-folder",
+                "../tests/input",
             ]
         )
         source.wait()
@@ -173,7 +175,7 @@ class TestQueries(unittest.TestCase):
                 "--tuples-per-batch",
                 "100",
                 "--input-folder",
-                "../test/input",
+                "../tests/input",
             ]
         )
         source.wait()
@@ -243,7 +245,7 @@ class TestQueries(unittest.TestCase):
                     "--step",
                     str(number_of_source_nodes * number_of_processing_nodes),
                     "--input-folder",
-                    "../test/input",
+                    "../tests/input",
                 ]
             )
             sources.append(source)

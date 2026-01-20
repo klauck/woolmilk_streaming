@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import subprocess
 import sys
 import threading
@@ -19,7 +18,9 @@ def generate_table(
     offset=0,
     step=1,
 ):
-    assert len(stream.split("_")) == 2 and stream.split("_")[0] == "nexmark"
+    assert (
+        len(stream.split("_")) == 2 and stream.split("_")[0] == "nexmark"
+    ), f"stream must be in format 'nexmark_<event_type>', got: {stream}"
     event_type = stream.split("_")[1]
     cmd = [
         generator_executable,
@@ -34,9 +35,7 @@ def generate_table(
         "--no-wait",
     ]
     print("Generate data..")
-    print(
-        f"  {event_type} \t number of tuples: {number_of_tuples} \t offset: {offset} \t step: {step}"
-    )
+    print(f"  {event_type}   #tuples: {number_of_tuples}  offset: {offset}  step: {step}")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     records = []
 
@@ -70,7 +69,11 @@ def stream_data(
     store_input,
 ):
     # generate (cached) Parquet file for input
-    path = Path(input_folder) / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
+    path = (
+        Path(__file__)
+        / input_folder
+        / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
+    )
     if not path.exists():
         table = generate_table(
             number_of_tuples, stream, generator_executable, offset, step
@@ -98,7 +101,7 @@ def stream_data(
     start = time.time()
     send_times = []
     total_bytes = 0
-    for i, batch in enumerate(table.to_batches(max_chunksize=args.tuples_per_batch)):
+    for i, batch in enumerate(table.to_batches(max_chunksize=tuples_per_batch)):
         send_start = time.time()
         writer.write_batch(batch)
         total_bytes += batch.nbytes
@@ -162,7 +165,6 @@ if __name__ == "__main__":
         "-store-input",
         action="store_true",
         help="Store generated data",
-        default="",
     )
     args = parser.parse_args()
 
@@ -192,7 +194,10 @@ if __name__ == "__main__":
         print("No server addresses for processing nodes provided. Exiting.")
         sys.exit(1)
 
-    assert args.overall_tuples % (args.tuples_per_batch * len(processing_nodes)) == 0
+    assert args.overall_tuples % (args.tuples_per_batch * len(processing_nodes)) == 0, (
+        f"overall_tuples ({args.overall_tuples}) must be divisible by tuples_per_batch "
+        f"({args.tuples_per_batch}) * number of processing nodes ({len(processing_nodes)})"
+    )
 
     threads = []
     for client_id in range(len(processing_nodes)):
