@@ -66,7 +66,7 @@ class SinkNode(pa.flight.FlightServerBase):
             "receive_times": receive_times,
             "end_time": end,
         }
-        log_str = json.dumps(log, indent=4)
+        log_str = json.dumps(log)
 
         print(f'WM_LOG= {log_str}')
         with self.file_counter_lock:

@@ -95,12 +95,20 @@ def send_data(
     gbps = (total_bytes * 8) / (duration * 1000**3)
     mbps = total_bytes / (duration * 1000**2)
 
-    print(f"[Thread {thread_id}] Start: {start}")
-    print("send_times = ", send_times)
-    print(
-        f"{thread_id}: Sent {total_bytes / 1000 ** 2} MB in {duration:.7f} seconds; "
-        f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
-    )
+    log = {
+        "thread": thread_id,
+        "experiment_id": experiment_id,
+        "iteration_id": iteration_id,
+        "source_node_id": source_node_id,
+        "send_times": send_times,
+        "total_bytes": total_bytes,
+        "start_time": start,
+        "end_time": end,
+        "gbps": f"{gbps:.4f}",
+        "mbps": f"{mbps:.2f}",
+    }
+
+    print(f'WM_LOG= {json.dumps(log)}')
 
 
 if __name__ == "__main__":

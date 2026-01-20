@@ -43,12 +43,12 @@ class ProcessingNode(pa.flight.FlightServerBase):
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
 
-        path_info = {"path": self.query or self.default_table_name}
-        
         experiment_id = None
         iteration_id = None
         source_node_id = None
         thread_id = None
+
+        incoming_path_info = {}
 
         try:
             incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
@@ -57,14 +57,12 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
-                path_info["experiment_id"] = experiment_id
-                path_info["iteration_id"] = iteration_id
-                path_info["source_node_id"] = source_node_id
-                path_info["thread_id"] = thread_id
+                
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 
-        encoded_path = json.dumps(path_info)
+        # we forward same path information to the next node
+        encoded_path = json.dumps(incoming_path_info)
 
         forward_writer, _ = self.forwarding_client.do_put(
             pa.flight.FlightDescriptor.for_path(encoded_path),
@@ -124,7 +122,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
             "sending": sum(cost_break_down["sending"]),
             "forward_times": forwarding_times,
         }
-        log_str = json.dumps(log, indent=4)
+        log_str = json.dumps(log)
         print(f'WM_LOG= {log_str}')
 
 
