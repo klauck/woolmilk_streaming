@@ -128,7 +128,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
             "forward_times": forwarding_times,
         }
         log_str = json.dumps(log)
-        
+
         with self.lock:
             self.logs.append(log)
 
@@ -139,7 +139,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
             with self.lock:
                 logs_list = list(self.logs)
                 self.logs.clear()
-            
+
             return [pa.flight.Result(json.dumps(logs_list).encode("utf-8"))]
 
 

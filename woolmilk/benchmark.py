@@ -6,8 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from time import sleep
 from typing import Dict, List
-import pyarrow.flight as flight
 
+import pyarrow.flight as flight
 from run_cluster import (
     Config,
     DeploymentRunner,
@@ -17,6 +17,7 @@ from run_cluster import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 @dataclass
 class ExperimentConfig:
@@ -59,14 +60,20 @@ def parse_benchmark_config(config_file: Path):
     return {"experiments": experiments, "remote_servers": config.remote_servers}
 
 
-def benchmark(config_path: Path, experiment_dir: str, mode: str, use_flight_logs: bool = False, experiment_name: str = None):
+def benchmark(
+    config_path: Path,
+    experiment_dir: str,
+    mode: str,
+    use_flight_logs: bool = False,
+    experiment_name: str = None,
+):
     combined_config = parse_benchmark_config(config_path)
     experiments: List[ExperimentConfig] = combined_config["experiments"]
     remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
-    
+
     # Load cluster nodes config if available
     cluster_nodes = []
-    with open(config_path, 'r') as f:
+    with open(config_path, "r") as f:
         data = json.load(f)
         cluster_nodes = data.get("cluster_nodes", [])
 
@@ -91,7 +98,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str, use_flight_logs
             if experiment_name:
                 base_exp_dir = PROJECT_ROOT / "woolmilk" / "experiments" / experiment_name
                 base_exp_dir.mkdir(parents=True, exist_ok=True)
-                
+
                 current_experiment_dir = (
                     base_exp_dir
                     / f"{timestamp}__experiment_{experiment_id}_iter_{iteration}"
@@ -112,7 +119,11 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str, use_flight_logs
 
             runner = DeploymentRunner(
                 config=current_config,
-                log_dir=str(current_experiment_dir / "source") if use_flight_logs else str(current_experiment_dir),
+                log_dir=(
+                    str(current_experiment_dir / "source")
+                    if use_flight_logs
+                    else str(current_experiment_dir)
+                ),
                 mode=mode,
                 log_to_file=True,
             )
@@ -120,23 +131,29 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str, use_flight_logs
             runner.deploy()
             sleep(5)
             runner.cleanup()
-            
+
             if use_flight_logs:
                 print("    Fetching logs from cluster nodes...")
-                
+
                 (current_experiment_dir / "processing").mkdir(parents=True, exist_ok=True)
                 (current_experiment_dir / "sink").mkdir(parents=True, exist_ok=True)
-                
+
                 for node in cluster_nodes:
                     node_type = node["type"]
                     address = node["address"]
                     try:
                         client = flight.FlightClient(f"grpc://{address}")
-                        result = client.do_action(flight.Action("get_and_clear_logs", b""))
+                        result = client.do_action(
+                            flight.Action("get_and_clear_logs", b"")
+                        )
                         logs_json_str = next(result).body.to_pybytes().decode("utf-8")
                         logs_list = json.loads(logs_json_str)
-                        
-                        log_file = current_experiment_dir / node_type / f"{node_type}_{address.replace(':', '_')}.log"
+
+                        log_file = (
+                            current_experiment_dir
+                            / node_type
+                            / f"{node_type}_{address.replace(':', '_')}.log"
+                        )
                         with open(log_file, "w") as f:
                             for log_entry in logs_list:
                                 f.write(f"WM_LOG= {json.dumps(log_entry)}\n")
@@ -152,7 +169,10 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str, use_flight_logs
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run benchmarks for Woolmilk.")
     parser.add_argument(
-        "--config-file", type=str, required=True, help="Path to the benchmark configuration file."
+        "--config-file",
+        type=str,
+        required=True,
+        help="Path to the benchmark configuration file.",
     )
     parser.add_argument(
         "--experiment-dir",
@@ -182,9 +202,9 @@ if __name__ == "__main__":
     config_path = Path(args.config_file)
 
     benchmark(
-        config_path, 
-        experiment_dir=args.experiment_dir, 
+        config_path,
+        experiment_dir=args.experiment_dir,
         mode=args.mode,
         use_flight_logs=args.flight_logs,
-        experiment_name=args.experiment_name
+        experiment_name=args.experiment_name,
     )
