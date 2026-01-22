@@ -7,6 +7,8 @@ from pathlib import Path
 from time import sleep
 from typing import Dict, List
 
+import pyarrow as pa
+import pyarrow.flight
 from run_cluster import (
     Config,
     DeploymentRunner,
@@ -31,6 +33,8 @@ def parse_benchmark_config(config_file: Path):
         print('No experiments specified, expected list "source_nodes_experiments"')
         exit(1)
 
+    sink_node = benchmark_config.get("sink_node", None)
+
     experiments: List[ExperimentConfig] = []
 
     for experiment in source_experiments:
@@ -54,13 +58,18 @@ def parse_benchmark_config(config_file: Path):
             )
         )
 
-    return {"experiments": experiments, "remote_servers": config.remote_servers}
+    return {
+        "experiments": experiments,
+        "remote_servers": config.remote_servers,
+        "sink_node": sink_node,
+    }
 
 
 def benchmark(config_path: Path, experiment_dir: str, mode: str):
     combined_config = parse_benchmark_config(config_path)
     experiments: List[ExperimentConfig] = combined_config["experiments"]
     remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
+    sink_node = combined_config["sink_node"]
 
     print("Starting benchmark...")
 
@@ -102,6 +111,26 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 
             runner.deploy()
             sleep(5)
+
+            if sink_node:
+                # collect log files:
+                client = pa.flight.FlightClient(f"grpc://{sink_node}")
+                result = client.do_action("get_logs")
+                print(result)
+                for data in result:
+                    print(data)
+                    bytes = data.body.to_pybytes().decode("utf-8")
+                    file_name = (
+                        Path(__file__).parent
+                        / current_experiment_dir
+                        / timestamp
+                        / ("sink__" + sink_node.replace(":", "_") + ".json")
+                    )
+                    with open(file_name, "w+") as f:
+                        f.write(bytes)
+                    print(json.loads(bytes))
+                client.do_action("delete_logs")
+
             runner.cleanup()
             print(
                 f"            Completed iteration {iteration + 1}/{experiment.iterations}"
@@ -111,7 +140,10 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run benchmarks for Woolmilk.")
     parser.add_argument(
-        "--config-file", type=str, required=True, help="Path to the benchmark configuration file."
+        "--config-file",
+        type=str,
+        required=True,
+        help="Path to the benchmark configuration file.",
     )
     parser.add_argument(
         "--experiment-dir",
