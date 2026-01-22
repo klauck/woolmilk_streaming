@@ -73,6 +73,12 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             print(
                 f"            Starting iteration {iteration + 1}/{experiment.iterations}"
             )
+
+            for i, source_node in enumerate(experiment.source_nodes):
+                source_node.experiment_id = experiment_id
+                source_node.iteration_id = iteration
+                source_node.id = i
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             current_experiment_dir = (
                 Path(experiment_dir)

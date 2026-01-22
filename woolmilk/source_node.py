@@ -48,14 +48,30 @@ def generate_table(
     return pa.Table.from_pylist(records)
 
 
-def send_data(thread_id, schema, batches, processing_nodes):
+def send_data(
+    thread_id,
+    schema,
+    batches,
+    processing_nodes,
+    experiment_id=None,
+    iteration_id=None,
+    source_node_id=None,
+):
+    path_info = {
+        "experiment_id": experiment_id,
+        "iteration_id": iteration_id,
+        "source_node_id": source_node_id,
+        "thread_id": thread_id,
+    }
+    encoded_path = json.dumps(path_info)
+
     writers = []
     for processing_node in processing_nodes:
         client = pa.flight.FlightClient(
             f"grpc://{processing_node[0]}:{processing_node[1]}"
         )
         writer, _ = client.do_put(
-            pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
+            pa.flight.FlightDescriptor.for_path(encoded_path), schema
         )
         writers.append(writer)
 
@@ -78,12 +94,20 @@ def send_data(thread_id, schema, batches, processing_nodes):
     gbps = (total_bytes * 8) / (duration * 1000**3)
     mbps = total_bytes / (duration * 1000**2)
 
-    print(f"[Thread {thread_id}] Start: {start}")
-    print("send_times = ", send_times)
-    print(
-        f"{thread_id}: Sent {total_bytes / 1000 ** 2} MB in {duration:.7f} seconds; "
-        f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
-    )
+    log = {
+        "thread": thread_id,
+        "experiment_id": experiment_id,
+        "iteration_id": iteration_id,
+        "source_node_id": source_node_id,
+        "send_times": send_times,
+        "total_bytes": total_bytes,
+        "start_time": start,
+        "end_time": end,
+        "gbps": f"{gbps:.4f}",
+        "mbps": f"{mbps:.2f}",
+    }
+
+    print(f"WM_LOG= {json.dumps(log)}")
 
 
 if __name__ == "__main__":
@@ -130,6 +154,24 @@ if __name__ == "__main__":
         help="Folder to store generated data",
         default="",
     )
+    parser.add_argument(
+        "--experiment-id",
+        type=int,
+        default=None,
+        help="Experiment ID for logging metadata",
+    )
+    parser.add_argument(
+        "--iteration-id",
+        type=int,
+        default=None,
+        help="Iteration ID for logging metadata",
+    )
+    parser.add_argument(
+        "--source-node-id",
+        type=int,
+        default=None,
+        help="Unique ID for the source node",
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -144,6 +186,9 @@ if __name__ == "__main__":
     print(f" Thread Count               : {args.thread_count}")
     print(f" Store Input                : {args.store_input}")
     print(f" Generator Executable       : {args.generator_executable}")
+    print(f" Experiment ID              : {args.experiment_id}")
+    print(f" Iteration ID               : {args.iteration_id}")
+    print(f" Source Node ID             : {args.source_node_id}")
     print("=" * 40 + "\n")
 
     processing_nodes = []
@@ -183,6 +228,9 @@ if __name__ == "__main__":
                 table.schema,
                 batches[thread_id :: args.thread_count],
                 processing_nodes,
+                args.experiment_id,
+                args.iteration_id,
+                args.source_node_id,
             ),
         )
         threads.append(t)
