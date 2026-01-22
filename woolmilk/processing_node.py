@@ -1,5 +1,6 @@
 import argparse
 import json
+import threading
 import time
 
 import pyarrow as pa
@@ -13,6 +14,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
         self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
+
+        self.logs = []
+        self.lock = threading.Lock()
 
         if not schema_json:
             raise ValueError("Schema is mandatory. Please provide a valid schema.")
@@ -124,7 +128,19 @@ class ProcessingNode(pa.flight.FlightServerBase):
             "forward_times": forwarding_times,
         }
         log_str = json.dumps(log)
+        
+        with self.lock:
+            self.logs.append(log)
+
         print(f"WM_LOG= {log_str}")
+
+    def do_action(self, context, action):
+        if action.type == "get_and_clear_logs":
+            with self.lock:
+                logs_list = list(self.logs)
+                self.logs.clear()
+            
+            return [pa.flight.Result(json.dumps(logs_list).encode("utf-8"))]
 
 
 if __name__ == "__main__":

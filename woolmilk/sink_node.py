@@ -13,6 +13,8 @@ class SinkNode(pa.flight.FlightServerBase):
     def __init__(self, location, result_folder=None):
         super().__init__(location)
         self.result_folder = result_folder
+        self.logs = []
+        self.lock = threading.Lock()
         if result_folder:
             os.makedirs(result_folder, exist_ok=True)
         self.file_counter = 0
@@ -67,6 +69,9 @@ class SinkNode(pa.flight.FlightServerBase):
             "end_time": end,
         }
         log_str = json.dumps(log)
+        
+        with self.lock:
+            self.logs.append(log)
 
         print(f"WM_LOG= {log_str}")
         with self.file_counter_lock:
@@ -79,6 +84,14 @@ class SinkNode(pa.flight.FlightServerBase):
                 table = pa.Table.from_batches(result)
                 pq.write_table(table, f"{self.result_folder}/{local_id}.parquet")
                 print(f"Wrote .. {self.result_folder}/{local_id}.parquet")
+
+    def do_action(self, context, action):
+        if action.type == "get_and_clear_logs":
+            with self.lock:
+                logs_list = list(self.logs)
+                self.logs.clear()
+            
+            return [pa.flight.Result(json.dumps(logs_list).encode("utf-8"))]
 
 
 if __name__ == "__main__":
