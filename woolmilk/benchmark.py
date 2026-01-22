@@ -78,7 +78,6 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 source_node.experiment_id = experiment_id
                 source_node.iteration_id = iteration
                 source_node.id = i
-                i += 1
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             current_experiment_dir = (
