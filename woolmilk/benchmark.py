@@ -152,7 +152,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str, use_flight_logs
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run benchmarks for Woolmilk.")
     parser.add_argument(
-        "--config-file", type=str, help="Path to the benchmark configuration file."
+        "--config-file", type=str, required=True, help="Path to the benchmark configuration file."
     )
     parser.add_argument(
         "--experiment-dir",
