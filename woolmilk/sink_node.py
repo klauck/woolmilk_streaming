@@ -1,6 +1,6 @@
 import argparse
-import os
 import json
+import os
 import threading
 import time
 
@@ -68,7 +68,7 @@ class SinkNode(pa.flight.FlightServerBase):
         }
         log_str = json.dumps(log)
 
-        print(f'WM_LOG= {log_str}')
+        print(f"WM_LOG= {log_str}")
         with self.file_counter_lock:
             local_id = self.file_counter
             self.file_counter += 1

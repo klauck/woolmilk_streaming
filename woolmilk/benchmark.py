@@ -74,9 +74,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 f"            Starting iteration {iteration + 1}/{experiment.iterations}"
             )
 
-            i = 0
-
-            for source_node in experiment.source_nodes:
+            for i, source_node in enumerate(experiment.source_nodes):
                 source_node.experiment_id = experiment_id
                 source_node.iteration_id = iteration
                 source_node.id = i

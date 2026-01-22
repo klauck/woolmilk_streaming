@@ -43,9 +43,9 @@ class SourceNode:
     deployment_server: Optional[str] = "127.0.0.1"
     store_input: Optional[str] = None
     generator_executable: Optional[str] = None
-    experiment_id: Optional[str] = None
-    iteration_id: Optional[str] = None
-    id: Optional[str] = None
+    experiment_id: Optional[int] = None
+    iteration_id: Optional[int] = None
+    id: Optional[int] = None
 
 
 @dataclass

@@ -58,7 +58,6 @@ def send_data(
     source_node_id=None,
 ):
     path_info = {
-        "path": "bandwidth-test",
         "experiment_id": experiment_id,
         "iteration_id": iteration_id,
         "source_node_id": source_node_id,
@@ -108,7 +107,7 @@ def send_data(
         "mbps": f"{mbps:.2f}",
     }
 
-    print(f'WM_LOG= {json.dumps(log)}')
+    print(f"WM_LOG= {json.dumps(log)}")
 
 
 if __name__ == "__main__":
@@ -157,19 +156,19 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--experiment-id",
-        type=str,
+        type=int,
         default=None,
         help="Experiment ID for logging metadata",
     )
     parser.add_argument(
         "--iteration-id",
-        type=str,
+        type=int,
         default=None,
         help="Iteration ID for logging metadata",
     )
     parser.add_argument(
         "--source-node-id",
-        type=str,
+        type=int,
         default=None,
         help="Unique ID for the source node",
     )
