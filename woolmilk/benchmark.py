@@ -118,8 +118,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 result = client.do_action("get_logs")
                 print(result)
                 for data in result:
-                    print(data)
-                    bytes = data.body.to_pybytes().decode("utf-8")
+                    log_bytes = data.body.to_pybytes().decode("utf-8")
                     file_name = (
                         Path(__file__).parent
                         / current_experiment_dir
@@ -132,8 +131,8 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                         )
                     )
                     with open(file_name, "w+") as f:
-                        f.write(bytes)
-                    print(json.loads(bytes))
+                        f.write(log_bytes)
+                    print(json.loads(log_bytes))
                 client.do_action("delete_logs")
 
             runner.cleanup()
