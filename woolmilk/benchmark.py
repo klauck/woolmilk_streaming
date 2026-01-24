@@ -124,7 +124,12 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                         Path(__file__).parent
                         / current_experiment_dir
                         / timestamp
-                        / (node["type"] + "__" + node['address'].replace(":", "_") + ".json")
+                        / (
+                            node["type"]
+                            + "__"
+                            + node["address"].replace(":", "_")
+                            + ".json"
+                        )
                     )
                     with open(file_name, "w+") as f:
                         f.write(bytes)
