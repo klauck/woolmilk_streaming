@@ -33,7 +33,7 @@ def parse_benchmark_config(config_file: Path):
         print('No experiments specified, expected list "source_nodes_experiments"')
         exit(1)
 
-    sink_node = benchmark_config.get("sink_node", None)
+    cluster_nodes = benchmark_config.get("cluster_nodes", [])
 
     experiments: List[ExperimentConfig] = []
 
@@ -61,7 +61,7 @@ def parse_benchmark_config(config_file: Path):
     return {
         "experiments": experiments,
         "remote_servers": config.remote_servers,
-        "sink_node": sink_node,
+        "cluster_nodes": cluster_nodes,
     }
 
 
@@ -69,7 +69,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
     combined_config = parse_benchmark_config(config_path)
     experiments: List[ExperimentConfig] = combined_config["experiments"]
     remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
-    sink_node = combined_config["sink_node"]
+    cluster_nodes = combined_config["cluster_nodes"]
 
     print("Starting benchmark...")
 
@@ -112,9 +112,9 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             runner.deploy()
             sleep(5)
 
-            if sink_node:
-                # collect log files:
-                client = pa.flight.FlightClient(f"grpc://{sink_node}")
+            # collect log files for specified cluster nodes:
+            for node in cluster_nodes:
+                client = pa.flight.FlightClient(f"grpc://{node['address']}")
                 result = client.do_action("get_logs")
                 print(result)
                 for data in result:
@@ -124,7 +124,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                         Path(__file__).parent
                         / current_experiment_dir
                         / timestamp
-                        / ("sink__" + sink_node.replace(":", "_") + ".json")
+                        / (node["type"] + "__" + node['address'].replace(":", "_") + ".json")
                     )
                     with open(file_name, "w+") as f:
                         f.write(bytes)
