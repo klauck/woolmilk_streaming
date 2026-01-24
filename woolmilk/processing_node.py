@@ -1,5 +1,6 @@
 import argparse
 import json
+import threading
 import time
 
 import pyarrow as pa
