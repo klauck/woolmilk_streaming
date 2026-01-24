@@ -1,5 +1,6 @@
 import argparse
 import json
+import threading
 import time
 
 import pyarrow as pa
@@ -13,6 +14,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
         self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
+        self.logs = []
+        self.logs_lock = threading.Lock()
 
         if not schema_json:
             raise ValueError("Schema is mandatory. Please provide a valid schema.")
@@ -39,6 +42,19 @@ class ProcessingNode(pa.flight.FlightServerBase):
             fields.append(pa.field(field_name, pa_type))
 
         return pa.schema(fields)
+
+    def do_action(self, context, action):
+        if action.type == "get_logs":
+            with self.logs_lock:
+                logs = {
+                    "logs": self.logs,
+                }
+            yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
+        elif action.type == "delete_logs":
+            with self.logs_lock:
+                self.logs = []
+        else:
+            raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
         ctx = SessionContext()
@@ -123,6 +139,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
             "sending": sum(cost_break_down["sending"]),
             "forward_times": forwarding_times,
         }
+        with self.logs_lock:
+            self.logs.append(log)
         log_str = json.dumps(log)
         print(f"WM_LOG= {log_str}")
 

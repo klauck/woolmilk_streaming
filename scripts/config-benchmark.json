@@ -33,5 +33,15 @@
             }
          ]
       }
+   ],
+   "cluster_nodes": [
+      {
+         "type": "processing",
+         "address": "127.0.0.1:8017"
+      },
+      {
+         "type": "sink",
+         "address": "127.0.0.1:8027"
+      }
    ]
 }

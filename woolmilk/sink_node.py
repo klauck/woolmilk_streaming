@@ -17,6 +17,21 @@ class SinkNode(pa.flight.FlightServerBase):
             os.makedirs(result_folder, exist_ok=True)
         self.file_counter = 0
         self.file_counter_lock = threading.Lock()
+        self.logs = []
+        self.logs_lock = threading.Lock()
+
+    def do_action(self, context, action):
+        if action.type == "get_logs":
+            with self.logs_lock:
+                logs = {
+                    "logs": self.logs,
+                }
+            yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
+        elif action.type == "delete_logs":
+            with self.logs_lock:
+                self.logs = []
+        else:
+            raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
         experiment_id = None
@@ -66,9 +81,11 @@ class SinkNode(pa.flight.FlightServerBase):
             "receive_times": receive_times,
             "end_time": end,
         }
+        with self.logs_lock:
+            self.logs.append(log)
         log_str = json.dumps(log)
-
         print(f"WM_LOG= {log_str}")
+
         with self.file_counter_lock:
             local_id = self.file_counter
             self.file_counter += 1
