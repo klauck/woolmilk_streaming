@@ -102,12 +102,10 @@ class DeploymentRunner:
 
         if log_to_file:
             self.log_dir = Path(log_dir)
-            
+
             if include_timestamp:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 self.log_dir = self.log_dir / timestamp
-
-
 
     def build_scp_command(
         self,

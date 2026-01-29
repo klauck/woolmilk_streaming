@@ -82,11 +82,13 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
         print(f"        Iterations: {experiment.iterations}")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        experiment_name = experiment.name if experiment.name else f"experiment_{experiment_id}"
-        
+        experiment_name = (
+            experiment.name if experiment.name else f"experiment_{experiment_id}"
+        )
+
         if experiment.name:
             experiment_base_dir = Path(experiment_dir) / f"{timestamp}_{experiment_name}"
-        else: 
+        else:
             experiment_base_dir = Path(experiment_dir) / f"{timestamp}"
 
         for iteration in range(experiment.iterations):
@@ -98,7 +100,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 source_node.experiment_id = experiment_id
                 source_node.iteration_id = iteration
                 source_node.id = i
-            
+
             current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
 
             current_config = Config(
