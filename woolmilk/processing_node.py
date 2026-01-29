@@ -46,9 +46,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
     def do_action(self, context, action):
         if action.type == "get_logs":
             with self.logs_lock:
-                logs = {
-                    "logs": self.logs,
-                }
+                logs = self.logs
             yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
         elif action.type == "delete_logs":
             with self.logs_lock:
@@ -142,7 +140,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
         with self.logs_lock:
             self.logs.append(log)
         log_str = json.dumps(log)
-        print(f"WM_LOG= {log_str}")
+        print(log_str)
 
 
 if __name__ == "__main__":

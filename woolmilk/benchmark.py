@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pyarrow as pa
 import pyarrow.flight
@@ -22,6 +22,7 @@ from run_cluster import (
 class ExperimentConfig:
     iterations: int
     source_nodes: List[SourceNode]
+    name: Optional[str] = None
 
 
 def parse_benchmark_config(config_file: Path):
@@ -54,7 +55,9 @@ def parse_benchmark_config(config_file: Path):
 
         experiments.append(
             ExperimentConfig(
-                iterations=experiment["iterations"], source_nodes=experiment_source_nodes
+                iterations=experiment["iterations"],
+                source_nodes=experiment_source_nodes,
+                name=experiment.get("name"),
             )
         )
 
@@ -78,6 +81,14 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
         print(f"        Number of source nodes: {len(experiment.source_nodes)}")
         print(f"        Iterations: {experiment.iterations}")
 
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        experiment_name = experiment.name if experiment.name else f"experiment_{experiment_id}"
+        
+        if experiment.name:
+            experiment_base_dir = Path(experiment_dir) / f"{timestamp}_{experiment_name}"
+        else: 
+            experiment_base_dir = Path(experiment_dir) / f"{timestamp}"
+
         for iteration in range(experiment.iterations):
             print(
                 f"            Starting iteration {iteration + 1}/{experiment.iterations}"
@@ -87,12 +98,8 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 source_node.experiment_id = experiment_id
                 source_node.iteration_id = iteration
                 source_node.id = i
-
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            current_experiment_dir = (
-                Path(experiment_dir)
-                / f"{timestamp}__experiment_{experiment_id}_iter_{iteration}"
-            )
+            
+            current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
 
             current_config = Config(
                 remote_servers=remote_servers,
@@ -107,6 +114,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 mode=mode,
                 log_to_file=True,
                 local_log_dir=str(current_experiment_dir),
+                include_timestamp=False,
             )
 
             runner.deploy()
@@ -122,7 +130,6 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                     file_name = (
                         Path(__file__).parent
                         / current_experiment_dir
-                        / timestamp
                         / (
                             node["type"]
                             + "__"
