@@ -20,7 +20,8 @@
    "source_nodes_experiments": [
       {
          "included_nodes": [0, 1],
-         "iterations": 2
+         "iterations": 2,
+         "name": "two_sources"
       },
       {
          "included_nodes": [1],
@@ -31,7 +32,8 @@
                "overall_tuples": 200000,
                "thread_count": 2
             }
-         ]
+         ],
+         "name": "single_source_two_threads"
       }
    ],
    "cluster_nodes": [

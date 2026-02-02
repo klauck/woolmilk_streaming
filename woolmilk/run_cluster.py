@@ -90,6 +90,7 @@ class DeploymentRunner:
         log_to_file: bool = False,
         local_log_dir: Optional[str] = None,
         local_results_dir: Optional[str] = None,
+        include_timestamp: bool = True,
     ):
         self.config = config
         self.mode = mode
@@ -100,8 +101,11 @@ class DeploymentRunner:
         self.local_results_dir = Path(local_results_dir) if local_results_dir else None
 
         if log_to_file:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.log_dir = Path(log_dir) / timestamp
+            self.log_dir = Path(log_dir)
+
+            if include_timestamp:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                self.log_dir = self.log_dir / timestamp
 
     def build_scp_command(
         self,
