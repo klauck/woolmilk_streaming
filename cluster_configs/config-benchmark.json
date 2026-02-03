@@ -34,31 +34,31 @@
    "source_nodes_experiments": [
       {
          "included_nodes": [0],
-         "iterations": 5,
+         "iterations": 1,
          "overridden_params": [
             {
-               "overall_tuples": 200000
+               "overall_tuples": 2000000
             }
          ],
          "name": "single_source_threads_1"
       },
       {
          "included_nodes": [0],
-         "iterations": 5,
+         "iterations": 1,
          "overridden_params": [
             {
-               "overall_tuples": 200000,
-               "thread_count": 5
+               "overall_tuples": 2000000,
+               "thread_count": 2
             }
          ],
          "name": "single_source_threads_2"
       },
       {
          "included_nodes": [0],
-         "iterations": 5,
+         "iterations": 1,
          "overridden_params": [
             {
-               "overall_tuples": 200000,
+               "overall_tuples": 2000000,
                "thread_count": 3
             }
          ],
@@ -66,10 +66,10 @@
       },
       {
          "included_nodes": [0],
-         "iterations": 5,
+         "iterations": 1,
          "overridden_params": [
             {
-               "overall_tuples": 200000,
+               "overall_tuples": 2000000,
                "thread_count": 4
             }
          ],
@@ -77,12 +77,12 @@
       },
       {
          "included_nodes": [0, 1],
-         "iterations": 5,
+         "iterations": 1,
          "name": "two_sources_threads_1"
       },
       {
          "included_nodes": [0, 1],
-         "iterations": 3,
+         "iterations": 1,
          "overridden_params": [
             {
                "thread_count": 2
@@ -97,11 +97,11 @@
    "cluster_nodes": [
       {
          "type": "processing",
-         "address": "127.0.0.1:8017"
+         "address": "192.168.2.63:8017"
       },
       {
          "type": "sink",
-         "address": "127.0.0.1:8027"
+         "address": "192.168.2.64:8027"
       }
    ]
 }

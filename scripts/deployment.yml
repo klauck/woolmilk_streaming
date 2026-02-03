@@ -22,6 +22,8 @@
         dest: "{{ project_dest }}/"
         recursive: yes
         delete: no
+        rsync_opts:
+          - "--chown=picocluster:picocluster"
 
     - name: Create Python virtual environment
       command: python3 -m venv "{{ venv_path }}"

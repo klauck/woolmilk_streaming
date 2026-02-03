@@ -99,6 +99,7 @@ class DeploymentRunner:
         self.log_to_file = log_to_file
         self.local_log_dir = Path(local_log_dir) if local_log_dir else None
         self.local_results_dir = Path(local_results_dir) if local_results_dir else None
+        self.include_timestamp = include_timestamp
 
         if log_to_file:
             self.log_dir = Path(log_dir)
@@ -353,6 +354,9 @@ class DeploymentRunner:
             try:
                 server_config = self.get_remote_server_config(host)
                 remote_log_dir = self.get_base_dir(host) / self.log_dir
+                if not self.include_timestamp:
+                    # copy files only but not entire folder
+                    remote_log_dir /= "*.log"
 
                 scp_cmd = self.build_scp_command(
                     server_config, str(remote_log_dir), str(self.local_log_dir), host
