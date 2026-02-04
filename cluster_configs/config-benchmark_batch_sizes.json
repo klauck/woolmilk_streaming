@@ -1,0 +1,103 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.61": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk/woolmilk",
+            "python_env": "/home/picocluster/woolmilk/venv"
+         },
+         "192.168.2.62": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk/woolmilk",
+            "python_env": "/home/picocluster/woolmilk/venv"
+         }
+      }
+   },
+   "source_nodes": [
+      {
+         "processing_nodes": ["192.168.2.63:8017"],
+         "tuples_per_batch": 100,
+         "overall_tuples": 1000000,
+         "stream": "nexmark.person",
+         "deployment_server": "192.168.2.61",
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+      },
+      {
+         "processing_nodes": ["192.168.2.63:8017"],
+         "stream": "nexmark.person",
+         "tuples_per_batch": 100,
+         "overall_tuples": 1000000,
+         "deployment_server": "192.168.2.62",
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+      }
+   ],
+   "source_nodes_experiments": [
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "name": "two_sources_threads_1_100tpb"
+      },
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 1000
+            },
+            {
+               "tuples_per_batch": 1000
+            }
+         ],
+         "name": "two_sources_threads_1_1000tpb"
+      },
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 10000
+            },
+            {
+               "tuples_per_batch": 10000
+            }
+         ],
+         "name": "two_sources_threads_1_10ktpb"
+      },
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000
+            },
+            {
+               "tuples_per_batch": 100000
+            }
+         ],
+         "name": "two_sources_threads_1_100ktpb"
+      },
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 1000000
+            },
+            {
+               "tuples_per_batch": 1000000
+            }
+         ],
+         "name": "two_sources_threads_1_1000ktpb"
+      }
+   ],
+   "cluster_nodes": [
+      {
+         "type": "processing",
+         "address": "192.168.2.63:8017"
+      },
+      {
+         "type": "sink",
+         "address": "192.168.2.64:8027"
+      }
+   ]
+}
