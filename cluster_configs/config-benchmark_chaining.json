@@ -1,0 +1,98 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.61": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk/woolmilk",
+            "python_env": "/home/picocluster/woolmilk/venv"
+         },
+         "192.168.2.62": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk/woolmilk",
+            "python_env": "/home/picocluster/woolmilk/venv"
+         }
+      }
+   },
+   "source_nodes": [
+      {
+         "processing_nodes": ["192.168.2.66:8027"],
+         "tuples_per_batch": 10000,
+         "overall_tuples": 1000000,
+         "stream": "nexmark.person",
+         "deployment_server": "192.168.2.61",
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+      },
+      {
+         "processing_nodes": ["192.168.2.66:8027"],
+         "stream": "nexmark.person",
+         "tuples_per_batch": 10000,
+         "overall_tuples": 1000000,
+         "deployment_server": "192.168.2.62",
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+      }
+   ],
+   "source_nodes_experiments": [
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "name": "two_source_direct"
+      },
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "processing_nodes": ["192.168.2.65:8027"]
+            },
+            {
+               "processing_nodes": ["192.168.2.65:8027"]
+            }
+         ],
+         "name": "two_source_2_hops"
+      },
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "processing_nodes": ["192.168.2.64:8027"]
+            },
+            {
+               "processing_nodes": ["192.168.2.64:8027"]
+            }
+         ],
+         "name": "two_source_3_hops"
+      },
+      {
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "processing_nodes": ["192.168.2.63:8027"]
+            },
+            {
+               "processing_nodes": ["192.168.2.63:8027"]
+            }
+         ],
+         "name": "two_source_4_hops"
+      }
+   ],
+   "cluster_nodes": [
+      {
+         "type": "processing",
+         "address": "192.168.2.63:8017"
+      },
+      {
+         "type": "processing",
+         "address": "192.168.2.64:8017"
+      },
+      {
+         "type": "processing",
+         "address": "192.168.2.65:8017"
+      },
+      {
+         "type": "sink",
+         "address": "192.168.2.66:8027"
+      }
+   ]
+}
