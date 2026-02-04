@@ -1,0 +1,28 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.63": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk/woolmilk",
+            "python_env": "/home/picocluster/woolmilk/venv"
+         },
+         "192.168.2.64": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/woolmilk/woolmilk",
+            "python_env": "/home/picocluster/woolmilk/venv"
+         }
+      }
+   },
+   "sink_nodes": [
+      {
+         "server_address": "192.168.2.63:8027",
+         "result_folder": "results"
+      },
+      {
+         "server_address": "192.168.2.64:8027",
+         "result_folder": "results"
+      }
+   ],
+   "processing_nodes": [
+   ]
+}
