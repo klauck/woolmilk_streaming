@@ -8,106 +8,216 @@ import time
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.flight
 import pyarrow.parquet as pq
+from pyarrow import flight
+from util import SourceNodeActions, SourceNodeStatus
 
 
-def generate_table(
-    num_rows=10**6, event_type="person", generator_executable="nexmark", offset=0, step=1
-):
-    cmd = [
-        generator_executable,
-        "-n",
-        str(num_rows),
-        "--offset",
-        str(offset),
-        "--step",
-        str(step),
-        "--type",
+class SourceNode(flight.FlightServerBase):
+    def __init__(
+        self,
+        location,
+        processing_nodes,
+        overall_tuples,
+        tuples_per_batch,
         event_type,
-        "--no-wait",
-    ]
-    print("Generate data..")
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-    records = []
+        generator_executable,
+        offset,
+        step,
+        thread_count,
+        store_input,
+        experiment_id,
+        iteration_id,
+        source_node_id,
+    ):
+        super().__init__(location)
+        self.location = location
+        self.current_status = SourceNodeStatus.NOT_STARTED
+        self.processing_nodes = processing_nodes
+        self.overall_tuples = overall_tuples
+        self.tuples_per_batch = tuples_per_batch
+        self.event_type = event_type
+        self.generator_executable = generator_executable
+        self.offset = offset
+        self.step = step
+        self.thread_count = thread_count
+        self.store_input = store_input
+        self.experiment_id = experiment_id
+        self.iteration_id = iteration_id
+        self.source_node_id = source_node_id
+        self.table = None
+        self.batches = None
+        self.threads = []
+        self.completed_threads = 0
+        self.lock = threading.Lock()
 
-    try:
-        for line in proc.stdout:
-            try:
-                record = json.loads(line)
-                key = event_type.capitalize()
-                records.append(record[key])
-            except json.JSONDecodeError:
-                continue
-    finally:
-        proc.stdout.close()
-        proc.kill()
-        proc.wait()
+    def start(self):
+        print(f"WoolMilk source node running at {self.location}")
+        self.serve()
 
-    print("Done.")
-    return pa.Table.from_pylist(records)
+    def do_action(self, context, action):
+        if action.type == SourceNodeActions.GET_STATUS:
+            yield flight.Result(self.current_status.encode("utf-8"))
+        elif action.type == SourceNodeActions.GENERATE_DATA:
+            self.current_status = SourceNodeStatus.GENERATING_DATA
+            self.generate_data()
+            yield flight.Result(self.current_status.encode("utf-8"))
+        elif action.type == SourceNodeActions.SEND_DATA:
+            self.current_status = SourceNodeStatus.SENDING_DATA
+            self.start_sending()
+            yield flight.Result(self.current_status.encode("utf-8"))
 
-
-def send_data(
-    thread_id,
-    schema,
-    batches,
-    processing_nodes,
-    experiment_id=None,
-    iteration_id=None,
-    source_node_id=None,
-):
-    path_info = {
-        "experiment_id": experiment_id,
-        "iteration_id": iteration_id,
-        "source_node_id": source_node_id,
-        "thread_id": thread_id,
-    }
-    encoded_path = json.dumps(path_info)
-
-    writers = []
-    for processing_node in processing_nodes:
-        client = pa.flight.FlightClient(
-            f"grpc://{processing_node[0]}:{processing_node[1]}"
+    def generate_data(self):
+        self.table = self.generate_table(
+            num_rows=self.overall_tuples,
+            event_type=self.event_type,
+            generator_executable=self.generator_executable,
+            offset=self.offset,
+            step=self.step,
         )
-        writer, _ = client.do_put(
-            pa.flight.FlightDescriptor.for_path(encoded_path), schema
-        )
-        writers.append(writer)
+        self.batches = self.table.to_batches(max_chunksize=self.tuples_per_batch)
 
-    start = time.time()
-    send_times = []
-    total_bytes = 0
-    for i, batch in enumerate(batches):
-        send_start = time.time()
-        writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
-        total_bytes += batch.nbytes
-        send_end = time.time()
-        send_times.append((send_start, send_end))
+        if self.store_input != "":
+            input_file = Path(self.store_input)
+            input_folder = input_file.parent
+            os.makedirs(input_folder, exist_ok=True)
+            table = pa.Table.from_batches(self.batches)
+            pq.write_table(table, f"{input_file}")
+            print(f"Wrote .. {input_file}")
 
-    for writer in writers:
-        writer.done_writing()
+        self.current_status = SourceNodeStatus.DATA_GENERATED
 
-    end = time.time()
+    def generate_table(
+        self,
+        num_rows=10**6,
+        event_type="person",
+        generator_executable="nexmark",
+        offset=0,
+        step=1,
+    ):
+        cmd = [
+            generator_executable,
+            "-n",
+            str(num_rows),
+            "--offset",
+            str(offset),
+            "--step",
+            str(step),
+            "--type",
+            event_type,
+            "--no-wait",
+        ]
+        print("Generate data..")
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+        records = []
 
-    duration = end - start
-    gbps = (total_bytes * 8) / (duration * 1000**3)
-    mbps = total_bytes / (duration * 1000**2)
+        try:
+            if proc.stdout:
+                for line in proc.stdout:
+                    try:
+                        record = json.loads(line)
+                        key = event_type.capitalize()
+                        records.append(record[key])
+                    except json.JSONDecodeError:
+                        continue
+        finally:
+            if proc.stdout:
+                proc.stdout.close()
+            proc.kill()
+            proc.wait()
 
-    log = {
-        "thread": thread_id,
-        "experiment_id": experiment_id,
-        "iteration_id": iteration_id,
-        "source_node_id": source_node_id,
-        "send_times": send_times,
-        "total_bytes": total_bytes,
-        "start_time": start,
-        "end_time": end,
-        "gbps": f"{gbps:.4f}",
-        "mbps": f"{mbps:.2f}",
-    }
+        print("Done.")
+        return pa.Table.from_pylist(records)
 
-    print(f"WM_LOG= {json.dumps(log)}")
+    def start_sending(self):
+        if self.table is None or self.batches is None:
+            raise RuntimeError("Data not generated. Call GENERATE_DATA action first.")
+
+        self.threads = []
+        for thread_id in range(self.thread_count):
+            t = threading.Thread(
+                target=self.send_data,
+                args=(
+                    thread_id,
+                    self.table.schema,
+                    self.batches[thread_id :: self.thread_count],
+                    self.processing_nodes,
+                    self.experiment_id,
+                    self.iteration_id,
+                    self.source_node_id,
+                ),
+                daemon=True,
+            )
+            self.threads.append(t)
+            t.start()
+
+    def send_data(
+        self,
+        thread_id,
+        schema,
+        batches,
+        processing_nodes,
+        experiment_id=None,
+        iteration_id=None,
+        source_node_id=None,
+    ):
+        print(f"SEND_TIME: {time.time()}")
+        path_info = {
+            "experiment_id": experiment_id,
+            "iteration_id": iteration_id,
+            "source_node_id": source_node_id,
+            "thread_id": thread_id,
+        }
+        encoded_path = json.dumps(path_info)
+
+        writers = []
+        for processing_node in processing_nodes:
+            client = flight.FlightClient(
+                f"grpc://{processing_node[0]}:{processing_node[1]}"
+            )
+            writer, _ = client.do_put(
+                flight.FlightDescriptor.for_path(encoded_path), schema
+            )
+            writers.append(writer)
+
+        start = time.time()
+        send_times = []
+        total_bytes = 0
+        for i, batch in enumerate(batches):
+            send_start = time.time()
+            writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
+            total_bytes += batch.nbytes
+            send_end = time.time()
+            send_times.append((send_start, send_end))
+
+        for writer in writers:
+            writer.done_writing()
+
+        end = time.time()
+
+        duration = end - start
+        gbps = (total_bytes * 8) / (duration * 1000**3)
+        mbps = total_bytes / (duration * 1000**2)
+
+        log = {
+            "thread": thread_id,
+            "experiment_id": experiment_id,
+            "iteration_id": iteration_id,
+            "source_node_id": source_node_id,
+            "send_times": send_times,
+            "total_bytes": total_bytes,
+            "start_time": start,
+            "end_time": end,
+            "gbps": f"{gbps:.4f}",
+            "mbps": f"{mbps:.2f}",
+        }
+
+        print(f"WM_LOG= {json.dumps(log)}")
+
+        with self.lock:
+            self.completed_threads += 1
+            if self.completed_threads == self.thread_count:
+                self.current_status = SourceNodeStatus.DONE
 
 
 if __name__ == "__main__":
@@ -172,6 +282,13 @@ if __name__ == "__main__":
         default=None,
         help="Unique ID for the source node",
     )
+    parser.add_argument(
+        "--source-server-address",
+        type=str,
+        default=None,
+        help="Address where source flight server starts",
+    )
+
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -202,39 +319,20 @@ if __name__ == "__main__":
 
     event_type = args.stream.split(".")[1]
 
-    table = generate_table(
-        num_rows=args.overall_tuples,
+    source_node = SourceNode(
+        location=f"grpc://{args.source_server_address}",
+        processing_nodes=processing_nodes,
+        overall_tuples=args.overall_tuples,
+        tuples_per_batch=args.tuples_per_batch,
         event_type=event_type,
         generator_executable=args.generator_executable,
         offset=args.offset,
         step=args.step,
+        thread_count=args.thread_count,
+        store_input=args.store_input,
+        experiment_id=args.experiment_id,
+        iteration_id=args.iteration_id,
+        source_node_id=args.source_node_id,
     )
-    batches = table.to_batches(max_chunksize=args.tuples_per_batch)
 
-    if args.store_input != "":
-        input_file = Path(args.store_input)
-        input_folder = input_file.parent
-        os.makedirs(input_folder, exist_ok=True)
-        table = pa.Table.from_batches(batches)
-        pq.write_table(table, f"{input_file}")
-        print(f"Wrote .. {input_file}")
-
-    threads = []
-    for thread_id in range(args.thread_count):
-        t = threading.Thread(
-            target=send_data,
-            args=(
-                thread_id,
-                table.schema,
-                batches[thread_id :: args.thread_count],
-                processing_nodes,
-                args.experiment_id,
-                args.iteration_id,
-                args.source_node_id,
-            ),
-        )
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
+    source_node.start()

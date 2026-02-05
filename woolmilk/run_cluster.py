@@ -39,6 +39,7 @@ class SourceNode:
     stream: str
     overall_tuples: int
     tuples_per_batch: int
+    server_address: str | None = None
     thread_count: int = 1
     deployment_server: Optional[str] = "127.0.0.1"
     store_input: Optional[str] = None
@@ -321,6 +322,10 @@ class DeploymentRunner:
             if source_node.id is not None:
                 cmd.append("--source-node-id")
                 cmd.append(str(source_node.id))
+
+            if source_node.server_address is not None:
+                cmd.append("--source-server-address")
+                cmd.append(source_node.server_address)
 
             self._spawn_process(
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
