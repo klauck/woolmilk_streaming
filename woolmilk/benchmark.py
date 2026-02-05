@@ -118,7 +118,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             )
 
             runner.deploy()
-            sleep(5)
+            sleep(180)
 
             # collect log files for specified cluster nodes:
             for node in cluster_nodes:
