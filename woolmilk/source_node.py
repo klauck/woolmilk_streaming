@@ -84,7 +84,7 @@ def send_data(
         max_timestamp = pc.max(batch.column("date_time"))
         watermark = str(max_timestamp).encode("utf-8")
 
-        writers[(thread_id + i) % len(processing_nodes)].write_batch(batch, watermark)
+        writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, watermark)
         total_bytes += batch.nbytes
         send_end = time.time()
         send_times.append((send_start, send_end))

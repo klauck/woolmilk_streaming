@@ -31,6 +31,8 @@ class ProcessingNode:
     forward_node: str
     query_result_schema: Dict
     query: Optional[str] = None
+    window_size: Optional[int] = 0
+    window_slide: Optional[int] = 0
 
 
 @dataclass
@@ -272,6 +274,12 @@ class DeploymentRunner:
             if proc_node.query:
                 cmd.append("--query")
                 cmd.append(self.quote_if_remote(proc_node.query))
+            if proc_node.window_size is not None:
+                cmd.append("--window-size")
+                cmd.append(str(proc_node.window_size))
+            if proc_node.window_slide is not None:
+                cmd.append("--window-slide")
+                cmd.append(str(proc_node.window_slide))
 
             self._spawn_process(
                 "processing", proc_node.server_address, cmd, base_dir=base_dir, host=host
@@ -286,6 +294,7 @@ class DeploymentRunner:
             host = source_node.deployment_server
 
             base_dir = self.get_base_dir(host)
+            source_node_id = source_node.id if source_node.id is not None else i
 
             cmd = [
                 self.get_python(host),
@@ -318,9 +327,9 @@ class DeploymentRunner:
                 cmd.append("--iteration-id")
                 cmd.append(str(source_node.iteration_id))
 
-            if source_node.id is not None:
+            if source_node_id is not None:
                 cmd.append("--source-node-id")
-                cmd.append(str(source_node.id))
+                cmd.append(str(source_node_id))
 
             self._spawn_process(
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
