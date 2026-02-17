@@ -9,6 +9,12 @@ import datafusion
 import pyarrow
 
 import woolmilk.source_node
+from woolmilk.control import prepare_source_nodes, start_sending, wait_until_completion
+
+# Mock class for source node, to start sending data to processing node
+class NodeMock:
+    def __init__(self, server_address):
+        self.server_address = server_address
 
 
 class TestQueries(unittest.TestCase):
@@ -83,8 +89,17 @@ class TestQueries(unittest.TestCase):
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
+                "--source-server-address",
+                "127.0.0.1:8210",
             ]
         )
+        
+        source_node = NodeMock("127.0.0.1:8210")
+        prepare_source_nodes([source_node])
+        start_sending([source_node])
+        wait_until_completion([source_node])
+        
+        source.terminate()
         source.wait()
 
         time.sleep(1)
@@ -115,8 +130,17 @@ class TestQueries(unittest.TestCase):
                 "100",
                 "--thread-count",
                 "3",
+                "--source-server-address",
+                "127.0.0.1:8210",
             ]
         )
+        
+        source_node = NodeMock("127.0.0.1:8210")
+        prepare_source_nodes([source_node])
+        start_sending([source_node])
+        wait_until_completion([source_node])
+        
+        source.terminate()
         source.wait()
 
         time.sleep(1)
@@ -174,8 +198,17 @@ class TestQueries(unittest.TestCase):
                 "100",
                 "--thread-count",
                 "3",
+                "--source-server-address",
+                "127.0.0.1:8210",
             ]
         )
+        
+        source_node = NodeMock("127.0.0.1:8210")
+        prepare_source_nodes([source_node])
+        start_sending([source_node])
+        wait_until_completion([source_node])
+        
+        source.terminate()
         source.wait()
 
         time.sleep(1)
@@ -225,6 +258,7 @@ class TestQueries(unittest.TestCase):
         number_of_source_nodes = 2
         sources = []
         for source_id in range(number_of_source_nodes):
+            server_address = f"127.0.0.1:{8210 + source_id}"
             source = subprocess.Popen(
                 [
                     "python",
@@ -243,11 +277,20 @@ class TestQueries(unittest.TestCase):
                     str(source_id),
                     "--step",
                     str(number_of_source_nodes),
+                    "--source-server-address",
+                    server_address,
                 ]
             )
-            sources.append(source)
-        for source in sources:
-            source.wait()
+            sources.append((source, NodeMock(server_address)))
+            
+        source_nodes = [s[1] for s in sources]
+        prepare_source_nodes(source_nodes)
+        start_sending(source_nodes)
+        wait_until_completion(source_nodes)
+        
+        for source_proc, _ in sources:
+            source_proc.terminate()
+            source_proc.wait()
 
         time.sleep(1)
         processing_node2.terminate()
