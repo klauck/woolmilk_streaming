@@ -9,3 +9,4 @@ datafusion-physical-plan-python/*.pb
 logs
 *.parquet
 woolmilk/experiments/*
+woolmilk.egg-info

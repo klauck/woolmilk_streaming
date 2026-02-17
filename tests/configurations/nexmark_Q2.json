@@ -3,7 +3,7 @@
       {
          "server_address": "127.0.0.1:8927",
          "result_folder": "../tests/results"
-
+         
       }
    ],
    "processing_nodes": [
@@ -26,7 +26,8 @@
          "stream": "nexmark.bid",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,
-         "thread_count": 2
+         "thread_count": 2,
+         "server_address": "127.0.0.1:8211"
       }
    ]
 }

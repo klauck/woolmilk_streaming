@@ -3,7 +3,7 @@
       {
          "server_address": "127.0.0.1:8927",
          "result_folder": "../tests/results"
-
+         
       }
    ],
    "processing_nodes": [
@@ -27,7 +27,8 @@
          "overall_tuples": 1000,
          "tuples_per_batch": 100,
          "thread_count": 2,
-         "store_input": "../tests/input/test_Q1_bid.parquet"
+         "store_input": "../tests/input/test_Q1_bid.parquet",
+         "server_address": "127.0.0.1:8210"
       }
    ]
 }

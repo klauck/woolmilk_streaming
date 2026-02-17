@@ -10,7 +10,8 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
-from util import SourceNodeActions, SourceNodeStatus
+
+from woolmilk.util import SourceNodeActions, SourceNodeStatus
 
 
 class SourceNode(flight.FlightServerBase):
@@ -68,7 +69,7 @@ class SourceNode(flight.FlightServerBase):
             yield flight.Result(self.current_status.encode("utf-8"))
 
     def generate_data(self):
-        self.table = self.generate_table(
+        self.table = generate_table(
             num_rows=self.overall_tuples,
             event_type=self.event_type,
             generator_executable=self.generator_executable,
@@ -86,48 +87,6 @@ class SourceNode(flight.FlightServerBase):
             print(f"Wrote .. {input_file}")
 
         self.current_status = SourceNodeStatus.DATA_GENERATED
-
-    def generate_table(
-        self,
-        num_rows=10**6,
-        event_type="person",
-        generator_executable="nexmark",
-        offset=0,
-        step=1,
-    ):
-        cmd = [
-            generator_executable,
-            "-n",
-            str(num_rows),
-            "--offset",
-            str(offset),
-            "--step",
-            str(step),
-            "--type",
-            event_type,
-            "--no-wait",
-        ]
-        print("Generate data..")
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-        records = []
-
-        try:
-            if proc.stdout:
-                for line in proc.stdout:
-                    try:
-                        record = json.loads(line)
-                        key = event_type.capitalize()
-                        records.append(record[key])
-                    except json.JSONDecodeError:
-                        continue
-        finally:
-            if proc.stdout:
-                proc.stdout.close()
-            proc.kill()
-            proc.wait()
-
-        print("Done.")
-        return pa.Table.from_pylist(records)
 
     def start_sending(self):
         if self.table is None or self.batches is None:
@@ -220,6 +179,48 @@ class SourceNode(flight.FlightServerBase):
                 self.current_status = SourceNodeStatus.DONE
 
 
+def generate_table(
+    num_rows=10**6,
+    event_type="person",
+    generator_executable="nexmark",
+    offset=0,
+    step=1,
+):
+    cmd = [
+        generator_executable,
+        "-n",
+        str(num_rows),
+        "--offset",
+        str(offset),
+        "--step",
+        str(step),
+        "--type",
+        event_type,
+        "--no-wait",
+    ]
+    print("Generate data..")
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    records = []
+
+    try:
+        if proc.stdout:
+            for line in proc.stdout:
+                try:
+                    record = json.loads(line)
+                    key = event_type.capitalize()
+                    records.append(record[key])
+                except json.JSONDecodeError:
+                    continue
+    finally:
+        if proc.stdout:
+            proc.stdout.close()
+        proc.kill()
+        proc.wait()
+
+    print("Done.")
+    return pa.Table.from_pylist(records)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Source Node")
     parser.add_argument(
@@ -306,6 +307,7 @@ if __name__ == "__main__":
     print(f" Experiment ID              : {args.experiment_id}")
     print(f" Iteration ID               : {args.iteration_id}")
     print(f" Source Node ID             : {args.source_node_id}")
+    print(f" Source Server Address      : {args.source_server_address}")
     print("=" * 40 + "\n")
 
     processing_nodes = []

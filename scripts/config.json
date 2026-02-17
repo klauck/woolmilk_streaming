@@ -20,7 +20,8 @@
          "overall_tuples": 1000000,
          "tuples_per_batch": 100000,
          "thread_count": 1,
-         "deployment_server": "127.0.0.1"
+         "deployment_server": "127.0.0.1",
+         "server_address": "127.0.0.1:8210"
       }
    ]
 }

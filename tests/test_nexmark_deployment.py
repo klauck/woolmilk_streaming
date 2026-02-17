@@ -7,6 +7,7 @@ import datafusion
 import pyarrow
 
 import woolmilk.source_node
+from woolmilk.control import prepare_source_nodes, start_sending, wait_until_completion
 from woolmilk.run_cluster import DeploymentRunner, parse_config
 
 
@@ -40,7 +41,11 @@ class TestNexmarkDeployment(unittest.TestCase):
 
         runner = DeploymentRunner(config, "logs")
         runner.deploy()
-        time.sleep(2)
+
+        prepare_source_nodes(config.source_nodes)
+        start_sending(config.source_nodes)
+        wait_until_completion(config.source_nodes)
+
         runner.cleanup()
 
         # Collect actual results
@@ -75,7 +80,11 @@ class TestNexmarkDeployment(unittest.TestCase):
 
         runner = DeploymentRunner(config, "logs")
         runner.deploy()
-        time.sleep(2)
+
+        prepare_source_nodes(config.source_nodes)
+        start_sending(config.source_nodes)
+        wait_until_completion(config.source_nodes)
+
         runner.cleanup()
 
         # Collect actual results
