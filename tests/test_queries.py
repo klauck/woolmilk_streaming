@@ -25,6 +25,7 @@ class TestQueries(unittest.TestCase):
         if Path(self.result_folder).exists():
             shutil.rmtree(self.result_folder)
         self.overall_tuples = 1000
+        self.procs = []
 
         self.woolmilk_dir = os.path.join(current_dir, "../woolmilk/")
         self.sink = subprocess.Popen(
@@ -37,6 +38,8 @@ class TestQueries(unittest.TestCase):
                 self.result_folder,
             ]
         )
+        self.procs.append(self.sink)
+
         self.processing_node = subprocess.Popen(
             [
                 "python",
@@ -55,6 +58,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
+        self.procs.append(self.processing_node)
 
         ctx = datafusion.SessionContext()
         bid = woolmilk.source_node.generate_table(self.overall_tuples, "bid")
@@ -70,11 +74,15 @@ class TestQueries(unittest.TestCase):
         time.sleep(1)
 
     def tearDown(self):
-        self.processing_node.terminate()
-        self.processing_node.wait()
-
-        self.sink.terminate()
-        self.sink.wait()
+        for proc in self.procs:
+            try:
+                proc.terminate()
+                proc.wait(timeout=2)
+            except Exception:
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
 
     def test_single_processing_node(self):
         source = subprocess.Popen(
@@ -93,15 +101,13 @@ class TestQueries(unittest.TestCase):
                 "127.0.0.1:8210",
             ]
         )
+        self.procs.append(source)
         
         source_node = NodeMock("127.0.0.1:8210")
         prepare_source_nodes([source_node])
         start_sending([source_node])
         wait_until_completion([source_node])
         
-        source.terminate()
-        source.wait()
-
         time.sleep(1)
 
         # Compare expected and actual results
@@ -134,15 +140,13 @@ class TestQueries(unittest.TestCase):
                 "127.0.0.1:8210",
             ]
         )
+        self.procs.append(source)
         
         source_node = NodeMock("127.0.0.1:8210")
         prepare_source_nodes([source_node])
         start_sending([source_node])
         wait_until_completion([source_node])
         
-        source.terminate()
-        source.wait()
-
         time.sleep(1)
 
         # Compare expected and actual results
@@ -182,6 +186,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
+        self.procs.append(processing_node2)
         time.sleep(1)
 
         source = subprocess.Popen(
@@ -202,18 +207,14 @@ class TestQueries(unittest.TestCase):
                 "127.0.0.1:8210",
             ]
         )
+        self.procs.append(source)
         
         source_node = NodeMock("127.0.0.1:8210")
         prepare_source_nodes([source_node])
         start_sending([source_node])
         wait_until_completion([source_node])
         
-        source.terminate()
-        source.wait()
-
         time.sleep(1)
-        processing_node2.terminate()
-        processing_node2.wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -253,6 +254,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
+        self.procs.append(processing_node2)
         time.sleep(1)
 
         number_of_source_nodes = 2
@@ -281,6 +283,7 @@ class TestQueries(unittest.TestCase):
                     server_address,
                 ]
             )
+            self.procs.append(source)
             sources.append((source, NodeMock(server_address)))
             
         source_nodes = [s[1] for s in sources]
@@ -288,13 +291,7 @@ class TestQueries(unittest.TestCase):
         start_sending(source_nodes)
         wait_until_completion(source_nodes)
         
-        for source_proc, _ in sources:
-            source_proc.terminate()
-            source_proc.wait()
-
         time.sleep(1)
-        processing_node2.terminate()
-        processing_node2.wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
