@@ -35,6 +35,8 @@ def prepare_source_nodes(nodes):
                     if status == SourceNodeStatus.DATA_GENERATED:
                         nodes_to_be_prepared.remove(node)
 
+        except flight.FlightUnavailableError as e:
+            print(f"[{node.server_address}] Waiting for node to be ready...")
         except Exception as e:
             print(f"Failed to check status for {node.server_address}: {e}")
             pass
@@ -79,6 +81,9 @@ def wait_until_completion(nodes):
 
                     if status == SourceNodeStatus.DONE:
                         nodes_to_wait.remove(node)
+            except flight.FlightUnavailableError:
+                # Node might be briefly unavailable during state transitions or just starting up
+                print(f"[{node.server_address}] Status check: node briefly unavailable, retrying...")
             except Exception as e:
                 print(f"Failed to check completion status for {node.server_address}: {e}")
 
