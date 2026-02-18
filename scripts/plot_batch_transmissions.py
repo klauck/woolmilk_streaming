@@ -1,49 +1,122 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import json
+import argparse
+from pathlib import Path
+from typing import List, Dict, Any
 
-# Sample data
-labels = ['source', 'processing node', 'sink_node']
+def parse_wmlog_file(log_file: Path) -> List[Dict[str, Any]]:
+    logs = []
+    with open(log_file, "r") as f:
+        for line in f:
+            if line.startswith("WM_LOG="):
+                try:
+                    data = json.loads(line.replace("WM_LOG=", "").strip())
+                    logs.append(data)
+                except json.JSONDecodeError:
+                    pass
+    return logs
 
+def parse_json_file(log_file: Path) -> List[Dict[str, Any]]:
+    try:
+        with open(log_file, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error reading JSON from {log_file}: {e}")
+        return []
 
-send_times =  [(1756499369.2957978, 1756499369.477711), (1756499369.47772, 1756499369.6740491), (1756499369.6740572, 1756499369.8732605), (1756499369.8732693, 1756499370.082368), (1756499370.082377, 1756499370.2847412), (1756499370.2847526, 1756499370.5054445), (1756499370.505453, 1756499370.7077358), (1756499370.7077532, 1756499370.918361), (1756499370.91837, 1756499371.1371932), (1756499371.1372027, 1756499371.3491309)]
-forward_times =  [(1756499369.2980874, 1756499369.7165093), (1756499369.7165093, 1756499369.929087), (1756499369.929087, 1756499370.1439888), (1756499370.1439888, 1756499370.3467245), (1756499370.3467245, 1756499370.5528007), (1756499370.5528007, 1756499370.7674944), (1756499370.7674944, 1756499370.9725533), (1756499370.9725533, 1756499371.1767592), (1756499371.1767592, 1756499371.3805435), (1756499371.3805435, 1756499371.581119)]
-receive_times =  [(1756499369.2976134, 1756499369.7868414), (1756499369.7868414, 1756499370.012161), (1756499370.012161, 1756499370.2022371), (1756499370.2022371, 1756499370.4071815), (1756499370.4071815, 1756499370.638083), (1756499370.638083, 1756499370.8392463), (1756499370.8392463, 1756499371.0464957), (1756499371.0464957, 1756499371.2342489), (1756499371.2342489, 1756499371.439226), (1756499371.439226, 1756499371.6342154)]
+def plot_experiment(experiment_dir: str):
+    exp_path = Path(experiment_dir)
+    if not exp_path.exists():
+        print(f"Directory {experiment_dir} not found.")
+        return
 
+    # node_batches[label][batch_idx] = [(start, end)]
+    node_batches = {}
 
+    for log_file in exp_path.glob("source__*.log"):
+        logs = parse_wmlog_file(log_file)
+        for entry in logs:
+            sid = entry.get("source_node_id", 0)
+            tid = entry.get("thread", 0)
+            label = f"Source {sid} (T{tid})"
+            
+            if label not in node_batches:
+                node_batches[label] = []
+            
+            for times in entry.get("send_times", []):
+                if len(times) != 2:
+                    continue
 
+                node_batches[label].append((times[0], times[1]))
 
-batch_times = []
-for batch_id in range(len(send_times)):
-    batch_time = {"duration": [], "start": []}
-    batch_time["duration"].append(send_times[batch_id][1] - send_times[batch_id][0])
-    batch_time["start"].append(send_times[batch_id][0]-send_times[0][0])
+    for json_file in exp_path.glob("processing__*.json"):
+        addr = json_file.stem.split("__")[-1]
+        port = addr.split("_")[-1] if "_" in addr else addr
+        data = parse_json_file(json_file)
+        for entry in data:
+            sid = entry.get("source_node_id", 0)
+            tid = entry.get("thread_id", 0)
+            
+            label = f"Proc ({port}, S{sid}, T{tid})"
+            
+            if label not in node_batches:
+                node_batches[label] = []
+            
+            for times in entry.get("forward_times", []):
+                node_batches[label].append((times[0], times[1]))
 
-    batch_time["duration"].append(forward_times[batch_id][1] - forward_times[batch_id][0])
-    batch_time["start"].append(forward_times[batch_id][0]-send_times[0][0])
+    for json_file in exp_path.glob("sink__*.json"):
+        addr = json_file.stem.split("__")[-1]
+        port = addr.split("_")[-1] if "_" in addr else addr
+        data = parse_json_file(json_file)
+        for entry in data:
+            sid = entry.get("source_node_id", 0)
+            tid = entry.get("thread_id", 0)
+            
+            label = f"Sink ({port}, S{sid}, T{tid})"
+            
+            if label not in node_batches:
+                node_batches[label] = []
+            
+            for times in entry.get("receive_times", []):
+                node_batches[label].append((times[0], times[1]))
 
-    batch_time["duration"].append(receive_times[batch_id][1] - forward_times[batch_id][0])
-    batch_time["start"].append(receive_times[batch_id][0]-send_times[0][0])
+    if not node_batches:
+        print("No log data found to plot.")
+        return
 
-    batch_times.append(batch_time)
+    labels = list(node_batches.keys())
+    x = np.arange(len(labels))
 
+    all_starts = []
+    for batches in node_batches.values():
+        if batches:
+            all_starts.append(batches[0][0])
+    global_start = min(all_starts) if all_starts else 0
+    
+    plt.figure(figsize=(12, 6))
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    
+    for label_idx, label in enumerate(labels):
+        batches = node_batches[label]
+        for b_idx, (start, end) in enumerate(batches):
+            plt.barh(label_idx, end - start,
+                     left=start - global_start, 
+                     color=colors[b_idx % len(colors)], 
+                     hatch='/',
+                     label=f'batch {b_idx}' if label_idx == 0 else "")
 
+    plt.xlabel('processing time (s)')
+    plt.yticks(x, labels)
+    plt.legend()
+    
+    plt.grid(axis='x')
+    plt.show()
 
-x = np.arange(len(labels))  # the label locations
-height = 0.6  # thickness of horizontal bars
-
-# Stacked horizontal bars
-for i, batch in enumerate(batch_times):
-    #plt.barh(x, send_time[1] - send_time[0], height, left=send_time[0], label=f'batch {i}', hatch='/')
-
-    plt.barh(x, batch["duration"], height, left=batch["start"], label=f'batch {i}', hatch='/')
-    # plt.barh(x, execution_time, height, left=optimization_time, label='execution time', hatch='')
-    # plt.barh(x, result_transmission, height, left=exec_opt_time, label='result transmission', hatch='|')
-
-# Add labels, title, and custom y-axis tick labels
-plt.xlabel('processing time (s)')
-plt.yticks(x, labels)
-plt.legend()
-
-plt.grid(axis='x')
-
-plt.show()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Plot batch processing times from experiment logs.")
+    parser.add_argument("--dir", type=str, required=True, help="Directory containing experiment logs")
+    args = parser.parse_args()
+    
+    plot_experiment(args.dir)
