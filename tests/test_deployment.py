@@ -30,6 +30,16 @@ class TestDeployment(unittest.TestCase):
         if Path(self.result_folder).exists():
             shutil.rmtree(self.result_folder)
 
+    def wait_until_results_are_ready(self):
+        print(f"Waiting for results in {self.result_folder}...")
+        start_time = time.time()
+        timeout = 30
+        while time.time() - start_time < timeout:
+            if os.path.exists(self.result_folder) and any(f.endswith('.parquet') for f in os.listdir(self.result_folder)):
+                break
+            print("Waiting for results...")
+            time.sleep(1)
+            
     def test_single_processing_node(self):
         config = parse_config(
             os.path.join(self.test_dir, "configurations/single_processing_node.json")
@@ -41,7 +51,7 @@ class TestDeployment(unittest.TestCase):
         start_sending(config.source_nodes)
         wait_until_completion(config.source_nodes)
 
-        runner.cleanup()
+        self.wait_until_results_are_ready()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -60,6 +70,8 @@ class TestDeployment(unittest.TestCase):
         print(actual_table)
         print(expected_table)
         self.assertTrue(actual_table.equals(expected_table))
+        
+        runner.cleanup()
 
     def test_two_processing_nodes(self):
         config = parse_config(
@@ -72,7 +84,7 @@ class TestDeployment(unittest.TestCase):
         start_sending(config.source_nodes)
         wait_until_completion(config.source_nodes)
 
-        runner.cleanup()
+        self.wait_until_results_are_ready()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -91,6 +103,8 @@ class TestDeployment(unittest.TestCase):
         print(actual_table)
         print(expected_table)
         self.assertTrue(actual_table.equals(expected_table))
+        
+        runner.cleanup()
 
 
 if __name__ == "__main__":
