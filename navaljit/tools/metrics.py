@@ -22,7 +22,7 @@ class LIMIT:
     critical: float
 
 @dataclass
-class MetricConfig:
+class HealthConfig:
     cpu_limit: LIMIT
     mem_limit: LIMIT
 
@@ -37,3 +37,25 @@ class HealthResult:
             "CPU": self.cpu,
             "MEM": self.memory
         }
+
+
+class MetricType(str, Enum):
+    RECEIVE = "RECEIVE"
+    SEND = "SEND"  # also write in parquet file for sink
+    PROCESS = "PROCESS"
+
+class Metric:
+    def __init__(self, duration_ns: float, nbytes: int, address: str, metric_type: MetricType):
+        self.duration_ns = duration_ns
+        self.bytes = nbytes
+        self.address = address
+        self.type = metric_type
+
+    def to_dict(self):
+        return {
+            "address": self.address,
+            "duration_ns": self.duration_ns,
+            "bytes": self.bytes,
+            "type": self.type
+        }
+

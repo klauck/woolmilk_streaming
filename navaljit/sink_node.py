@@ -5,15 +5,17 @@
 import json
 import os
 import argparse
+import queue
 import threading
 import time
 from pathlib import Path
-from queue import Queue, Empty
+from queue import Queue
 
 import pyarrow as pa
 import pyarrow.flight as pf
 import pyarrow.parquet as pq
 
+from tools.metrics import Metric, MetricType
 from tools.monitor import MonitorService
 from tools.logger import LogService, LogType
 Logger: LogService | None = None
@@ -66,14 +68,22 @@ class SinkNode(pf.FlightServerBase):
             serialize = Logger.get_logs()
             yield pa.flight.Result(json.dumps(serialize).encode("utf-8"))
 
+        elif action.type == "metrics":
+            metrics: list = []
+
+            with self.monitor.metric_lock:
+                while not self.monitor.metric_queue.empty():
+                    metrics.append(self.monitor.metric_queue.get().to_dict())
+
+            yield pa.flight.Result(json.dumps(metrics).encode("utf-8"))
 
     def received_batch(self, reader: pf.MetadataRecordBatchReader, q: Queue[pa.RecordBatch | None] | None, address: str):
-        total_received_mbytes = 0
-        total_duration = 0
+        total_mbytes = 0
+        total_duration_ms = 0
         it = iter(reader)
 
         while True:
-            start_time = time.time()
+            start_time = time.time_ns()
             try:
                 chunk = next(it)
             except StopIteration:
@@ -84,21 +94,25 @@ class SinkNode(pf.FlightServerBase):
             if q is not None:
                 q.put(batch)
 
-            end_time = time.time()
+            end_time = time.time_ns()
 
+            duration_ns = end_time - start_time
+            if self.monitor:
+                self.monitor.metric_queue.put(Metric(duration_ns, batch.nbytes, address, MetricType.RECEIVE))
 
-            batch_mbytes = batch.nbytes / (1024**2) #MB
-            total_received_mbytes += batch_mbytes
-
-            duration_s = (end_time - start_time)
-            duration_ms = duration_s * 1000
-            total_duration += duration_s
-            mbps = batch_mbytes / duration_s if duration_s > 0 else float("inf")
+            batch_mbytes = batch.nbytes / (10**6)
+            duration_ms = duration_ns / (10**6)
+            mbps = ((batch_mbytes / duration_ms) * 1000) if duration_ms > 0 else float("inf")
             Logger.log(f"[Receive Batch] Size {batch_mbytes:.2f}MB in {duration_ms:.2f}ms by {address} [{mbps:.2f} MB/s]",
                        LogType.DEBUG)
 
-        avg_mbps = total_received_mbytes / total_duration if total_duration > 0 else float("inf")
-        Logger.log(f"[Receive Batch] Total Size {total_received_mbytes:.2f}MB in {(total_duration * 1000):.2f}ms by {address} [{avg_mbps:.2f} MB/s]", LogType.INFO)
+            total_mbytes += batch_mbytes
+            total_duration_ms += duration_ms
+
+
+        avg_mbps = ((total_mbytes / total_duration_ms) * 1000) if total_duration_ms > 0 else float("inf")
+        Logger.log(f"[Receive Batch] Total Size {total_mbytes:.2f}MB in {total_duration_ms:.2f}ms by {address} [{avg_mbps:.2f} MB/s]", LogType.INFO)
+
         if q is not None:
             q.put(None)
 
@@ -106,22 +120,24 @@ class SinkNode(pf.FlightServerBase):
         for thread in self.threads:
             thread.join(timeout=3)
 
-    def write_parquet(self, queue: Queue[pa.RecordBatch | None], address: str):
+    def write_parquet(self, batch_queue: Queue[pa.RecordBatch | None], address: str):
         global SHUTDOWN_FLAG
 
-        path = Path(f"{self.result_folder}/{address}/{time.time_ns()}.parquet")
+        path = Path(f"{self.result_folder}/{address.replace(':', '-')}/{time.time_ns()}.parquet")
         path.parent.mkdir(parents=True, exist_ok=True)
 
         writer: pq.ParquetWriter | None = None
 
-        bytes_written = 0
-        total_duration = 0
+        total_mbytes = 0
+        total_duration_ms = 0
 
         try:
             while not SHUTDOWN_FLAG:
                 try:
-                    batch: pa.RecordBatch = queue.get(timeout=3)
-                except Empty:
+                    batch: pa.RecordBatch = batch_queue.get(timeout=3)
+                except queue.ShutDown:
+                    break
+                except queue.Empty:
                     continue
                 if batch is None:
                     break
@@ -129,22 +145,26 @@ class SinkNode(pf.FlightServerBase):
                 if writer is None:
                     writer = pq.ParquetWriter(path, schema=batch.schema, compression="snappy")
 
-                t0 = time.time()
+                start_time = time.time_ns()
                 writer.write_batch(batch)
-                t1 = time.time()
+                end_time = time.time_ns()
 
-                batch_mbytes = batch.nbytes / (1024**2)
-                bytes_written += batch.nbytes
-                duration_s = (t1 - t0)
-                duration_ms = duration_s * 1000
-                total_duration += duration_s
-                mbps = batch_mbytes / duration_s if duration_s > 0 else float("inf")
+                duration_ns = end_time - start_time
+
+                if self.monitor:
+                    self.monitor.metric_queue.put(Metric(duration_ns, batch.nbytes, str(path), MetricType.SEND))
+
+                batch_mbytes = batch.nbytes / (10 ** 6)
+                duration_ms = duration_ns / (10 ** 6)
+                mbps = ((batch_mbytes / duration_ms) * 1000) if duration_ms > 0 else float("inf")
                 Logger.log(f"[Write Parquet] Write Batch of Size {batch_mbytes:.2f} MB in {duration_ms:.2f}ms into file {path} [{mbps:.2f} MB/s]", LogType.DEBUG)
+                total_mbytes += batch_mbytes
+                total_duration_ms += duration_ms
 
         finally:
-            mbytes_total = bytes_written / (1024 ** 2)
-            avg_mbps = mbytes_total / total_duration if total_duration > 0 else float("inf")
-            Logger.log(f"[Write Parquet] Complete write of file {path} in {(total_duration * 1000):.2f}ms with size {mbytes_total:.2f} MB. [{avg_mbps:.2f}MB/s]", LogType.INFO)
+            avg_mbps = ((total_mbytes / total_duration_ms) * 1000) if total_duration_ms > 0 else float("inf")
+            Logger.log(f"[Write Parquet] Complete write of file {path} in {total_duration_ms:.2f}ms with size {total_mbytes:.2f} MB. [{avg_mbps:.2f}MB/s]", LogType.INFO)
+
             if writer is not None:
                 writer.close()
 

@@ -6,11 +6,12 @@
 import json
 import threading
 from asyncio import timeout
+from queue import Queue
 
 import psutil
 from pyarrow import flight
 
-from .metrics import MetricConfig
+from .metrics import HealthConfig, Metric
 from .logger import LogService, LogType
 
 class NodeInfo:
@@ -20,7 +21,7 @@ class NodeInfo:
         self.client = flight.FlightClient(f"grpc://{url}")
 
 class MonitorService:
-    def __init__(self, logger: LogService, metric_config: MetricConfig = None, monitor_url: str = ""):
+    def __init__(self, logger: LogService, health_config: HealthConfig = None, monitor_url: str = ""):
         self.proc = psutil.Process()
         self.proc.cpu_percent()
         self.proc.memory_percent()
@@ -28,7 +29,9 @@ class MonitorService:
         self._lock = threading.Lock()
 
         self.monitor_node = flight.FlightClient(monitor_url)
-        self.metric_config = metric_config
+        self.health_config = health_config
+        self.metric_lock = threading.Lock()
+        self.metric_queue: Queue[Metric] = Queue()
         self.logger = logger
         self.monitor_connected = False
         self._internal_error = False

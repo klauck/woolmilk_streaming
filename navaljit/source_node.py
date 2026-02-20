@@ -3,7 +3,7 @@ import json
 import queue
 import threading
 import time
-from queue import Queue
+from queue import Queue, ShutDown
 from typing import Iterator
 
 import pyarrow as pa
@@ -35,6 +35,8 @@ class SourceNode(pa.flight.FlightServerBase):
         if action.type == "logs":
             serialize = Logger.get_logs()
             yield pa.flight.Result(json.dumps(serialize).encode("utf-8"))
+        elif action.type == "metrics":
+            yield pa.flight.Result(json.dumps("TODO").encode("utf-8"))
 
 
 '''
@@ -42,10 +44,10 @@ class SourceNode(pa.flight.FlightServerBase):
 '''
 
 class WriteWorker:
-    def __init__(self, address: str, queue_size: int, schema: pa.Schema):
+    def __init__(self, source_address: str, address: str, queue_size: int, schema: pa.Schema):
         self.address = address
         self.client = pf.FlightClient(f"grpc://{address}")
-        flight_descriptor: pf.FlightDescriptor = pf.FlightDescriptor.for_path(f"source-{address.replace(':', '-')}")
+        flight_descriptor: pf.FlightDescriptor = pf.FlightDescriptor.for_path(source_address)
         self.writer, _ = self.client.do_put(flight_descriptor, schema)
         self.queue = Queue(queue_size)
         self.thread: threading.Thread | None = None
@@ -172,12 +174,12 @@ def distribute_batches(gen: Iterator[pa.RecordBatch], workers: list[WriteWorker]
 
 #### Helper Functions
 
-def create_writer_workers(nodes: list[str], batch_per_second: int, schema: pa.Schema) -> list[WriteWorker]:
+def create_writer_workers(src_address: str, nodes: list[str], batch_per_second: int, schema: pa.Schema) -> list[WriteWorker]:
     Logger.log("Creating Write Worker", LogType.INFO)
     workers: list[WriteWorker] = []
     for node in nodes:
         queue_size: int = batch_per_second
-        w = WriteWorker(node, queue_size, schema)
+        w = WriteWorker(src_address, node, queue_size, schema)
         t = threading.Thread(target=send_batch, args=(w,), daemon=True)
         w.thread = t
         t.start()
@@ -216,21 +218,21 @@ def parse_arguments() -> argparse.Namespace:
         "--tuple-per-batch",
         type=int,
         help="Number of Tuples to send per Batch",
-        default=10 ** 4,
+        default=10 ** 5,
     )
 
     parser.add_argument(
         "--batch-per-second",
         type=int,
         help="Number of Batches to send per second (per forward node) (Limit, -1 if uncapped)",
-        default=80,
+        default=10,
     )
 
     parser.add_argument(
         "--overall_batches",
         type=int,
         help="Number of overall batches to send (Limit, -1 if uncapped)",
-        default=-1,
+        default=30,
     )
 
     parser.add_argument(
@@ -281,7 +283,7 @@ if __name__ == "__main__":
     gen = parse_parquet_file(parquet_file, args.overall_batches, args.tuple_per_batch)
 
     nodes: list[str] = [n.strip() for n in args.forward_nodes.split(",") if n.strip()]
-    workers: list[WriteWorker] = create_writer_workers(nodes, args.batch_per_second * 2, schema)
+    workers: list[WriteWorker] = create_writer_workers(f"{args.advertised_host}:{args.port}", nodes, args.batch_per_second * 2, schema)
 
     monitorService: MonitorService | None = None
     if args.monitor_url:
