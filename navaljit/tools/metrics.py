@@ -5,6 +5,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Final
+import pyarrow as pa
 
 UNDEFINED_MONITOR: Final[str] = "No Monitor configured for this node."
 
@@ -13,7 +14,7 @@ class HealthStatus(str, Enum):
     WARN = "WARN"
     CRITICAL = "CRITICAL"
     ERROR = "ERROR"
-    DOWN = "UNKNOWN" # Never use it outside MonitorNode
+    UNKNOWN = "UNKNOWN"
 
 
 @dataclass
@@ -41,21 +42,42 @@ class HealthResult:
 
 class MetricType(str, Enum):
     RECEIVE = "RECEIVE"
-    SEND = "SEND"  # also write in parquet file for sink
+    SEND = "SEND"
     PROCESS = "PROCESS"
+    WRITE = "WRITE"
 
+@dataclass
 class Metric:
-    def __init__(self, duration_ns: float, nbytes: int, address: str, metric_type: MetricType):
-        self.duration_ns = duration_ns
-        self.bytes = nbytes
-        self.address = address
-        self.type = metric_type
+    address: str
+    type: MetricType
+    duration_ns: int
+    bytes: int
 
-    def to_dict(self):
-        return {
-            "address": self.address,
-            "duration_ns": self.duration_ns,
-            "bytes": self.bytes,
-            "type": self.type
-        }
+METRIC_SCHEMA: pa.Schema = pa.schema([
+    ("address", pa.string()),
+    ("type", pa.string()),
+    ("duration_ns", pa.int64()),
+    ("bytes", pa.int64()),
+])
 
+def metrics_to_record_batch(metrics: list[Metric]) -> pa.RecordBatch:
+
+    address_list: list[str] = []
+    type_list: list[str] = []
+    duration_list: list[int] = []
+    bytes_list: list[int] = []
+
+    for metric in metrics:
+        address_list.append(metric.address)
+        type_list.append(metric.type.value)
+        duration_list.append(metric.duration_ns)
+        bytes_list.append(metric.bytes)
+
+    list_arrays: list[pa.Array] = [
+        pa.array(address_list),
+        pa.array(type_list),
+        pa.array(duration_list),
+        pa.array(bytes_list)
+    ]
+
+    return pa.RecordBatch.from_arrays(list_arrays, schema=METRIC_SCHEMA)

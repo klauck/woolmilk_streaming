@@ -218,21 +218,21 @@ def parse_arguments() -> argparse.Namespace:
         "--tuple-per-batch",
         type=int,
         help="Number of Tuples to send per Batch",
-        default=10 ** 5,
+        default=10 ** 4,
     )
 
     parser.add_argument(
         "--batch-per-second",
         type=int,
         help="Number of Batches to send per second (per forward node) (Limit, -1 if uncapped)",
-        default=10,
+        default=-1,
     )
 
     parser.add_argument(
         "--overall_batches",
         type=int,
         help="Number of overall batches to send (Limit, -1 if uncapped)",
-        default=30,
+        default=-1,
     )
 
     parser.add_argument(

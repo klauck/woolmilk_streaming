@@ -5,19 +5,25 @@
 
 import json
 import threading
-from asyncio import timeout
+from enum import Enum
 from queue import Queue
 
 import psutil
 from pyarrow import flight
 
-from .metrics import HealthConfig, Metric
+from .metrics import HealthConfig, Metric, HealthResult, HealthStatus
 from .logger import LogService, LogType
 
+class NodeType(str, Enum):
+    SOURCE = "Source"
+    SINK = "Sink"
+    PROCESS = "Processing"
+
 class NodeInfo:
-    def __init__(self, url: str, forward_urls: list[str] | None = None, query: str = ""):
+    def __init__(self, url: str, node_type: NodeType, forward_urls: list[str] | None = None, query: str = ""):
         self.forward_urls = forward_urls or []
         self.query = query
+        self.node_type = node_type
         self.client = flight.FlightClient(f"grpc://{url}")
 
 class MonitorService:
@@ -36,10 +42,11 @@ class MonitorService:
         self.monitor_connected = False
         self._internal_error = False
 
-    def connect_monitor(self, url: str, forward_url: list[str] | None = None, query: str | None = None):
+    def connect_monitor(self, url: str, node_type: NodeType, forward_url: list[str] | None = None, query: str | None = None):
         try :
             payload = {
                 "url": url,
+                "type": node_type,
                 "forward_urls": forward_url or [],
                 "query": query or ""
             }
@@ -62,8 +69,10 @@ class MonitorService:
 
     def disconnect_monitor(self, url: str):
         try:
+            options = flight.FlightCallOptions(timeout=2.0)
             results = self.monitor_node.do_action(
-                flight.Action("disconnect", url.encode("utf-8"))
+                flight.Action("disconnect", url.encode("utf-8")),
+                options
             )
             result = next(results, None)
 
@@ -76,3 +85,27 @@ class MonitorService:
         except Exception as e:
             self.logger.log(f"connect_monitor::Failed to disconnect to Monitor::{e}", LogType.ERROR)
             self._internal_error = True
+
+
+    def check_health(self) -> HealthResult:
+        cpu = round(self.proc.cpu_percent() / psutil.cpu_count(), 2)
+        memory = round(self.proc.memory_percent(), 2)
+
+        if self.health_config is None:
+            self.logger.log("MonitorService::check_health::MetricConfig is not defined", LogType.ERROR)
+            self._internal_error = True
+
+        if self._internal_error:
+            return HealthResult(HealthStatus.ERROR, cpu, memory)
+
+        if (cpu >= self.health_config.cpu_limit.critical
+        or memory >= self.health_config.mem_limit.critical):
+            self.logger.log("MonitorService::check_health::MetricConfig CPU limit exceeded", LogType.WARN)
+            return HealthResult(HealthStatus.CRITICAL, cpu, memory)
+
+        if (cpu >= self.health_config.cpu_limit.warn
+        or memory >= self.health_config.mem_limit.warn):
+            self.logger.log("MonitorService::check_health::MetricConfig CPU Warn exceeded", LogType.WARN)
+            return HealthResult(HealthStatus.WARN, cpu, memory)
+
+        return HealthResult(HealthStatus.OK, cpu, memory)

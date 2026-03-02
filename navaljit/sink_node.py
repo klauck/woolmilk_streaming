@@ -15,8 +15,9 @@ import pyarrow as pa
 import pyarrow.flight as pf
 import pyarrow.parquet as pq
 
-from tools.metrics import Metric, MetricType
-from tools.monitor import MonitorService
+from tools.metrics import HealthStatus, HealthConfig, LIMIT, HealthResult
+from tools.metrics import Metric, MetricType, metrics_to_record_batch
+from tools.monitor import MonitorService, NodeType
 from tools.logger import LogService, LogType
 Logger: LogService | None = None
 
@@ -35,13 +36,14 @@ class SinkNode(pf.FlightServerBase):
         self.queue_size = queue_size
         self.result_folder = result_folder
         self.threads: list[threading.Thread] = []
+        self.status: HealthStatus = HealthStatus.OK
         if result_folder:
             os.makedirs(result_folder, exist_ok=True)
 
 
         self.monitor = monitor
         if self.monitor:
-            self.monitor.connect_monitor(url=f"{advertised_host}:{port}")
+            self.monitor.connect_monitor(url=f"{advertised_host}:{port}", node_type=NodeType.SINK)
 
     def do_put(self, context, descriptor: pf.FlightDescriptor, reader, writer):
         q: Queue[pa.RecordBatch | None] | None = None
@@ -68,14 +70,17 @@ class SinkNode(pf.FlightServerBase):
             serialize = Logger.get_logs()
             yield pa.flight.Result(json.dumps(serialize).encode("utf-8"))
 
+        elif action.type == "health":
+            payload: HealthResult = self.monitor.check_health()
+            yield pf.Result(json.dumps(payload.to_dict()).encode("utf-8"))
+
         elif action.type == "metrics":
-            metrics: list = []
-
             with self.monitor.metric_lock:
+                metrics = []
                 while not self.monitor.metric_queue.empty():
-                    metrics.append(self.monitor.metric_queue.get().to_dict())
+                    metrics.append(self.monitor.metric_queue.get())
 
-            yield pa.flight.Result(json.dumps(metrics).encode("utf-8"))
+            yield pa.flight.Result(metrics_to_record_batch(metrics).serialize().to_pybytes())
 
     def received_batch(self, reader: pf.MetadataRecordBatchReader, q: Queue[pa.RecordBatch | None] | None, address: str):
         total_mbytes = 0
@@ -98,7 +103,7 @@ class SinkNode(pf.FlightServerBase):
 
             duration_ns = end_time - start_time
             if self.monitor:
-                self.monitor.metric_queue.put(Metric(duration_ns, batch.nbytes, address, MetricType.RECEIVE))
+                self.monitor.metric_queue.put(Metric(address, MetricType.RECEIVE, duration_ns, batch.nbytes))
 
             batch_mbytes = batch.nbytes / (10**6)
             duration_ms = duration_ns / (10**6)
@@ -152,7 +157,7 @@ class SinkNode(pf.FlightServerBase):
                 duration_ns = end_time - start_time
 
                 if self.monitor:
-                    self.monitor.metric_queue.put(Metric(duration_ns, batch.nbytes, str(path), MetricType.SEND))
+                    self.monitor.metric_queue.put(Metric(str(path), MetricType.SEND, duration_ns, batch.nbytes))
 
                 batch_mbytes = batch.nbytes / (10 ** 6)
                 duration_ms = duration_ns / (10 ** 6)
@@ -201,6 +206,21 @@ def parse_arguments():
         "--queue-maxsize", type=int, default=100, help="Backpressure queue size for each Batch"
     )
 
+    parser.add_argument(
+        "--metric_cpu_warn", type=float, default=60.0, help="CPU warning metric"
+    )
+    parser.add_argument(
+        "--metric_mem_warn", type=float, default=60.0, help="Memory warning metric"
+    )
+
+    parser.add_argument(
+        "--metric_cpu_critical", type=float, default=85.0, help="CPU critical metric"
+    )
+
+    parser.add_argument(
+        "--metric_mem_critical", type=float, default=80.0, help="Memory critical metric"
+    )
+
     args: argparse.Namespace = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -221,9 +241,12 @@ if __name__ == "__main__":
     Logger = LogService(args.log_save_level, args.log_print_level)
     Logger.log("Starting WoolMilk Sink Node", LogType.INFO)
 
+    healthConfig: HealthConfig = HealthConfig(LIMIT(args.metric_cpu_warn, args.metric_cpu_critical),
+                                              LIMIT(args.metric_mem_warn, args.metric_mem_critical))
+
     monitorService: MonitorService | None = None
     if args.monitor_url:
-        monitorService = MonitorService(Logger, monitor_url=f"grpc://{args.monitor_url}")
+        monitorService = MonitorService(Logger, monitor_url=f"grpc://{args.monitor_url}", health_config=healthConfig)
 
     sinkNode: SinkNode = SinkNode(args.port,args.advertised_host, args.queue_maxsize, f"{args.result_folder}/{args.port}", monitorService)
 
