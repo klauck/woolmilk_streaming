@@ -99,6 +99,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 source_node.id = i
 
             current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
+            current_experiment_dir.mkdir(parents=True, exist_ok=True)
 
             current_config = Config(
                 remote_servers=remote_servers,
@@ -109,15 +110,15 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 
             runner = DeploymentRunner(
                 config=current_config,
-                log_dir=str(current_experiment_dir) if mode == "local" else "logs",
+                log_dir=str(current_experiment_dir),
                 mode=mode,
                 log_to_file=True,
-                local_log_dir=str(current_experiment_dir),
+                local_log_dir=str(current_experiment_dir) if mode == "remote" else None,
                 include_timestamp=False,
             )
 
             runner.deploy()
-            sleep(5)
+            sleep(180)
 
             # collect log files for specified cluster nodes:
             for node in cluster_nodes:
