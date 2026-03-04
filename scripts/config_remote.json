@@ -26,8 +26,10 @@
    "processing_nodes": [
       {
          "server_address": "192.168.2.64:8815",
-         "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
-         "query_result_schema": {"fields":[{"name":"id","type":"int64"},{"name":"name","type":"string"},{"name":"email_address","type":"string"},{"name":"credit_card","type":"string"},{"name":"city","type":"string"},{"name":"state","type":"string"},{"name":"date_time","type":"int64"},{"name":"extra","type":"string"}]},
+         "query": "SELECT COUNT(*) FROM nexmark_data",
+         "window_size": 60,
+         "window_slide": 10,
+         "query_result_schema": {"fields":[{"name":"count","type":"int64"}]},
          "forward_node": "192.168.2.65:8820"
       }
    ],

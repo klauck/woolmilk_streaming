@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.flight
 import pyarrow.parquet as pq
 
@@ -80,7 +81,10 @@ def send_data(
     total_bytes = 0
     for i, batch in enumerate(batches):
         send_start = time.time()
-        writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
+        max_timestamp = pc.max(batch.column("date_time"))
+        watermark = str(max_timestamp).encode("utf-8")
+
+        writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, watermark)
         total_bytes += batch.nbytes
         send_end = time.time()
         send_times.append((send_start, send_end))
