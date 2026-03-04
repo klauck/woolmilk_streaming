@@ -44,6 +44,9 @@ class SourceNode:
     store_input: Optional[bool] = False
     input_folder: Optional[str] = None
     generator_executable: Optional[str] = None
+    experiment_id: Optional[int] = None
+    iteration_id: Optional[int] = None
+    id: Optional[int] = None
 
 
 @dataclass
@@ -88,6 +91,7 @@ class DeploymentRunner:
         log_to_file: bool = False,
         local_log_dir: Optional[str] = None,
         local_results_dir: Optional[str] = None,
+        include_timestamp: bool = True,
     ):
         self.config = config
         self.mode = mode
@@ -96,10 +100,14 @@ class DeploymentRunner:
         self.log_to_file = log_to_file
         self.local_log_dir = Path(local_log_dir) if local_log_dir else None
         self.local_results_dir = Path(local_results_dir) if local_results_dir else None
+        self.include_timestamp = include_timestamp
 
         if log_to_file:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.log_dir = Path(log_dir) / timestamp
+            self.log_dir = Path(log_dir)
+
+            if include_timestamp:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                self.log_dir = self.log_dir / timestamp
 
     def build_scp_command(
         self,
@@ -306,6 +314,18 @@ class DeploymentRunner:
                 cmd.append("--generator-executable")
                 cmd.append(source_node.generator_executable)
 
+            if source_node.experiment_id is not None:
+                cmd.append("--experiment-id")
+                cmd.append(str(source_node.experiment_id))
+
+            if source_node.iteration_id is not None:
+                cmd.append("--iteration-id")
+                cmd.append(str(source_node.iteration_id))
+
+            if source_node.id is not None:
+                cmd.append("--source-node-id")
+                cmd.append(str(source_node.id))
+
             self._spawn_process(
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
             )
@@ -337,6 +357,9 @@ class DeploymentRunner:
             try:
                 server_config = self.get_remote_server_config(host)
                 remote_log_dir = self.get_base_dir(host) / self.log_dir
+                if not self.include_timestamp:
+                    # copy files only but not entire folder
+                    remote_log_dir /= "*.log"
 
                 scp_cmd = self.build_scp_command(
                     server_config, str(remote_log_dir), str(self.local_log_dir), host

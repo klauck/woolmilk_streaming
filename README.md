@@ -72,7 +72,7 @@ python woolmilk/processing_node.py \
 **3. Start the source client (in another terminal)**
 
 ```
-python woolmilk/source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017
+python woolmilk/source_node.py --stream nexmark_person --processing-nodes 127.0.0.1:8017
 ```
 
 ## Run Local Example in One Command

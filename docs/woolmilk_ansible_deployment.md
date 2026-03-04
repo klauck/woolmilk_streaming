@@ -26,7 +26,11 @@ ssh-copy-id -i ~/.ssh/id_ed25519.pub picocluster@192.168.2.61
 ```
 
 
-After SSH is configured, deploy the WoolMilk sources and set up the Python environment using: 
+After configuring SSH, deploy the WoolMilk source files and set up the Python environment:
+
+If needed, edit [`scripts/deployment.yml`](https://github.com/klauck/woolmilk_streaming/blob/main/scripts/deployment.yml)) to change the local source path (`project_src`), destination path on the cluster nodes (`project_dest`), and virtual environment location (`venv_path`).
+
+ Then, run the deployment command:
 ```bash
 cd scripts
 ansible-playbook -i inventory_example.ini deployment.yml

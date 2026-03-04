@@ -57,7 +57,7 @@ def generate_table(
 
 
 def stream_data(
-    client_id,
+    thread_id,
     input_folder,
     stream,
     generator_executable,
@@ -67,11 +67,13 @@ def stream_data(
     number_of_tuples,
     tuples_per_batch,
     store_input,
+    experiment_id=None,
+    iteration_id=None,
+    source_node_id=None,
 ):
     # generate (cached) Parquet file for input
     path = (
-        Path(__file__)
-        / input_folder
+        Path(input_folder)
         / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
     )
     if not path.exists():
@@ -93,9 +95,19 @@ def stream_data(
     # table = table.drop_columns(["date_time"])
     # schema = schema.append(pa.field("timestamp", pa.int64()))
 
-    client = pa.flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
+    path_info = {
+        "experiment_id": experiment_id,
+        "iteration_id": iteration_id,
+        "source_node_id": source_node_id,
+        "thread_id": thread_id,
+    }
+    encoded_path = json.dumps(path_info)
+
+    client = pa.flight.FlightClient(
+       f"grpc://{processing_node[0]}:{processing_node[1]}"
+    )
     writer, _ = client.do_put(
-        pa.flight.FlightDescriptor.for_path("bandwidth-test"), schema
+        pa.flight.FlightDescriptor.for_path(encoded_path), schema
     )
 
     start = time.time()
@@ -116,12 +128,20 @@ def stream_data(
     gbps = (total_bytes * 8) / (duration * 1000**3)
     mbps = total_bytes / (duration * 1000**2)
 
-    print(f"[Client {client_id}] Start: {start}")
-    print("send_times = ", send_times)
-    print(
-        f"{client_id}: Sent {total_bytes / 1000 ** 2} MB in {duration:.7f} seconds; "
-        f"{gbps:.4f} Gbps ({mbps:.2f} MBps)"
-    )
+    log = {
+        "thread": thread_id,
+        "experiment_id": experiment_id,
+        "iteration_id": iteration_id,
+        "source_node_id": source_node_id,
+        "send_times": send_times,
+        "total_bytes": total_bytes,
+        "start_time": start,
+        "end_time": end,
+        "gbps": f"{gbps:.4f}",
+        "mbps": f"{mbps:.2f}",
+    }
+
+    print(f"WM_LOG= {json.dumps(log)}")
 
 
 if __name__ == "__main__":
@@ -166,6 +186,24 @@ if __name__ == "__main__":
         action="store_true",
         help="Store generated data",
     )
+    parser.add_argument(
+        "--experiment-id",
+        type=int,
+        default=None,
+        help="Experiment ID for logging metadata",
+    )
+    parser.add_argument(
+        "--iteration-id",
+        type=int,
+        default=None,
+        help="Iteration ID for logging metadata",
+    )
+    parser.add_argument(
+        "--source-node-id",
+        type=int,
+        default=None,
+        help="Unique ID for the source node",
+    )
     args = parser.parse_args()
 
     processing_nodes = []
@@ -188,6 +226,9 @@ if __name__ == "__main__":
     print(f" Store Input                : {args.store_input}")
     print(f" Processing Nodes           : {args.processing_nodes}")
     print(f" Generator Executable       : {args.generator_executable}")
+    print(f" Experiment ID              : {args.experiment_id}")
+    print(f" Iteration ID               : {args.iteration_id}")
+    print(f" Source Node ID             : {args.source_node_id}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -200,20 +241,23 @@ if __name__ == "__main__":
     )
 
     threads = []
-    for client_id in range(len(processing_nodes)):
+    for thread_id in range(len(processing_nodes)):
         t = threading.Thread(
             target=stream_data,
             args=(
-                client_id,
+                thread_id,
                 args.input_folder,
                 args.stream,
                 args.generator_executable,
-                args.offset + client_id,
+                args.offset + thread_id,
                 args.step,
-                processing_nodes[client_id],
+                processing_nodes[thread_id],
                 args.overall_tuples // len(processing_nodes),
                 args.tuples_per_batch,
                 args.store_input,
+                args.experiment_id,
+                args.iteration_id,
+                args.source_node_id,
             ),
         )
         threads.append(t)

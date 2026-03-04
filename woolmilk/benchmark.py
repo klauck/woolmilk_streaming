@@ -5,8 +5,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+import pyarrow as pa
+import pyarrow.flight
 from run_cluster import (
     Config,
     DeploymentRunner,
@@ -20,6 +22,7 @@ from run_cluster import (
 class ExperimentConfig:
     iterations: int
     source_nodes: List[SourceNode]
+    name: Optional[str] = None
 
 
 def parse_benchmark_config(config_file: Path):
@@ -30,6 +33,8 @@ def parse_benchmark_config(config_file: Path):
     if not source_experiments:
         print('No experiments specified, expected list "source_nodes_experiments"')
         exit(1)
+
+    cluster_nodes = benchmark_config.get("cluster_nodes", [])
 
     experiments: List[ExperimentConfig] = []
 
@@ -50,17 +55,24 @@ def parse_benchmark_config(config_file: Path):
 
         experiments.append(
             ExperimentConfig(
-                iterations=experiment["iterations"], source_nodes=experiment_source_nodes
+                iterations=experiment["iterations"],
+                source_nodes=experiment_source_nodes,
+                name=experiment.get("name"),
             )
         )
 
-    return {"experiments": experiments, "remote_servers": config.remote_servers}
+    return {
+        "experiments": experiments,
+        "remote_servers": config.remote_servers,
+        "cluster_nodes": cluster_nodes,
+    }
 
 
 def benchmark(config_path: Path, experiment_dir: str, mode: str):
     combined_config = parse_benchmark_config(config_path)
     experiments: List[ExperimentConfig] = combined_config["experiments"]
     remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
+    cluster_nodes = combined_config["cluster_nodes"]
 
     print("Starting benchmark...")
 
@@ -69,15 +81,25 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
         print(f"        Number of source nodes: {len(experiment.source_nodes)}")
         print(f"        Iterations: {experiment.iterations}")
 
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        if experiment.name:
+            experiment_base_dir = Path(experiment_dir) / f"{timestamp}_{experiment.name}"
+        else:
+            experiment_base_dir = Path(experiment_dir) / f"{timestamp}"
+
         for iteration in range(experiment.iterations):
             print(
                 f"            Starting iteration {iteration + 1}/{experiment.iterations}"
             )
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            current_experiment_dir = (
-                Path(experiment_dir)
-                / f"{timestamp}__experiment_{experiment_id}_iter_{iteration}"
-            )
+
+            for i, source_node in enumerate(experiment.source_nodes):
+                source_node.experiment_id = experiment_id
+                source_node.iteration_id = iteration
+                source_node.id = i
+
+            current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
+            current_experiment_dir.mkdir(parents=True, exist_ok=True)
 
             current_config = Config(
                 remote_servers=remote_servers,
@@ -88,14 +110,38 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 
             runner = DeploymentRunner(
                 config=current_config,
-                log_dir=str(current_experiment_dir) if mode == "local" else "logs",
+                log_dir=str(current_experiment_dir),
                 mode=mode,
                 log_to_file=True,
-                local_log_dir=str(current_experiment_dir),
+                local_log_dir=str(current_experiment_dir) if mode == "remote" else None,
+                include_timestamp=False,
             )
 
             runner.deploy()
-            sleep(5)
+            sleep(20)
+
+            # collect log files for specified cluster nodes:
+            for node in cluster_nodes:
+                client = pa.flight.FlightClient(f"grpc://{node['address']}")
+                result = client.do_action("get_logs")
+                print(result)
+                for data in result:
+                    log_bytes = data.body.to_pybytes().decode("utf-8")
+                    file_name = (
+                        Path(__file__).parent
+                        / current_experiment_dir
+                        / (
+                            node["type"]
+                            + "__"
+                            + node["address"].replace(":", "_")
+                            + ".json"
+                        )
+                    )
+                    with open(file_name, "w+") as f:
+                        f.write(log_bytes)
+                    print(json.loads(log_bytes))
+                client.do_action("delete_logs")
+
             runner.cleanup()
             print(
                 f"            Completed iteration {iteration + 1}/{experiment.iterations}"
@@ -105,7 +151,10 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run benchmarks for Woolmilk.")
     parser.add_argument(
-        "--config-file", type=str, help="Path to the benchmark configuration file."
+        "--config-file",
+        type=str,
+        required=True,
+        help="Path to the benchmark configuration file.",
     )
     parser.add_argument(
         "--experiment-dir",

@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import threading
 import time
@@ -16,8 +17,36 @@ class SinkNode(pa.flight.FlightServerBase):
             os.makedirs(result_folder, exist_ok=True)
         self.file_counter = 0
         self.file_counter_lock = threading.Lock()
+        self.logs = []
+        self.logs_lock = threading.Lock()
+
+    def do_action(self, context, action):
+        if action.type == "get_logs":
+            with self.logs_lock:
+                logs = self.logs
+            yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
+        elif action.type == "delete_logs":
+            with self.logs_lock:
+                self.logs = []
+        else:
+            raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
+        experiment_id = None
+        iteration_id = None
+        source_node_id = None
+        thread_id = None
+
+        try:
+            incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
+            if isinstance(incoming_path_info, dict):
+                experiment_id = incoming_path_info.get("experiment_id")
+                iteration_id = incoming_path_info.get("iteration_id")
+                source_node_id = incoming_path_info.get("source_node_id")
+                thread_id = incoming_path_info.get("thread_id")
+        except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+            pass
+
         total_bytes = 0
         receive_times = []
         start = receive_start = time.time()
@@ -37,12 +66,24 @@ class SinkNode(pa.flight.FlightServerBase):
         gbps = (total_bytes * 8) / (duration * 1000**3)
         mbps = total_bytes / (duration * 1000**2)
 
-        print(
-            f'WM_LOG= {{"received_bytes": {total_bytes}, "start_time": {start},'
-            f' "duration": {duration}, "MBps": {mbps:.2f}, "Gbps": {gbps:.4f}}}'
-        )
-        print(f"End: {end}")
-        print("receive_times = ", receive_times)
+        log = {
+            "experiment_id": experiment_id,
+            "iteration_id": iteration_id,
+            "source_node_id": source_node_id,
+            "thread_id": thread_id,
+            "received_bytes": total_bytes,
+            "start_time": start,
+            "duration": duration,
+            "MBps": f"{mbps:.2f}",
+            "Gbps": f"{gbps:.4f}",
+            "receive_times": receive_times,
+            "end_time": end,
+        }
+        with self.logs_lock:
+            self.logs.append(log)
+        log_str = json.dumps(log)
+        print(log_str)
+
         with self.file_counter_lock:
             local_id = self.file_counter
             self.file_counter += 1
