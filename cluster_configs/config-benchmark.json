@@ -48,7 +48,7 @@
          "overridden_params": [
             {
                "overall_tuples": 2000000,
-               "thread_count": 2
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
             }
          ],
          "name": "single_source_threads_2"
@@ -59,18 +59,7 @@
          "overridden_params": [
             {
                "overall_tuples": 2000000,
-               "thread_count": 3
-            }
-         ],
-         "name": "single_source_threads_3"
-      },
-      {
-         "included_nodes": [0],
-         "iterations": 1,
-         "overridden_params": [
-            {
-               "overall_tuples": 2000000,
-               "thread_count": 4
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017", "192.168.2.63:8017", "192.168.2.63:8017"]
             }
          ],
          "name": "single_source_threads_4"
@@ -85,10 +74,10 @@
          "iterations": 1,
          "overridden_params": [
             {
-               "thread_count": 2
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
             },
             {
-               "thread_count": 2
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
             }
          ],
          "name": "two_sources_threads_2"
