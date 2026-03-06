@@ -53,6 +53,7 @@ def send_data(
     schema,
     batches,
     processing_nodes,
+    thread_count,
     experiment_id=None,
     iteration_id=None,
     source_node_id=None,
@@ -79,11 +80,13 @@ def send_data(
     send_times = []
     total_bytes = 0
     for i, batch in enumerate(batches):
+        original_batch_id = thread_id + (i * thread_count)
         send_start = time.time()
-        writers[(thread_id + i) % len(processing_nodes)].write_batch(batch)
+        batch_meta = json.dumps({"batch_id": original_batch_id}).encode("utf-8")
+        writers[(thread_id + i) % len(processing_nodes)].write_with_metadata(batch, batch_meta)
         total_bytes += batch.nbytes
         send_end = time.time()
-        send_times.append((send_start, send_end))
+        send_times.append((send_start, send_end, original_batch_id))
 
     for writer in writers:
         writer.done_writing()
@@ -228,6 +231,7 @@ if __name__ == "__main__":
                 table.schema,
                 batches[thread_id :: args.thread_count],
                 processing_nodes,
+                args.thread_count,
                 args.experiment_id,
                 args.iteration_id,
                 args.source_node_id,

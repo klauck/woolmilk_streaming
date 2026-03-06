@@ -91,6 +91,14 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         for chunk in reader:
             batch = chunk.data
+            # Extract batch_id from source metadata
+            batch_id = None
+            if chunk.app_metadata:
+                try:
+                    meta = json.loads(chunk.app_metadata.to_pybytes().decode("utf-8"))
+                    batch_id = meta.get("batch_id")
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    pass
 
             processing_start = time.time()
             ctx.register_record_batches(self.default_table_name, [[batch]])
@@ -101,13 +109,14 @@ class ProcessingNode(pa.flight.FlightServerBase):
             processing_end = time.time()
 
             for result_batch in result:
-                forward_writer.write_batch(result_batch)
+                forward_meta = json.dumps({"batch_id": batch_id}).encode("utf-8")
+                forward_writer.write_with_metadata(result_batch, forward_meta)
                 total_bytes += result_batch.nbytes
 
             ctx.deregister_table(self.default_table_name)
 
             forward_end = time.time()
-            forwarding_times.append((forward_start, forward_end))
+            forwarding_times.append((forward_start, forward_end, batch_id))
 
             cost_break_down["receiving"].append(processing_start - forward_start)
             cost_break_down["querying"].append(processing_end - processing_start)

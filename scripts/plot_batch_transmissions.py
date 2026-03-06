@@ -25,13 +25,13 @@ def parse_json_file(log_file: Path) -> List[Dict[str, Any]]:
         print(f"Error reading JSON from {log_file}: {e}")
         return []
 
-def plot_experiment(experiment_dir: str):
+def plot_experiment(experiment_dir: str, title: str = None, save_path: str = None):
     exp_path = Path(experiment_dir)
     if not exp_path.exists():
         print(f"Directory {experiment_dir} not found.")
         return
 
-    # node_batches[label][batch_idx] = [(start, end)]
+    # node_batches[label] = [(start, end, batch_id), ...]
     node_batches = {}
 
     for log_file in exp_path.glob("source__*.log"):
@@ -45,10 +45,10 @@ def plot_experiment(experiment_dir: str):
                 node_batches[label] = []
             
             for times in entry.get("send_times", []):
-                if len(times) != 2:
-                    continue
-
-                node_batches[label].append((times[0], times[1]))
+                if len(times) == 3:
+                    node_batches[label].append((times[0], times[1], times[2]))
+                elif len(times) == 2:
+                    node_batches[label].append((times[0], times[1], len(node_batches[label])))
 
     for json_file in exp_path.glob("processing__*.json"):
         addr = json_file.stem.split("__")[-1]
@@ -64,7 +64,10 @@ def plot_experiment(experiment_dir: str):
                 node_batches[label] = []
             
             for times in entry.get("forward_times", []):
-                node_batches[label].append((times[0], times[1]))
+                if len(times) == 3:
+                    node_batches[label].append((times[0], times[1], times[2]))
+                elif len(times) == 2:
+                    node_batches[label].append((times[0], times[1], len(node_batches[label])))
 
     for json_file in exp_path.glob("sink__*.json"):
         addr = json_file.stem.split("__")[-1]
@@ -80,7 +83,10 @@ def plot_experiment(experiment_dir: str):
                 node_batches[label] = []
             
             for times in entry.get("receive_times", []):
-                node_batches[label].append((times[0], times[1]))
+                if len(times) == 3:
+                    node_batches[label].append((times[0], times[1], times[2]))
+                elif len(times) == 2:
+                    node_batches[label].append((times[0], times[1], len(node_batches[label])))
 
     if not node_batches:
         print("No log data found to plot.")
@@ -96,27 +102,46 @@ def plot_experiment(experiment_dir: str):
     global_start = min(all_starts) if all_starts else 0
     
     plt.figure(figsize=(12, 6))
+    if title:
+        plt.title(title)
+        
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     
+    max_batches = max((len(b) for b in node_batches.values()), default=0)
+    
+    legend_added = set()
     for label_idx, label in enumerate(labels):
         batches = node_batches[label]
-        for b_idx, (start, end) in enumerate(batches):
+        for start, end, batch_id in batches:
+            # Only add label to legend if total batches <= 15
+            label_name = f'batch {batch_id}' if (batch_id not in legend_added and max_batches <= 15) else ""
+            if label_name:
+                legend_added.add(batch_id)
             plt.barh(label_idx, end - start,
                      left=start - global_start, 
-                     color=colors[b_idx % len(colors)], 
+                     color=colors[batch_id % len(colors)], 
                      hatch='/',
-                     label=f'batch {b_idx}' if label_idx == 0 else "")
+                     label=label_name)
 
     plt.xlabel('processing time (s)')
     plt.yticks(x, labels)
-    plt.legend()
+    if max_batches <= 15:
+        plt.legend()
     
     plt.grid(axis='x')
-    plt.show()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"Plot saved to {save_path}")
+    else:
+        plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot batch processing times from experiment logs.")
     parser.add_argument("--dir", type=str, required=True, help="Directory containing experiment logs")
+    parser.add_argument("--title", type=str, help="Title for the plot")
+    parser.add_argument("--save-path", type=str, help="Path to save the plot as an image")
     args = parser.parse_args()
     
-    plot_experiment(args.dir)
+    plot_experiment(args.dir, title=args.title, save_path=args.save_path)

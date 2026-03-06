@@ -53,12 +53,19 @@ class SinkNode(pa.flight.FlightServerBase):
         result = []
         for chunk in reader:
             batch = chunk.data
+            batch_id = None
+            if chunk.app_metadata:
+                try:
+                    meta = json.loads(chunk.app_metadata.to_pybytes().decode("utf-8"))
+                    batch_id = meta.get("batch_id")
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    pass
             # execute and forward data here
             total_bytes += batch.nbytes
             if self.result_folder:
                 result.append(batch)
             receive_end = time.time()
-            receive_times.append((receive_start, receive_end))
+            receive_times.append((receive_start, receive_end, batch_id))
             receive_start = receive_end
         end = time.time()
 
