@@ -72,10 +72,7 @@ def stream_data(
     source_node_id=None,
 ):
     # generate (cached) Parquet file for input
-    path = (
-        Path(input_folder)
-        / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
-    )
+    path = Path(input_folder) / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
     if not path.exists():
         table = generate_table(
             number_of_tuples, stream, generator_executable, offset, step
@@ -103,12 +100,8 @@ def stream_data(
     }
     encoded_path = json.dumps(path_info)
 
-    client = pa.flight.FlightClient(
-       f"grpc://{processing_node[0]}:{processing_node[1]}"
-    )
-    writer, _ = client.do_put(
-        pa.flight.FlightDescriptor.for_path(encoded_path), schema
-    )
+    client = pa.flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
+    writer, _ = client.do_put(pa.flight.FlightDescriptor.for_path(encoded_path), schema)
 
     start = time.time()
     send_times = []
@@ -236,8 +229,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     assert args.overall_tuples % (args.tuples_per_batch * len(processing_nodes)) == 0, (
-        f"overall_tuples ({args.overall_tuples}) must be divisible by tuples_per_batch "
-        f"({args.tuples_per_batch}) * number of processing nodes ({len(processing_nodes)})"
+        f"overall_tuples ({args.overall_tuples}) must be divisible by "
+        f"tuples_per_batch ({args.tuples_per_batch}) * "
+        f"number of processing nodes ({len(processing_nodes)})"
     )
 
     threads = []
