@@ -37,7 +37,6 @@
          "stream": "nexmark_person",
          "overall_tuples": 100000,
          "tuples_per_batch": 10000,
-         "thread_count": 1,
          "deployment_server": "192.168.2.63",
          "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
       }

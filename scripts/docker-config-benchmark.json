@@ -45,7 +45,7 @@
             {
                "stream": "nexmark_person",
                "overall_tuples": 200000,
-               "thread_count": 2
+               "processing_nodes": ["woolmilk-processing:9017", "woolmilk-processing:9017"]
             }
          ]
       }

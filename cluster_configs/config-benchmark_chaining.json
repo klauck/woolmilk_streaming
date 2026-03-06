@@ -20,7 +20,9 @@
          "overall_tuples": 1000000,
          "stream": "nexmark_person",
          "deployment_server": "192.168.2.61",
-         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark",
+         "store_input": true,
+         "input_folder": "../input_data"
       },
       {
          "processing_nodes": ["192.168.2.66:8027"],
@@ -28,7 +30,9 @@
          "tuples_per_batch": 10000,
          "overall_tuples": 1000000,
          "deployment_server": "192.168.2.62",
-         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark",
+         "store_input": true,
+         "input_folder": "../input_data"
       }
    ],
    "source_nodes_experiments": [

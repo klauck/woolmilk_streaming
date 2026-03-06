@@ -55,7 +55,6 @@
          "stream": "nexmark_person",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,
-         "thread_count": 1,
          "deployment_server": "woolmilk-source"
       }
    ]
