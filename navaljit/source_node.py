@@ -150,7 +150,7 @@ def distribute_batches(gen: Iterator[pa.RecordBatch], workers: list[WriteWorker]
             current_second = now
             batches_queued_this_second = 0
 
-        if batch_per_second != -1 and batches_queued_this_second >= batch_per_second:
+        if batch_per_second != 0 and batches_queued_this_second >= batch_per_second:
             time.sleep(0.005)
             continue
 
@@ -218,14 +218,14 @@ def parse_arguments() -> argparse.Namespace:
         "--tuple-per-batch",
         type=int,
         help="Number of Tuples to send per Batch",
-        default=10 ** 4,
+        default=10 ** 2,
     )
 
     parser.add_argument(
         "--batch-per-second",
         type=int,
-        help="Number of Batches to send per second (per forward node) (Limit, -1 if uncapped)",
-        default=-1,
+        help="Number of Batches to send per second (per forward node) (Limit, 0 if uncapped)",
+        default=5,
     )
 
     parser.add_argument(

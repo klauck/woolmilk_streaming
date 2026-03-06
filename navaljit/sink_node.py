@@ -157,7 +157,7 @@ class SinkNode(pf.FlightServerBase):
                 duration_ns = end_time - start_time
 
                 if self.monitor:
-                    self.monitor.metric_queue.put(Metric(str(path), MetricType.SEND, duration_ns, batch.nbytes))
+                    self.monitor.metric_queue.put(Metric(str(path), MetricType.WRITE, duration_ns, batch.nbytes))
 
                 batch_mbytes = batch.nbytes / (10 ** 6)
                 duration_ms = duration_ns / (10 ** 6)
@@ -188,7 +188,7 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        "--result-folder", type=str, default="results", help="Folder to store results"
+        "--write-parquet", type=bool, default=False, help="Store Result in Folder?"
     )
 
     parser.add_argument(
@@ -229,7 +229,7 @@ def parse_arguments():
     print(f" Host                       : {args.advertised_host}")
     print(f" Port                       : {args.port}")
     print(f" Monitor                    : {args.monitor_url}")
-    print(f" Result Folder              : {args.result_folder}")
+    print(f" Store to Folder            : {args.write_parquet}")
     print(f" Queue Max Size             : {args.queue_maxsize}")
     print("=" * 40 + "\n")
     return args
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     if args.monitor_url:
         monitorService = MonitorService(Logger, monitor_url=f"grpc://{args.monitor_url}", health_config=healthConfig)
 
-    sinkNode: SinkNode = SinkNode(args.port,args.advertised_host, args.queue_maxsize, f"{args.result_folder}/{args.port}", monitorService)
+    sinkNode: SinkNode = SinkNode(args.port,args.advertised_host, args.queue_maxsize, f"results/{args.port}" if args.write_parquet else None, monitorService)
 
     try:
         sinkNode.serve()
