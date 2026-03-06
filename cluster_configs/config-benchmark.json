@@ -18,17 +18,21 @@
          "processing_nodes": ["192.168.2.63:8017"],
          "tuples_per_batch": 10000,
          "overall_tuples": 1000000,
-         "stream": "nexmark.person",
+         "stream": "nexmark_person",
          "deployment_server": "192.168.2.61",
-         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark",
+         "store_input": true,
+         "input_folder": "../input_data"
       },
       {
          "processing_nodes": ["192.168.2.63:8017"],
-         "stream": "nexmark.person",
+         "stream": "nexmark_person",
          "tuples_per_batch": 10000,
          "overall_tuples": 1000000,
          "deployment_server": "192.168.2.62",
-         "generator_executable": "/home/picocluster/.cargo/bin/nexmark"
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark",
+         "store_input": true,
+         "input_folder": "../input_data"
       }
    ],
    "source_nodes_experiments": [
@@ -48,7 +52,7 @@
          "overridden_params": [
             {
                "overall_tuples": 2000000,
-               "thread_count": 2
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
             }
          ],
          "name": "single_source_threads_2"
@@ -59,18 +63,7 @@
          "overridden_params": [
             {
                "overall_tuples": 2000000,
-               "thread_count": 3
-            }
-         ],
-         "name": "single_source_threads_3"
-      },
-      {
-         "included_nodes": [0],
-         "iterations": 1,
-         "overridden_params": [
-            {
-               "overall_tuples": 2000000,
-               "thread_count": 4
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017", "192.168.2.63:8017", "192.168.2.63:8017"]
             }
          ],
          "name": "single_source_threads_4"
@@ -85,10 +78,10 @@
          "iterations": 1,
          "overridden_params": [
             {
-               "thread_count": 2
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
             },
             {
-               "thread_count": 2
+               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
             }
          ],
          "name": "two_sources_threads_2"

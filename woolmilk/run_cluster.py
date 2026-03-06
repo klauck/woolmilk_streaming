@@ -39,9 +39,10 @@ class SourceNode:
     stream: str
     overall_tuples: int
     tuples_per_batch: int
-    thread_count: int = 1
+    step: int = -1
     deployment_server: Optional[str] = "127.0.0.1"
-    store_input: Optional[str] = None
+    store_input: Optional[bool] = False
+    input_folder: Optional[str] = None
     generator_executable: Optional[str] = None
     experiment_id: Optional[int] = None
     iteration_id: Optional[int] = None
@@ -296,16 +297,18 @@ class DeploymentRunner:
                 source_node.stream,
                 "--tuples-per-batch",
                 str(source_node.tuples_per_batch),
+                "--step",
+                str(source_node.step),
                 "--overall-tuples",
                 str(source_node.overall_tuples),
                 "--processing-nodes",
                 processing_nodes,
-                "--thread-count",
-                str(source_node.thread_count),
             ]
             if source_node.store_input:
-                cmd.append("--store-input")
-                cmd.append(str(base_dir / Path(source_node.store_input)))
+                cmd.append("-store-input")
+            if source_node.input_folder:
+                cmd.append("--input-folder")
+                cmd.append(str(base_dir / Path(source_node.input_folder)))
 
             if source_node.generator_executable:
                 cmd.append("--generator-executable")

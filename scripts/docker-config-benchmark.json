@@ -22,14 +22,14 @@
          "processing_nodes": ["woolmilk-processing:9017"],
          "tuples_per_batch": 10000,
          "overall_tuples": 100000,
-         "stream": "nexmark.person",
+         "stream": "nexmark_person",
          "deployment_server": "woolmilk-source"
       },
       {
          "processing_nodes": ["woolmilk-processing:9017"],
          "tuples_per_batch": 10000,
          "overall_tuples": 100000,
-         "stream": "nexmark.person",
+         "stream": "nexmark_person",
          "deployment_server": "woolmilk-source"
       }
    ],
@@ -43,9 +43,9 @@
          "iterations": 2,
          "overridden_params": [
             {
-               "stream": "nexmark.person",
+               "stream": "nexmark_person",
                "overall_tuples": 200000,
-               "thread_count": 2
+               "processing_nodes": ["woolmilk-processing:9017", "woolmilk-processing:9017"]
             }
          ]
       }

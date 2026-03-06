@@ -12,13 +12,13 @@ class TestNexmarkQueries(unittest.TestCase):
     def setUpClass(cls):
         cls.ctx = datafusion.SessionContext()
 
-        bid = woolmilk.source_node.generate_table(1000, "bid")
+        bid = woolmilk.source_node.generate_table(1000, "nexmark_bid")
         cls.ctx.register_record_batches("bid", [bid.to_batches()])
 
-        auction = woolmilk.source_node.generate_table(1000, "auction")
+        auction = woolmilk.source_node.generate_table(1000, "nexmark_auction")
         cls.ctx.register_record_batches("auction", [auction.to_batches()])
 
-        person = woolmilk.source_node.generate_table(1000, "person")
+        person = woolmilk.source_node.generate_table(1000, "nexmark_person")
         cls.ctx.register_record_batches("person", [person.to_batches()])
 
         result_df = cls.ctx.sql("SELECT DISTINCT(category) AS id FROM auction").collect()

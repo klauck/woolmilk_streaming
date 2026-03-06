@@ -55,7 +55,7 @@ class TestNexmarkDeployment(unittest.TestCase):
 
         # Calculate expected result
         ctx = datafusion.SessionContext()
-        ctx.register_parquet("bid", self.test_dir / "input" / "test_Q1_bid.parquet")
+        ctx.register_parquet("bid", self.test_dir / "input" / "test_Q1_bid")
         expected = ctx.sql(
             "SELECT auction, price * 0.85 AS price, bidder, date_time FROM Bid"
         ).collect()
@@ -85,7 +85,7 @@ class TestNexmarkDeployment(unittest.TestCase):
 
         # Calculate expected result
         ctx = datafusion.SessionContext()
-        bid = woolmilk.source_node.generate_table(1000, "bid")
+        bid = woolmilk.source_node.generate_table(1000, "nexmark_bid")
         ctx.register_record_batches("bid", [bid.to_batches()])
         expected = ctx.sql(
             "SELECT auction, price "

@@ -51,7 +51,7 @@ class TestQueries(unittest.TestCase):
         )
 
         ctx = datafusion.SessionContext()
-        bid = woolmilk.source_node.generate_table(self.overall_tuples, "bid")
+        bid = woolmilk.source_node.generate_table(self.overall_tuples, "nexmark_bid")
         ctx.register_record_batches("bid", [bid.to_batches()])
         self.expected_q2 = ctx.sql(
             "SELECT auction, price "
@@ -76,13 +76,15 @@ class TestQueries(unittest.TestCase):
                 "python",
                 os.path.join(self.woolmilk_dir, "source_node.py"),
                 "--stream",
-                "nexmark.bid",
+                "nexmark_bid",
                 "--processing-nodes",
                 "127.0.0.1:8910",
                 "--overall-tuples",
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
+                "--input-folder",
+                "../tests/input",
             ]
         )
         source.wait()
@@ -106,15 +108,15 @@ class TestQueries(unittest.TestCase):
                 "python",
                 os.path.join(self.woolmilk_dir, "source_node.py"),
                 "--stream",
-                "nexmark.bid",
+                "nexmark_bid",
                 "--processing-nodes",
-                "127.0.0.1:8910",
+                "127.0.0.1:8910,127.0.0.1:8910",
                 "--overall-tuples",
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
-                "--thread-count",
-                "3",
+                "--input-folder",
+                "../tests/input",
             ]
         )
         source.wait()
@@ -139,7 +141,7 @@ class TestQueries(unittest.TestCase):
         print(expected_table)
         self.assertTrue(actual_table.equals(expected_table))
 
-    def test_two_processing_node_multiple_threads(self):
+    def test_two_processing_nodes(self):
         processing_node2 = subprocess.Popen(
             [
                 "python",
@@ -165,15 +167,15 @@ class TestQueries(unittest.TestCase):
                 "python",
                 os.path.join(self.woolmilk_dir, "source_node.py"),
                 "--stream",
-                "nexmark.bid",
+                "nexmark_bid",
                 "--processing-nodes",
                 "127.0.0.1:8910,127.0.0.1:8911",
                 "--overall-tuples",
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
-                "--thread-count",
-                "3",
+                "--input-folder",
+                "../tests/input",
             ]
         )
         source.wait()
@@ -223,6 +225,7 @@ class TestQueries(unittest.TestCase):
         time.sleep(1)
 
         number_of_source_nodes = 2
+        number_of_processing_nodes = 2
         sources = []
         for source_id in range(number_of_source_nodes):
             source = subprocess.Popen(
@@ -230,19 +233,19 @@ class TestQueries(unittest.TestCase):
                     "python",
                     os.path.join(self.woolmilk_dir, "source_node.py"),
                     "--stream",
-                    "nexmark.bid",
+                    "nexmark_bid",
                     "--processing-nodes",
                     "127.0.0.1:8910,127.0.0.1:8911",
                     "--overall-tuples",
                     str(self.overall_tuples // number_of_source_nodes),
                     "--tuples-per-batch",
-                    "100",
-                    "--thread-count",
-                    "3",
+                    "50",
                     "--offset",
-                    str(source_id),
+                    str(source_id * number_of_processing_nodes),
                     "--step",
-                    str(number_of_source_nodes),
+                    str(number_of_source_nodes * number_of_processing_nodes),
+                    "--input-folder",
+                    "../tests/input",
                 ]
             )
             sources.append(source)
