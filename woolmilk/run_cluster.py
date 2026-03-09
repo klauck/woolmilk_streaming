@@ -47,6 +47,7 @@ class SourceNode:
     experiment_id: Optional[int] = None
     iteration_id: Optional[int] = None
     id: Optional[int] = None
+    batches_per_second: Optional[str] = None
 
 
 @dataclass
@@ -325,6 +326,10 @@ class DeploymentRunner:
             if source_node.id is not None:
                 cmd.append("--source-node-id")
                 cmd.append(str(source_node.id))
+
+            if source_node.batches_per_second is not None:
+                cmd.append("--batches-per-second")
+                cmd.append(str(source_node.batches_per_second))
 
             self._spawn_process(
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
