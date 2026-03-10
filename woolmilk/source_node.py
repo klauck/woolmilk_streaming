@@ -74,7 +74,6 @@ def stream_data(
     iteration_id=None,
     source_node_id=None,
     batches_per_second_per_thread=None,
-    total_batches_per_second=None,
 ):
     # generate (cached) Parquet file for input
     path = Path(input_folder) / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
@@ -113,7 +112,6 @@ def stream_data(
     total_bytes = 0
 
     interval = None
-    next_send_time = None
     if batches_per_second_per_thread:
         # how much time between batches
         # when bps = 1.5
@@ -121,28 +119,18 @@ def stream_data(
         # then interval = 1 / 0.75 = 1.333
         interval = float(1 / batches_per_second_per_thread)
 
-        #start offset, when tbps = 1.5, 1/1.5 = 0.666
-        # thread 0: 0 * 0.666 = 0
-        # thread 1: 1 * 0.666 = 0.666
-        # thread 2: 2 * 0.666 = 1.333
-        start_offset = float((1 / total_batches_per_second) * thread_id)
-        next_send_time = start + start_offset
-
     for i, batch in enumerate(table.to_batches(max_chunksize=tuples_per_batch)):
-        if next_send_time is not None:
-            now = time.time()
-            if now < next_send_time:
-                time.sleep(next_send_time - now)
-            test_send_times.append((thread_id, float(next_send_time - start)))
 
-        send_start = time.time()
+        now = time.time()
+        if batches_per_second_per_thread and start + i * interval > now:
+            time.sleep(start + i * interval - now)
+            send_start = time.time()
+        else:
+            send_start = send_start
         writer.write_batch(batch)
         total_bytes += batch.nbytes
         send_end = time.time()
         send_times.append((send_start, send_end))
-
-        if next_send_time is not None:
-            next_send_time += interval
 
     writer.done_writing()
 
@@ -248,6 +236,7 @@ if __name__ == "__main__":
     batches_per_second_per_thread = None
     if args.batches_per_second:
         batches_per_second = Fraction(args.batches_per_second)
+        assert batches_per_second > 0
         batches_per_second_per_thread = batches_per_second / len(processing_nodes)
 
     print("\n" + "=" * 40)
@@ -297,7 +286,6 @@ if __name__ == "__main__":
                 args.iteration_id,
                 args.source_node_id,
                 batches_per_second_per_thread,
-                batches_per_second,
             ),
         )
         threads.append(t)
