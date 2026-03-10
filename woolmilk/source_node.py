@@ -126,7 +126,7 @@ def stream_data(
             time.sleep(start + i * interval - now)
             send_start = time.time()
         else:
-            send_start = send_start
+            send_start = now
         writer.write_batch(batch)
         total_bytes += batch.nbytes
         send_end = time.time()
