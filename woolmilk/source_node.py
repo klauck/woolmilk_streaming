@@ -11,8 +11,6 @@ import pyarrow as pa
 import pyarrow.flight
 import pyarrow.parquet as pq
 
-# (thread_id, send_time)
-test_send_times: list[tuple[int, float]] = []
 
 def generate_table(
     number_of_tuples=10**6,
@@ -293,6 +291,3 @@ if __name__ == "__main__":
 
     for t in threads:
         t.join()
-
-    print(f"Test Send Times: {test_send_times}")
-
