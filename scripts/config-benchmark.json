@@ -30,7 +30,8 @@
             {
                "stream": "nexmark_person",
                "overall_tuples": 200000,
-               "processing_nodes": ["127.0.0.1:8017", "127.0.0.1:8017"]
+               "processing_nodes": ["127.0.0.1:8017", "127.0.0.1:8017"],
+               "batches_per_second": "3/2"
             }
          ],
          "name": "single_source_two_threads"

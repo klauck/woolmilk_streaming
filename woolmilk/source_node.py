@@ -4,6 +4,7 @@ import subprocess
 import sys
 import threading
 import time
+from fractions import Fraction
 from pathlib import Path
 
 import pyarrow as pa
@@ -70,6 +71,7 @@ def stream_data(
     experiment_id=None,
     iteration_id=None,
     source_node_id=None,
+    batches_per_second_per_thread=None,
 ):
     # generate (cached) Parquet file for input
     path = Path(input_folder) / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
@@ -106,8 +108,23 @@ def stream_data(
     start = time.time()
     send_times = []
     total_bytes = 0
+
+    interval = None
+    if batches_per_second_per_thread:
+        # how much time between batches
+        # when bps = 1.5
+        # then bpspt = 1.5 / number of threads (2) = 0.75
+        # then interval = 1 / 0.75 = 1.333
+        interval = float(1 / batches_per_second_per_thread)
+
     for i, batch in enumerate(table.to_batches(max_chunksize=tuples_per_batch)):
-        send_start = time.time()
+
+        now = time.time()
+        if batches_per_second_per_thread and start + i * interval > now:
+            time.sleep(start + i * interval - now)
+            send_start = time.time()
+        else:
+            send_start = now
         writer.write_batch(batch)
         total_bytes += batch.nbytes
         send_end = time.time()
@@ -197,6 +214,12 @@ if __name__ == "__main__":
         default=None,
         help="Unique ID for the source node",
     )
+    parser.add_argument(
+        "--batches-per-second",
+        type=str,
+        default=None,
+        help="Number of batches sent per second (e.g. 1.5 or 3/2)",
+    )
     args = parser.parse_args()
 
     processing_nodes = []
@@ -206,6 +229,13 @@ if __name__ == "__main__":
 
     if args.step == -1:
         args.step = len(processing_nodes)
+
+    batches_per_second = None
+    batches_per_second_per_thread = None
+    if args.batches_per_second:
+        batches_per_second = Fraction(args.batches_per_second)
+        assert batches_per_second > 0
+        batches_per_second_per_thread = batches_per_second / len(processing_nodes)
 
     print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
@@ -222,6 +252,7 @@ if __name__ == "__main__":
     print(f" Experiment ID              : {args.experiment_id}")
     print(f" Iteration ID               : {args.iteration_id}")
     print(f" Source Node ID             : {args.source_node_id}")
+    print(f" Batches Per Second         : {batches_per_second}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -252,6 +283,7 @@ if __name__ == "__main__":
                 args.experiment_id,
                 args.iteration_id,
                 args.source_node_id,
+                batches_per_second_per_thread,
             ),
         )
         threads.append(t)
