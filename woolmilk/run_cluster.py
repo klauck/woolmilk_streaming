@@ -40,13 +40,15 @@ class SourceNode:
     overall_tuples: int
     tuples_per_batch: int
     server_address: str | None = None
-    thread_count: int = 1
+    step: int = -1
     deployment_server: Optional[str] = "127.0.0.1"
-    store_input: Optional[str] = None
+    store_input: Optional[bool] = False
+    input_folder: Optional[str] = None
     generator_executable: Optional[str] = None
     experiment_id: Optional[int] = None
     iteration_id: Optional[int] = None
     id: Optional[int] = None
+    batches_per_second: Optional[str] = None
 
 
 @dataclass
@@ -100,6 +102,7 @@ class DeploymentRunner:
         self.log_to_file = log_to_file
         self.local_log_dir = Path(local_log_dir) if local_log_dir else None
         self.local_results_dir = Path(local_results_dir) if local_results_dir else None
+        self.include_timestamp = include_timestamp
 
         if log_to_file:
             self.log_dir = Path(log_dir)
@@ -296,16 +299,18 @@ class DeploymentRunner:
                 source_node.stream,
                 "--tuples-per-batch",
                 str(source_node.tuples_per_batch),
+                "--step",
+                str(source_node.step),
                 "--overall-tuples",
                 str(source_node.overall_tuples),
                 "--processing-nodes",
                 processing_nodes,
-                "--thread-count",
-                str(source_node.thread_count),
             ]
             if source_node.store_input:
-                cmd.append("--store-input")
-                cmd.append(str(base_dir / Path(source_node.store_input)))
+                cmd.append("-store-input")
+            if source_node.input_folder:
+                cmd.append("--input-folder")
+                cmd.append(str(base_dir / Path(source_node.input_folder)))
 
             if source_node.generator_executable:
                 cmd.append("--generator-executable")
@@ -326,6 +331,10 @@ class DeploymentRunner:
             if source_node.server_address is not None:
                 cmd.append("--source-server-address")
                 cmd.append(source_node.server_address)
+
+            if source_node.batches_per_second is not None:
+                cmd.append("--batches-per-second")
+                cmd.append(str(source_node.batches_per_second))
 
             self._spawn_process(
                 "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
@@ -358,6 +367,9 @@ class DeploymentRunner:
             try:
                 server_config = self.get_remote_server_config(host)
                 remote_log_dir = self.get_base_dir(host) / self.log_dir
+                if not self.include_timestamp:
+                    # copy files only but not entire folder
+                    remote_log_dir /= "*.log"
 
                 scp_cmd = self.build_scp_command(
                     server_config, str(remote_log_dir), str(self.local_log_dir), host

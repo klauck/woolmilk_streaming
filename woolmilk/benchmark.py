@@ -101,6 +101,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 source_node.id = i
 
             current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
+            current_experiment_dir.mkdir(parents=True, exist_ok=True)
 
             current_config = Config(
                 remote_servers=remote_servers,
@@ -111,15 +112,15 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 
             runner = DeploymentRunner(
                 config=current_config,
-                log_dir=str(current_experiment_dir) if mode == "local" else "logs",
+                log_dir=str(current_experiment_dir),
                 mode=mode,
                 log_to_file=True,
-                local_log_dir=str(current_experiment_dir),
+                local_log_dir=str(current_experiment_dir) if mode == "remote" else None,
                 include_timestamp=False,
             )
 
             runner.deploy()
-            sleep(2)
+            sleep(15)
 
             prepare_source_nodes(experiment.source_nodes)
             start_sending(experiment.source_nodes)

@@ -45,7 +45,7 @@ python processing_node.py \
 **3. Start the source client (in another terminal)**
 
 ```
-python source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017
+python source_node.py --stream nexmark_person --processing-nodes 127.0.0.1:8017
 ```
 
 ## Multiple processing servers
@@ -91,7 +91,7 @@ python processing_node.py \
 Clients can send to multiple processing servers
 
 ```
-python source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017,127.0.0.1:8018
+python source_node.py --stream nexmark_person --processing-nodes 127.0.0.1:8017,127.0.0.1:8018
 ```
 
 ## Command Line Options
@@ -115,7 +115,7 @@ python source_node.py --stream nexmark.person --processing-nodes 127.0.0.1:8017,
 ### source_node.py (Source Node)
 
 ```
---stream {nexmark.bid,nexmark.auction,nexmark.person}       Stream type
+--stream {nexmark_bid,nexmark_auction,nexmark_person}       Stream type
 --generator-executable GENERATOR_EXECUTABLE                 Executable to generate data
 --overall-tuples OVERALL_TUPLES                             Total number of tuples needs to be sent.
 --tuples-per-batch TUPLES_PER_BATCH                         Number of tuples per batch

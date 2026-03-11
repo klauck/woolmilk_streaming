@@ -18,7 +18,7 @@ class TestDeployment(unittest.TestCase):
         self.test_dir = os.path.dirname(__file__)
         self.overall_tuples = 1000
         ctx = datafusion.SessionContext()
-        bid = woolmilk.source_node.generate_table(self.overall_tuples, "bid")
+        bid = woolmilk.source_node.generate_table(self.overall_tuples, "nexmark_bid")
         ctx.register_record_batches("bid", [bid.to_batches()])
         self.expected_q2 = ctx.sql(
             "SELECT auction, price "
