@@ -120,7 +120,6 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             )
 
             runner.deploy()
-            sleep(15)
 
             prepare_source_nodes(experiment.source_nodes)
             start_sending(experiment.source_nodes)

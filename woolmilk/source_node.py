@@ -47,7 +47,9 @@ class SourceNode(flight.FlightServerBase):
         self.experiment_id = experiment_id
         self.iteration_id = iteration_id
         self.source_node_id = source_node_id
-        self.batches_per_second_per_thread = batches_per_second / len(processing_nodes)
+        self.batches_per_second_per_thread = (
+            batches_per_second / len(processing_nodes) if batches_per_second else None
+        )
         self.batches_per_second = batches_per_second
         self.table = None
         self.batches = None
