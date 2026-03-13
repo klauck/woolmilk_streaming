@@ -31,7 +31,7 @@ class TestDeployment(unittest.TestCase):
             shutil.rmtree(self.result_folder)
 
     def test_single_processing_node(self):
-        config = parse_config(self.test_dir / "configurations" / "single_processing_node.json")
+        config = parse_config(self.test_dir + "/configurations/single_processing_node.json")
         runner = DeploymentRunner(config, "logs")
         self.addCleanup(runner.cleanup)
         runner.deploy_and_wait()
@@ -55,7 +55,7 @@ class TestDeployment(unittest.TestCase):
         self.assertTrue(actual_table.equals(expected_table))
 
     def test_two_processing_nodes(self):
-        config = parse_config(self.test_dir / "configurations" / "two_processing_nodes.json")
+        config = parse_config(self.test_dir + "/configurations/two_processing_nodes.json")
         runner = DeploymentRunner(config, "logs")
         self.addCleanup(runner.cleanup)
         runner.deploy_and_wait()
