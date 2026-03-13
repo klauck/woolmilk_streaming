@@ -48,10 +48,10 @@ class TestRemote(unittest.TestCase):
             log_to_file=True,
             local_log_dir=str(self.logs_dir),
         )
+        self.addCleanup(runner.cleanup)
 
         runner.deploy()
         time.sleep(2)
-        runner.cleanup()
 
         log_files = list(self.logs_dir.glob("**/*.log"))
         self.assertGreater(len(log_files), 0)
@@ -66,10 +66,10 @@ class TestRemote(unittest.TestCase):
             log_to_file=True,
             local_results_dir=str(self.results_dir),
         )
+        self.addCleanup(runner.cleanup)
 
         runner.deploy()
         time.sleep(2)
-        runner.cleanup()
 
         result_files = list(self.results_dir.glob("**/*.parquet"))
         self.assertGreater(len(result_files), 0)

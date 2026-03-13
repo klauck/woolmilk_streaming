@@ -19,6 +19,17 @@ class TestNexmarkDeployment(unittest.TestCase):
         if self.result_folder.exists():
             shutil.rmtree(self.result_folder)
 
+    def deploy_and_wait(self, config_name):
+        config = parse_config(self.test_dir / "configurations" / config_name)
+        runner = DeploymentRunner(config, "logs")
+        self.addCleanup(runner.cleanup)
+        runner.deploy()
+
+        prepare_source_nodes(config.source_nodes)
+        start_sending(config.source_nodes)
+        wait_until_completion(config.source_nodes)
+        return config
+
     @staticmethod
     def _collect_parquet_results(folder: Path) -> pyarrow.Table:
         """Read and return all results from a folder of Parquet files."""
@@ -37,16 +48,7 @@ class TestNexmarkDeployment(unittest.TestCase):
         self.assertTrue(actual.equals(expected), "Actual and expected tables differ.")
 
     def test_nexmark_Q1(self):
-        config = parse_config(self.test_dir / "configurations" / "nexmark_Q1.json")
-
-        runner = DeploymentRunner(config, "logs")
-        runner.deploy()
-
-        prepare_source_nodes(config.source_nodes)
-        start_sending(config.source_nodes)
-        wait_until_completion(config.source_nodes)
-
-        runner.cleanup()
+        self.deploy_and_wait("nexmark_Q1.json")
 
         # Collect actual results
         actual_table = self._collect_parquet_results(self.result_folder).sort_by(
@@ -76,16 +78,7 @@ class TestNexmarkDeployment(unittest.TestCase):
         self._assert_tables_equal(actual_table, expected_table)
 
     def test_nexmark_Q2(self):
-        config = parse_config(self.test_dir / "configurations" / "nexmark_Q2.json")
-
-        runner = DeploymentRunner(config, "logs")
-        runner.deploy()
-
-        prepare_source_nodes(config.source_nodes)
-        start_sending(config.source_nodes)
-        wait_until_completion(config.source_nodes)
-
-        runner.cleanup()
+        self.deploy_and_wait("nexmark_Q2.json")
 
         # Collect actual results
         actual_table = self._collect_parquet_results(self.result_folder).sort_by(

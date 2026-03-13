@@ -40,18 +40,20 @@ class TestDeployment(unittest.TestCase):
             print("Waiting for results...")
             time.sleep(1)
             
-    def test_single_processing_node(self):
-        config = parse_config(
-            os.path.join(self.test_dir, "configurations/single_processing_node.json")
-        )
+    def deploy_and_wait(self, config_path):
+        config = parse_config(config_path)
         runner = DeploymentRunner(config, "logs")
+        self.addCleanup(runner.cleanup)
         runner.deploy()
         
         prepare_source_nodes(config.source_nodes)
         start_sending(config.source_nodes)
         wait_until_completion(config.source_nodes)
-
         self.wait_until_results_are_ready()
+        return config
+
+    def test_single_processing_node(self):
+        self.deploy_and_wait(os.path.join(self.test_dir, "configurations/single_processing_node.json"))
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -70,21 +72,9 @@ class TestDeployment(unittest.TestCase):
         print(actual_table)
         print(expected_table)
         self.assertTrue(actual_table.equals(expected_table))
-        
-        runner.cleanup()
 
     def test_two_processing_nodes(self):
-        config = parse_config(
-            os.path.join(self.test_dir, "configurations/two_processing_nodes.json")
-        )
-        runner = DeploymentRunner(config, "logs")
-        runner.deploy()
-        
-        prepare_source_nodes(config.source_nodes)
-        start_sending(config.source_nodes)
-        wait_until_completion(config.source_nodes)
-
-        self.wait_until_results_are_ready()
+        self.deploy_and_wait(os.path.join(self.test_dir, "configurations/two_processing_nodes.json"))
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -103,8 +93,6 @@ class TestDeployment(unittest.TestCase):
         print(actual_table)
         print(expected_table)
         self.assertTrue(actual_table.equals(expected_table))
-        
-        runner.cleanup()
 
 
 if __name__ == "__main__":

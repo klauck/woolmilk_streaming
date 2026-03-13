@@ -25,7 +25,6 @@ class TestQueries(unittest.TestCase):
         if Path(self.result_folder).exists():
             shutil.rmtree(self.result_folder)
         self.overall_tuples = 1000
-        self.procs = []
 
         self.woolmilk_dir = os.path.join(current_dir, "../woolmilk/")
         self.sink = subprocess.Popen(
@@ -38,7 +37,7 @@ class TestQueries(unittest.TestCase):
                 self.result_folder,
             ]
         )
-        self.procs.append(self.sink)
+        self.addCleanup(self.cleanup_proc, self.sink)
 
         self.processing_node = subprocess.Popen(
             [
@@ -58,7 +57,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
-        self.procs.append(self.processing_node)
+        self.addCleanup(self.cleanup_proc, self.processing_node)
 
         ctx = datafusion.SessionContext()
         bid = woolmilk.source_node.generate_table(self.overall_tuples, "nexmark_bid")
@@ -73,16 +72,19 @@ class TestQueries(unittest.TestCase):
         # Wait for processing node and sink to be ready to accept connections
         time.sleep(1)
 
-    def tearDown(self):
-        for proc in self.procs:
+    def cleanup_proc(self, proc):
+        try:
+            proc.terminate()
+            proc.wait(timeout=2)
+        except Exception:
             try:
-                proc.terminate()
-                proc.wait(timeout=2)
+                proc.kill()
             except Exception:
-                try:
-                    proc.kill()
-                except Exception:
-                    pass
+                pass
+
+    def tearDown(self):
+        # Remaining procs will be handled by addCleanup
+        pass
 
     def test_single_processing_node(self):
         source = subprocess.Popen(
@@ -103,7 +105,7 @@ class TestQueries(unittest.TestCase):
                 "../tests/input",
             ]
         )
-        self.procs.append(source)
+        self.addCleanup(self.cleanup_proc, source)
         
         source_node = NodeMock("127.0.0.1:8210")
         prepare_source_nodes([source_node])
@@ -142,7 +144,7 @@ class TestQueries(unittest.TestCase):
                 "../tests/input",
             ]
         )
-        self.procs.append(source)
+        self.addCleanup(self.cleanup_proc, source)
         
         source_node = NodeMock("127.0.0.1:8210")
         prepare_source_nodes([source_node])
@@ -188,7 +190,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
-        self.procs.append(processing_node2)
+        self.addCleanup(self.cleanup_proc, processing_node2)
         time.sleep(1)
 
         source = subprocess.Popen(
@@ -209,7 +211,7 @@ class TestQueries(unittest.TestCase):
                 "../tests/input",
             ]
         )
-        self.procs.append(source)
+        self.addCleanup(self.cleanup_proc, source)
         
         source_node = NodeMock("127.0.0.1:8210")
         prepare_source_nodes([source_node])
@@ -256,7 +258,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
-        self.procs.append(processing_node2)
+        self.addCleanup(self.cleanup_proc, processing_node2)
         time.sleep(1)
 
         number_of_source_nodes = 2
@@ -286,7 +288,7 @@ class TestQueries(unittest.TestCase):
                     "../tests/input",
                 ]
             )
-            self.procs.append(source)
+            self.addCleanup(self.cleanup_proc, source)
             sources.append((source, NodeMock(server_address)))
             
         source_nodes = [s[1] for s in sources]
