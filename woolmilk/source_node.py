@@ -229,17 +229,15 @@ def generate_table(
     records = []
 
     try:
-        if proc.stdout:
-            for line in proc.stdout:
-                try:
-                    record = json.loads(line)
-                    key = event_type.capitalize()
-                    records.append(record[key])
-                except json.JSONDecodeError:
-                    continue
+        for line in proc.stdout:
+            try:
+                record = json.loads(line)
+                key = event_type.capitalize()
+                records.append(record[key])
+            except json.JSONDecodeError:
+                continue
     finally:
-        if proc.stdout:
-            proc.stdout.close()
+        proc.stdout.close()
         proc.kill()
         proc.wait()
 
