@@ -6,13 +6,14 @@ from pyarrow import flight
 
 from woolmilk.util import SourceNodeActions, SourceNodeStatus
 
+DEFAULT_SLEEP_DURATION = 1
 
-def prepare_source_nodes(nodes):
+def prepare_source_nodes(nodes, timeout: int | None = None):
     """Wait for source nodes to be ready and trigger data generation."""
     print("Preparing source nodes....")
     nodes_to_be_prepared = list(nodes)
 
-    while len(nodes_to_be_prepared) > 0:
+    while len(nodes_to_be_prepared) > 0 and (timeout is None or timeout > 0):
         try:
             for node in list(nodes_to_be_prepared):
                 client = flight.FlightClient(f"grpc://{node.server_address}")
@@ -39,8 +40,13 @@ def prepare_source_nodes(nodes):
             pass
 
         # sleep so that we don't overwhelm the source nodes
-        sleep(1)
+        sleep(DEFAULT_SLEEP_DURATION)
+        if timeout is not None:
+            timeout -= DEFAULT_SLEEP_DURATION
 
+    if len(nodes_to_be_prepared) > 0:
+        raise RuntimeError("Timeout reached while preparing source nodes.")
+    
     print("All source nodes ready.")
 
 
@@ -54,12 +60,12 @@ def start_sending(nodes):
     print("Done.")
 
 
-def wait_until_completion(nodes):
+def wait_until_completion(nodes, timeout: int | None = None):
     """Wait until all source nodes have finished sending data."""
     nodes_to_wait = list(nodes)
     print("Waiting for source nodes to complete...")
 
-    while len(nodes_to_wait) > 0:
+    while len(nodes_to_wait) > 0 and (timeout is None or timeout > 0):
         for node in list(nodes_to_wait):
 
             try:
@@ -82,5 +88,11 @@ def wait_until_completion(nodes):
 
         if len(nodes_to_wait) > 0:
             # sleep so that we don't overwhelm the source nodes
-            sleep(1)
+            sleep(DEFAULT_SLEEP_DURATION)
+            if timeout is not None:
+                timeout -= DEFAULT_SLEEP_DURATION
+
+    if len(nodes_to_wait) > 0:
+        raise RuntimeError("Timeout reached while waiting for source nodes to complete.")
+    
     print("All source nodes finished.")
