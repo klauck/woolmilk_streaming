@@ -51,8 +51,7 @@ class SourceNode(flight.FlightServerBase):
             batches_per_second / len(processing_nodes) if batches_per_second else None
         )
         self.batches_per_second = batches_per_second
-        self.table = None
-        self.batches = None
+        self.thread_tables = [None] * len(processing_nodes)
         self.threads = []
         self.completed_threads = 0
         self.lock = threading.Lock()
@@ -74,47 +73,53 @@ class SourceNode(flight.FlightServerBase):
             yield flight.Result(self.current_status.encode("utf-8"))
 
     def generate_data(self):
-        path = (
-            Path(self.input_folder)
-            / f"{self.stream}_{self.overall_tuples}_{self.offset}_{self.step}.parquet"
-        )
+        tuples_per_thread = self.overall_tuples // len(self.processing_nodes)
 
-        if path.exists():
-            parquet_file = pq.ParquetFile(path)
-            self.table = parquet_file.read()
-        else:
-            self.table = generate_table(
-                number_of_tuples=self.overall_tuples,
-                stream=self.stream,
-                generator_executable=self.generator_executable,
-                offset=self.offset,
-                step=self.step,
+        for thread_id in range(len(self.processing_nodes)):
+            thread_offset = self.offset + thread_id
+            path = (
+                Path(self.input_folder)
+                / f"{self.stream}_{tuples_per_thread}_{thread_offset}_{self.step}.parquet"
             )
-            if self.store_input:
-                path.parent.mkdir(parents=True, exist_ok=True)
-                pq.write_table(
-                    self.table,
-                    path,
-                    row_group_size=self.tuples_per_batch,
-                    compression="snappy",
-                )
-                print(f"Wrote .. {path}")
 
-        self.batches = self.table.to_batches(max_chunksize=self.tuples_per_batch)
+            if path.exists():
+                parquet_file = pq.ParquetFile(path)
+                self.thread_tables[thread_id] = parquet_file.read()
+            else:
+                table = generate_table(
+                    number_of_tuples=tuples_per_thread,
+                    stream=self.stream,
+                    generator_executable=self.generator_executable,
+                    offset=thread_offset,
+                    step=self.step,
+                )
+                if self.store_input:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    pq.write_table(
+                        table,
+                        path,
+                        row_group_size=self.tuples_per_batch,
+                        compression="snappy",
+                    )
+                    print(f"Wrote .. {path}")
+                self.thread_tables[thread_id] = table
+
         self.current_status = SourceNodeStatus.DATA_GENERATED
 
     def start_streaming(self):
-        if self.table is None or self.batches is None:
+        # if any none value in thread_tables, raise error
+        if any(t is None for t in self.thread_tables):
             raise RuntimeError("Data not generated. Call GENERATE_DATA action first.")
 
         self.threads = []
         for thread_id in range(len(self.processing_nodes)):
+            table = self.thread_tables[thread_id]
             t = threading.Thread(
                 target=self.stream_data,
                 args=(
                     thread_id,
-                    self.table.schema,
-                    self.batches[thread_id :: len(self.processing_nodes)],
+                    table.schema,
+                    table.to_batches(max_chunksize=self.tuples_per_batch),
                     self.processing_nodes[thread_id],
                     self.experiment_id,
                     self.iteration_id,
