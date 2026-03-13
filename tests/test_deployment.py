@@ -29,16 +29,6 @@ class TestDeployment(unittest.TestCase):
         self.result_folder = os.path.join(self.test_dir, "results")
         if Path(self.result_folder).exists():
             shutil.rmtree(self.result_folder)
-
-    def wait_until_results_are_ready(self):
-        print(f"Waiting for results in {self.result_folder}...")
-        start_time = time.time()
-        timeout = 30
-        while time.time() - start_time < timeout:
-            if os.path.exists(self.result_folder) and any(f.endswith('.parquet') for f in os.listdir(self.result_folder)):
-                break
-            print("Waiting for results...")
-            time.sleep(1)
             
     def deploy_and_wait(self, config_path):
         config = parse_config(config_path)
@@ -49,7 +39,6 @@ class TestDeployment(unittest.TestCase):
         prepare_source_nodes(config.source_nodes)
         start_sending(config.source_nodes)
         wait_until_completion(config.source_nodes)
-        self.wait_until_results_are_ready()
         return config
 
     def test_single_processing_node(self):

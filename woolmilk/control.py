@@ -15,9 +15,6 @@ def prepare_source_nodes(nodes):
     while len(nodes_to_be_prepared) > 0:
         try:
             for node in list(nodes_to_be_prepared):
-                if node.server_address is None:
-                    continue
-
                 client = flight.FlightClient(f"grpc://{node.server_address}")
                 result = list(
                     client.do_action(flight.Action(SourceNodeActions.GET_STATUS, b""))
@@ -51,8 +48,6 @@ def start_sending(nodes):
     """Trigger data transmission from source nodes."""
     print("Starting to send data from source nodes...")
     for node in nodes:
-        if node.server_address is None:
-            continue
 
         client = flight.FlightClient(f"grpc://{node.server_address}")
         client.do_action(flight.Action(SourceNodeActions.SEND_DATA, b""))
@@ -66,8 +61,6 @@ def wait_until_completion(nodes):
 
     while len(nodes_to_wait) > 0:
         for node in list(nodes_to_wait):
-            if node.server_address is None:
-                continue
 
             try:
                 client = flight.FlightClient(f"grpc://{node.server_address}")
