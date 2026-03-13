@@ -29,20 +29,12 @@ class TestDeployment(unittest.TestCase):
         self.result_folder = os.path.join(self.test_dir, "results")
         if Path(self.result_folder).exists():
             shutil.rmtree(self.result_folder)
-            
-    def deploy_and_wait(self, config_path):
-        config = parse_config(config_path)
-        runner = DeploymentRunner(config, "logs")
-        self.addCleanup(runner.cleanup)
-        runner.deploy()
-        
-        prepare_source_nodes(config.source_nodes)
-        start_sending(config.source_nodes)
-        wait_until_completion(config.source_nodes)
-        return config
 
     def test_single_processing_node(self):
-        self.deploy_and_wait(os.path.join(self.test_dir, "configurations/single_processing_node.json"))
+        config = parse_config(self.test_dir / "configurations" / "single_processing_node.json")
+        runner = DeploymentRunner(config, "logs")
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -63,7 +55,10 @@ class TestDeployment(unittest.TestCase):
         self.assertTrue(actual_table.equals(expected_table))
 
     def test_two_processing_nodes(self):
-        self.deploy_and_wait(os.path.join(self.test_dir, "configurations/two_processing_nodes.json"))
+        config = parse_config(self.test_dir / "configurations" / "two_processing_nodes.json")
+        runner = DeploymentRunner(config, "logs")
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()

@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
+from woolmilk.control import wait_until_completion, prepare_source_nodes, start_sending
 
 
 @dataclass
@@ -432,6 +433,13 @@ class DeploymentRunner:
             print(f"Error during deployment: {e}")
             self.cleanup()
             sys.exit(1)
+
+    def deploy_and_wait(self, timeout=None):
+        """Deploy the entire system and wait for completion"""
+        self.deploy()
+        prepare_source_nodes(self.config.source_nodes, timeout)
+        start_sending(self.config.source_nodes)
+        wait_until_completion(self.config.source_nodes, timeout)
 
 
 if __name__ == "__main__":
