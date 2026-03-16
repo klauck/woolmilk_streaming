@@ -450,6 +450,7 @@ class DeploymentRunner:
         start_sending(self.config.source_nodes)
         wait_until_completion(self.config.source_nodes, timeout)
 
+        time.sleep(3)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Streaming Deployment")
