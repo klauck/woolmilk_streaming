@@ -6,6 +6,7 @@ import threading
 import time
 from fractions import Fraction
 from pathlib import Path
+import time
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -369,7 +370,7 @@ if __name__ == "__main__":
     event_type = args.stream.split("_")[1]
 
     source_node = SourceNode(
-        location=f"grpc://{args.source_server_address}",
+        location=f"grpc://{args.source_server_address}" if args.source_server_address else None,
         processing_nodes=processing_nodes,
         overall_tuples=args.overall_tuples,
         tuples_per_batch=args.tuples_per_batch,
@@ -385,4 +386,14 @@ if __name__ == "__main__":
         batches_per_second=batches_per_second,
     )
 
-    source_node.start()
+    if args.source_server_address:
+        source_node.start()
+    else:
+        print("Generating data...")
+        source_node.generate_data()
+        print("Streaming data...")
+        source_node.start_streaming()
+
+        while source_node.current_status != SourceNodeStatus.DONE:
+            print("Waiting for threads to finish...")
+            time.sleep(1)

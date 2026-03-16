@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import sys
 import time
 import unittest
 from pathlib import Path
@@ -9,12 +10,6 @@ import datafusion
 import pyarrow
 
 import woolmilk.source_node
-from woolmilk.control import prepare_source_nodes, start_sending, wait_until_completion
-
-# Mock class for source node, to start sending data to processing node
-class NodeMock:
-    def __init__(self, server_address):
-        self.server_address = server_address
 
 
 class TestQueries(unittest.TestCase):
@@ -99,18 +94,12 @@ class TestQueries(unittest.TestCase):
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
-                "--source-server-address",
-                "127.0.0.1:8210",
                 "--input-folder",
                 "../tests/input",
             ]
         )
         self.addCleanup(self.cleanup_proc, source)
-        
-        source_node = NodeMock("127.0.0.1:8210")
-        prepare_source_nodes([source_node])
-        start_sending([source_node])
-        wait_until_completion([source_node])
+        source.wait()
         
         time.sleep(1)
 
@@ -138,18 +127,13 @@ class TestQueries(unittest.TestCase):
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
-                "--source-server-address",
-                "127.0.0.1:8210",
                 "--input-folder",
                 "../tests/input",
             ]
         )
         self.addCleanup(self.cleanup_proc, source)
-        
-        source_node = NodeMock("127.0.0.1:8210")
-        prepare_source_nodes([source_node])
-        start_sending([source_node])
-        wait_until_completion([source_node])
+
+        source.wait()
         
         time.sleep(1)
 
@@ -205,18 +189,13 @@ class TestQueries(unittest.TestCase):
                 str(self.overall_tuples),
                 "--tuples-per-batch",
                 "100",
-                "--source-server-address",
-                "127.0.0.1:8210",
                 "--input-folder",
                 "../tests/input",
             ]
         )
         self.addCleanup(self.cleanup_proc, source)
         
-        source_node = NodeMock("127.0.0.1:8210")
-        prepare_source_nodes([source_node])
-        start_sending([source_node])
-        wait_until_completion([source_node])
+        source.wait()
         
         time.sleep(1)
 
@@ -282,19 +261,17 @@ class TestQueries(unittest.TestCase):
                     str(source_id * number_of_processing_nodes),
                     "--step",
                     str(number_of_source_nodes * number_of_processing_nodes),
-                    "--source-server-address",
-                    server_address,
                     "--input-folder",
                     "../tests/input",
                 ]
             )
+
             self.addCleanup(self.cleanup_proc, source)
-            sources.append((source, NodeMock(server_address)))
+            sources.append(source)
             
-        source_nodes = [s[1] for s in sources]
-        prepare_source_nodes(source_nodes)
-        start_sending(source_nodes)
-        wait_until_completion(source_nodes)
+
+        for source in sources:
+            source.wait()
         
         time.sleep(1)
 
