@@ -337,8 +337,14 @@ class DeploymentRunner:
                 cmd.append("--batches-per-second")
                 cmd.append(str(source_node.batches_per_second))
 
+            node_identifier = (
+                source_node.server_address
+                if source_node.server_address is not None
+                else f"{host}_{i}"
+            )
+            
             self._spawn_process(
-                "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
+                "source", node_identifier, cmd, base_dir=base_dir, host=host
             )
 
     def get_ssh_connection_command(
@@ -392,7 +398,10 @@ class DeploymentRunner:
         for node_type, node_identifier, proc in self.processes:
             print(f"    Terminate process ({node_type}, {node_identifier}, {proc})")
             if self.mode == "remote":
-                if node_type in ["sink", "processing"]:
+                if node_type in ["sink", "processing", "source"]:
+                    if ":" not in node_identifier:
+                        continue
+                    
                     host, port = node_identifier.split(":")
                     server_config = self.get_remote_server_config(host)
                     ssh_cmd = self.get_ssh_connection_command(server_config, host)
