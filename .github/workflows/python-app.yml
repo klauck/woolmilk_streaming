@@ -27,7 +27,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install -e . # to treat the current code as package. 
     - name: Install Rust (for nexmark)
       uses: dtolnay/rust-toolchain@stable
     - name: Install nexmark generator
