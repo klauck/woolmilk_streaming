@@ -448,9 +448,16 @@ class DeploymentRunner:
         self.deploy()
         prepare_source_nodes(self.config.source_nodes, timeout)
         start_sending(self.config.source_nodes)
-        wait_until_completion(self.config.source_nodes, timeout)
 
-        time.sleep(3)
+        print("\nWaiting for pipeline completion...")
+        print("Waiting for source nodes...")
+        wait_until_completion(self.config.source_nodes, timeout)
+        
+        print("Waiting for processing nodes...")
+        wait_until_completion(self.config.processing_nodes, timeout)
+
+        print("Waiting for sink nodes...")
+        wait_until_completion(self.config.sink_nodes, timeout)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Streaming Deployment")

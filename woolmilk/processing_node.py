@@ -3,6 +3,8 @@ import json
 import threading
 import time
 
+from woolmilk.source_node import NodeStatus, SourceNodeActions
+
 import pyarrow as pa
 import pyarrow.flight
 from datafusion import SessionContext
@@ -16,6 +18,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
         self.default_table_name = "nexmark_data"
         self.logs = []
         self.logs_lock = threading.Lock()
+        self.open_requests = 0
+        self.open_requests_lock = threading.Lock()
 
         if not schema_json:
             raise ValueError("Schema is mandatory. Please provide a valid schema.")
@@ -51,10 +55,20 @@ class ProcessingNode(pa.flight.FlightServerBase):
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
+        elif action.type == SourceNodeActions.GET_STATUS:
+            with self.open_requests_lock:
+                if self.open_requests == 0:
+                    status = NodeStatus.IDLE
+                else:
+                    status = NodeStatus.SENDING_DATA
+            yield pyarrow.flight.Result(status.encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
+        with self.open_requests_lock:
+            self.open_requests += 1
+
         ctx = SessionContext()
 
         # data for path info
@@ -141,6 +155,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
             self.logs.append(log)
         log_str = json.dumps(log)
         print(log_str)
+
+        with self.open_requests_lock:
+            self.open_requests -= 1
 
 
 if __name__ == "__main__":

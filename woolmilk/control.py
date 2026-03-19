@@ -61,9 +61,9 @@ def start_sending(nodes):
 
 
 def wait_until_completion(nodes, timeout: int | None = None):
-    """Wait until all source nodes have finished sending data."""
+    """Wait until all nodes have finished sending data."""
     nodes_to_wait = list(nodes)
-    print("Waiting for source nodes to complete...")
+    print("Waiting for nodes to complete...")
 
     while len(nodes_to_wait) > 0 and (timeout is None or timeout > 0):
         for node in list(nodes_to_wait):
@@ -95,4 +95,4 @@ def wait_until_completion(nodes, timeout: int | None = None):
     if len(nodes_to_wait) > 0:
         raise RuntimeError("Timeout reached while waiting for source nodes to complete.")
     
-    print("All source nodes finished.")
+    print("All nodes finished.")
