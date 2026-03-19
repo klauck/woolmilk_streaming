@@ -4,7 +4,7 @@ from typing import List
 
 from pyarrow import flight
 
-from woolmilk.util import SourceNodeActions, NodeStatus
+from woolmilk.source_node import SourceNodeActions, NodeStatus
 
 DEFAULT_SLEEP_DURATION = 1
 

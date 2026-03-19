@@ -12,7 +12,16 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
 
-from woolmilk.util import SourceNodeActions, NodeStatus
+class NodeStatus:
+    IDLE = "IDLE"
+    GENERATING_DATA = "GENERATING_DATA"
+    DATA_GENERATED = "DATA_GENERATED"
+    SENDING_DATA = "SENDING_DATA"
+
+class SourceNodeActions:
+    GENERATE_DATA = "GENERATE_DATA"
+    SEND_DATA = "SEND_DATA"
+    GET_STATUS = "GET_STATUS"
 
 
 class SourceNode(flight.FlightServerBase):
