@@ -1,10 +1,8 @@
-class SourceNodeStatus:
-    NOT_STARTED = "NOT_STARTED"
+class NodeStatus:
+    IDLE = "IDLE"
     GENERATING_DATA = "GENERATING_DATA"
     DATA_GENERATED = "DATA_GENERATED"
     SENDING_DATA = "SENDING_DATA"
-    DONE = "DONE"
-
 
 class SourceNodeActions:
     GENERATE_DATA = "GENERATE_DATA"

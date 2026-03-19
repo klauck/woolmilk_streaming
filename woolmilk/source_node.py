@@ -12,7 +12,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
 
-from woolmilk.util import SourceNodeActions, SourceNodeStatus
+from woolmilk.util import SourceNodeActions, NodeStatus
 
 
 class SourceNode(flight.FlightServerBase):
@@ -35,7 +35,7 @@ class SourceNode(flight.FlightServerBase):
     ):
         super().__init__(location)
         self.location = location
-        self.current_status = SourceNodeStatus.NOT_STARTED
+        self.current_status = NodeStatus.IDLE
         self.processing_nodes = processing_nodes
         self.overall_tuples = overall_tuples
         self.tuples_per_batch = tuples_per_batch
@@ -65,11 +65,11 @@ class SourceNode(flight.FlightServerBase):
         if action.type == SourceNodeActions.GET_STATUS:
             yield flight.Result(self.current_status.encode("utf-8"))
         elif action.type == SourceNodeActions.GENERATE_DATA:
-            self.current_status = SourceNodeStatus.GENERATING_DATA
+            self.current_status = NodeStatus.GENERATING_DATA
             self.generate_data()
             yield flight.Result(self.current_status.encode("utf-8"))
         elif action.type == SourceNodeActions.SEND_DATA:
-            self.current_status = SourceNodeStatus.SENDING_DATA
+            self.current_status = NodeStatus.SENDING_DATA
             self.start_streaming()
             yield flight.Result(self.current_status.encode("utf-8"))
 
@@ -105,7 +105,7 @@ class SourceNode(flight.FlightServerBase):
                     print(f"Wrote .. {path}")
                 self.thread_tables[thread_id] = table
 
-        self.current_status = SourceNodeStatus.DATA_GENERATED
+        self.current_status = NodeStatus.DATA_GENERATED
 
     def start_streaming(self):
         # if any none value in thread_tables, raise error
@@ -203,7 +203,7 @@ class SourceNode(flight.FlightServerBase):
         with self.lock:
             self.completed_threads += 1
             if self.completed_threads == len(self.processing_nodes):
-                self.current_status = SourceNodeStatus.DONE
+                self.current_status = NodeStatus.IDLE
 
 
 def generate_table(
@@ -394,6 +394,6 @@ if __name__ == "__main__":
         print("Streaming data...")
         source_node.start_streaming()
 
-        while source_node.current_status != SourceNodeStatus.DONE:
+        while source_node.current_status != NodeStatus.IDLE:
             print("Waiting for threads to finish...")
             time.sleep(1)

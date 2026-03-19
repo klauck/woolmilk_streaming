@@ -4,7 +4,7 @@ from typing import List
 
 from pyarrow import flight
 
-from woolmilk.util import SourceNodeActions, SourceNodeStatus
+from woolmilk.util import SourceNodeActions, NodeStatus
 
 DEFAULT_SLEEP_DURATION = 1
 
@@ -25,12 +25,12 @@ def prepare_source_nodes(nodes, timeout: int | None = None):
                     status = result[0].body.to_pybytes().decode("utf-8")
                     print(f"[{node.server_address}] Status: {status}")
 
-                    if status == SourceNodeStatus.NOT_STARTED:
+                    if status == NodeStatus.IDLE:
                         print(f"[{node.server_address}] Generating data...")
                         client.do_action(
                             flight.Action(SourceNodeActions.GENERATE_DATA, b"")
                         )
-                    if status == SourceNodeStatus.DATA_GENERATED:
+                    if status == NodeStatus.DATA_GENERATED:
                         nodes_to_be_prepared.remove(node)
 
         except flight.FlightUnavailableError as e:
@@ -78,7 +78,7 @@ def wait_until_completion(nodes, timeout: int | None = None):
                     status = result[0].body.to_pybytes().decode("utf-8")
                     print(f"[{node.server_address}] Status: {status}")
 
-                    if status == SourceNodeStatus.DONE:
+                    if status == NodeStatus.IDLE:
                         nodes_to_wait.remove(node)
             except flight.FlightUnavailableError:
                 # Node might be briefly unavailable during state transitions or just starting up
