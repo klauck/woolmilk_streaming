@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-from woolmilk.control import wait_until_completion, prepare_source_nodes, start_sending
-
+from woolmilk.control import wait_until_completion, prepare_source_nodes, start_sending, wait_until_status
+from woolmilk.source_node import NodeStatus
 
 @dataclass
 class RemoteServerConfig:
@@ -446,6 +446,10 @@ class DeploymentRunner:
     def deploy_and_wait(self, timeout=None):
         """Deploy the entire system and wait for completion"""
         self.deploy()
+
+        wait_until_status(self.config.sink_nodes, NodeStatus.IDLE, timeout)
+        wait_until_status(self.config.processing_nodes, NodeStatus.IDLE, timeout)
+
         prepare_source_nodes(self.config.source_nodes, timeout)
         start_sending(self.config.source_nodes)
 

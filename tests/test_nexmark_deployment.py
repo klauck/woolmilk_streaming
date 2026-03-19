@@ -7,7 +7,6 @@ import datafusion
 import pyarrow
 
 import woolmilk.source_node
-from woolmilk.control import prepare_source_nodes, start_sending, wait_until_completion
 from woolmilk.run_cluster import DeploymentRunner, parse_config
 
 
