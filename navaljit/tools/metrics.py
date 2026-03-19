@@ -48,14 +48,14 @@ class MetricType(str, Enum):
 
 @dataclass
 class Metric:
-    address: str
+    client_url: str
     type: MetricType
     duration_ns: int
     bytes: int
 
 METRIC_SCHEMA: pa.Schema = pa.schema([
-    ("address", pa.string()),
-    ("type", pa.string()),
+    ("client_url", pa.string()),
+    ("metric_type", pa.string()),
     ("duration_ns", pa.int64()),
     ("bytes", pa.int64()),
 ])
@@ -68,7 +68,7 @@ def metrics_to_record_batch(metrics: list[Metric]) -> pa.RecordBatch:
     bytes_list: list[int] = []
 
     for metric in metrics:
-        address_list.append(metric.address)
+        address_list.append(metric.client_url)
         type_list.append(metric.type.value)
         duration_list.append(metric.duration_ns)
         bytes_list.append(metric.bytes)

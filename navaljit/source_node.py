@@ -10,10 +10,11 @@ import pyarrow as pa
 import pyarrow.flight as pf
 import pyarrow.parquet as pq
 
-from tools.monitor import MonitorService
+from tools.metrics import Metric, MetricType, HealthResult, metrics_to_record_batch, HealthConfig, LIMIT
+from tools.monitor import MonitorService, NodeType
 from tools.logger import LogService, LogType
 Logger: LogService | None = None
-
+monitor: MonitorService | None = None
 
 SHUTDOWN_FLAG = False
 
@@ -21,13 +22,13 @@ SHUTDOWN_FLAG = False
     Apache Flight Server Thread
 '''
 class SourceNode(pa.flight.FlightServerBase):
-    def __init__(self, port: int, advertised_host: str, monitor: MonitorService | None=None):
+    def __init__(self, port: int, advertised_host: str, forward_nodes: list[str], monitor: MonitorService | None=None):
         super().__init__(f"grpc://0.0.0.0:{port}")
         Logger.log("Initializing Apache Flight Server for Source Node", LogType.INFO)
 
         self.monitor = monitor
         if self.monitor:
-            self.monitor.connect_monitor(url=f"{advertised_host}:{port}")
+            self.monitor.connect_monitor(url=f"{advertised_host}:{port}", node_type=NodeType.SOURCE, forward_url=forward_nodes)
 
 
     def do_action(self, context, action):
@@ -35,9 +36,17 @@ class SourceNode(pa.flight.FlightServerBase):
         if action.type == "logs":
             serialize = Logger.get_logs()
             yield pa.flight.Result(json.dumps(serialize).encode("utf-8"))
-        elif action.type == "metrics":
-            yield pa.flight.Result(json.dumps("TODO").encode("utf-8"))
 
+        elif action.type == "health":
+            payload: HealthResult = self.monitor.check_health()
+            yield pf.Result(json.dumps(payload.to_dict()).encode("utf-8"))
+
+        elif action.type == "metrics":
+            with self.monitor.metric_lock:
+                metrics = []
+                while not self.monitor.metric_queue.empty():
+                    metrics.append(self.monitor.metric_queue.get())
+            yield pa.flight.Result(metrics_to_record_batch(metrics).serialize().to_pybytes())
 
 '''
     Sender Thread
@@ -85,22 +94,27 @@ def send_batch(worker: WriteWorker):
             send_duration_total += send_duration
             send_duration = 0
 
-        t0 = time.time_ns()
 
         try:
+
+            t0 = time.time_ns()
             worker.writer.write_batch(batch)
+            t1 = time.time_ns()
 
         except Exception as e:
             Logger.log(f"[Send Batch] Worker ({worker.address}) failed with exception {e}", LogType.ERROR)
             SHUTDOWN_FLAG = True
             return
 
-        t1 = time.time_ns()
-
         batches_sent_this_second += 1
         bytes_sent_this_second += batch.nbytes
-        send_duration += (t1 - t0) / (1000**2) #ms
-        mbytes_total += (batch.nbytes / (1024**2) )
+        send_duration += (t1 - t0) / (1000 ** 2)  # ms
+        mbytes_total += (batch.nbytes / (1024 ** 2))
+
+        duration_ns = t1 - t0
+
+        if monitor:
+            monitor.metric_queue.put(Metric(worker.address, MetricType.SEND, duration_ns, batch.nbytes))
 
     try:
         worker.writer.done_writing()
@@ -251,6 +265,20 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--monitor_url", type=str, default=None, help="Monitor URL"
     )
+    parser.add_argument(
+        "--metric_cpu_warn", type=float, default=60.0, help="CPU warning metric"
+    )
+    parser.add_argument(
+        "--metric_mem_warn", type=float, default=60.0, help="Memory warning metric"
+    )
+
+    parser.add_argument(
+        "--metric_cpu_critical", type=float, default=85.0, help="CPU critical metric"
+    )
+
+    parser.add_argument(
+        "--metric_mem_critical", type=float, default=80.0, help="Memory critical metric"
+    )
     args: argparse.Namespace = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -260,7 +288,7 @@ def parse_arguments() -> argparse.Namespace:
     print(f" Host                       : {args.advertised_host}")
     print(f" Port                       : {args.port}")
     print(f" Monitor                    : {args.monitor_url}")
-    print(f" Processing Nodes           : {args.forward_nodes}")
+    print(f" Forward Nodes              : {args.forward_nodes}")
     print(f" Overall Batches            : {args.overall_batches}")
     print(f" Batch per Second           : {args.batch_per_second}")
     print(f" Tuple per Batch            : {args.tuple_per_batch}")
@@ -274,7 +302,6 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     Logger = LogService(args.log_save_level, args.log_print_level)
-
     Logger.log("Starting WoolMilk Source Node", LogType.INFO)
 
     parquet_file: pq.ParquetFile = pq.ParquetFile(args.file_path)
@@ -285,11 +312,14 @@ if __name__ == "__main__":
     nodes: list[str] = [n.strip() for n in args.forward_nodes.split(",") if n.strip()]
     workers: list[WriteWorker] = create_writer_workers(f"{args.advertised_host}:{args.port}", nodes, args.batch_per_second * 2, schema)
 
-    monitorService: MonitorService | None = None
-    if args.monitor_url:
-        monitorService = MonitorService(Logger, monitor_url=f"grpc://{args.monitor_url}")
+    healthConfig: HealthConfig = HealthConfig(LIMIT(args.metric_cpu_warn, args.metric_cpu_critical),
+                                              LIMIT(args.metric_mem_warn, args.metric_mem_critical))
 
-    source_node = SourceNode(args.port, args.advertised_host, monitorService)
+    monitor = None
+    if args.monitor_url:
+        monitor = MonitorService(Logger, monitor_url=f"grpc://{args.monitor_url}", health_config=healthConfig)
+
+    source_node = SourceNode(args.port, args.advertised_host,nodes, monitor)
     server_thread = threading.Thread(target=source_node.serve, args=(), daemon=True)
 
     try:
