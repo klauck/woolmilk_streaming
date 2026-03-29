@@ -4,6 +4,7 @@ import threading
 import time
 
 from woolmilk.source_node import NodeStatus, SourceNodeActions
+from woolmilk.encoding import dictionary_decode_batch, dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
 
 import pyarrow as pa
 import pyarrow.flight
@@ -77,6 +78,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
         source_node_id = None
         thread_id = None
 
+        use_dictionary_encoding = False
+        use_compression = False
+
         incoming_path_info = {}
 
         try:
@@ -86,6 +90,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
+                use_dictionary_encoding = incoming_path_info.get("use_dictionary_encoding", False)
+                use_compression = incoming_path_info.get("use_compression", False)
 
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
@@ -93,9 +99,18 @@ class ProcessingNode(pa.flight.FlightServerBase):
         # we forward same path information to the next node
         forwarded_path_info = json.dumps(incoming_path_info)
 
+        target_schema = self.predefined_schema
+        if use_dictionary_encoding:
+            target_schema = dictionary_encode_schema(target_schema)
+
+        call_options = None
+        if use_compression:
+            call_options = get_compressed_flight_options()
+
         forward_writer, _ = self.forwarding_client.do_put(
             pa.flight.FlightDescriptor.for_path(forwarded_path_info),
-            schema=self.predefined_schema,
+            schema=target_schema,
+            options=call_options,
         )
 
         total_bytes = 0
@@ -105,6 +120,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
         for chunk in reader:
             batch = chunk.data
+            
+            if use_dictionary_encoding:
+                batch = dictionary_decode_batch(batch)
 
             processing_start = time.time()
             ctx.register_record_batches(self.default_table_name, [[batch]])
@@ -115,6 +133,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
             processing_end = time.time()
 
             for result_batch in result:
+                if use_dictionary_encoding:
+                    result_batch = dictionary_encode_batch(result_batch)
+                    
                 forward_writer.write_batch(result_batch)
                 total_bytes += result_batch.nbytes
 
@@ -186,6 +207,16 @@ if __name__ == "__main__":
         required=True,
         help="JSON schema definition for the data (required)",
     )
+    parser.add_argument(
+        "--use-compression",
+        action="store_true",
+        help="Use LZ4 compression for flight flight payload",
+    )
+    parser.add_argument(
+        "--use-dictionary-encoding",
+        action="store_true",
+        help="Dictionary-encode string columns before transmission",
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -195,6 +226,8 @@ if __name__ == "__main__":
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
     print(f" Schema         : {args.query_result_schema}")
+    print(f" Use Compression: {args.use_compression}")
+    print(f" Use Dict Enc   : {args.use_dictionary_encoding}")
     print("=" * 40 + "\n")
 
     port = args.port
@@ -203,7 +236,10 @@ if __name__ == "__main__":
     schema_json = args.query_result_schema
 
     processing_node = ProcessingNode(
-        f"grpc://0.0.0.0:{port}", forward_node, sql_query, schema_json
+        f"grpc://0.0.0.0:{port}",
+        forward_node,
+        sql_query,
+        schema_json
     )
     print(f"WoolMilk processing node running on port {port}")
     processing_node.serve()

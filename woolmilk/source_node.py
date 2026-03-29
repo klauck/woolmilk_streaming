@@ -12,6 +12,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
 
+from woolmilk.encoding import dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
+
 class NodeStatus:
     IDLE = "IDLE"
     GENERATING_DATA = "GENERATING_DATA"
@@ -42,6 +44,8 @@ class SourceNode(flight.FlightServerBase):
         iteration_id,
         source_node_id,
         batches_per_second=None,
+        use_compression=False,
+        use_dictionary_encoding=False,
     ):
         super().__init__(location)
         self.location = location
@@ -62,6 +66,8 @@ class SourceNode(flight.FlightServerBase):
             batches_per_second / len(processing_nodes) if batches_per_second else None
         )
         self.batches_per_second = batches_per_second
+        self.use_compression = use_compression
+        self.use_dictionary_encoding = use_dictionary_encoding
         self.thread_tables = [None] * len(processing_nodes)
         self.threads = []
         self.completed_threads = 0
@@ -157,14 +163,25 @@ class SourceNode(flight.FlightServerBase):
             "iteration_id": iteration_id,
             "source_node_id": source_node_id,
             "thread_id": thread_id,
+            "use_compression": self.use_compression,
+            "use_dictionary_encoding": self.use_dictionary_encoding,
         }
         encoded_path = json.dumps(path_info)
 
         client = flight.FlightClient(
             f"grpc://{processing_node[0]}:{processing_node[1]}"
         )
+        
+        target_schema = schema
+        if self.use_dictionary_encoding:
+            target_schema = dictionary_encode_schema(schema)
+
+        call_options = None
+        if self.use_compression:
+            call_options = get_compressed_flight_options()
+
         writer, _ = client.do_put(
-            flight.FlightDescriptor.for_path(encoded_path), schema
+            flight.FlightDescriptor.for_path(encoded_path), target_schema, options=call_options
         )
 
         start = time.time()
@@ -182,6 +199,10 @@ class SourceNode(flight.FlightServerBase):
                 send_start = time.time()
             else:
                 send_start = now
+                
+            if self.use_dictionary_encoding:
+                batch = dictionary_encode_batch(batch)
+
             writer.write_batch(batch)
             total_bytes += batch.nbytes
             send_end = time.time()
@@ -333,6 +354,16 @@ if __name__ == "__main__":
         default=None,
         help="Number of batches sent per second (e.g. 1.5 or 3/2)",
     )
+    parser.add_argument(
+        "--use-compression",
+        action="store_true",
+        help="Use LZ4 compression for flight flight payload",
+    )
+    parser.add_argument(
+        "--use-dictionary-encoding",
+        action="store_true",
+        help="Dictionary-encode string columns before transmission",
+    )
     args = parser.parse_args()
 
     processing_nodes = []
@@ -365,6 +396,8 @@ if __name__ == "__main__":
     print(f" Source Node ID             : {args.source_node_id}")
     print(f" Source Server Address      : {args.source_server_address}")
     print(f" Batches Per Second         : {batches_per_second}")
+    print(f" Use Compression            : {args.use_compression}")
+    print(f" Use Dictionary Encoding    : {args.use_dictionary_encoding}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -394,6 +427,8 @@ if __name__ == "__main__":
         iteration_id=args.iteration_id,
         source_node_id=args.source_node_id,
         batches_per_second=batches_per_second,
+        use_compression=args.use_compression,
+        use_dictionary_encoding=args.use_dictionary_encoding,
     )
 
     if args.source_server_address:

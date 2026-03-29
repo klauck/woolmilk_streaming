@@ -5,6 +5,7 @@ import threading
 import time
 
 from woolmilk.source_node import NodeStatus, SourceNodeActions
+from woolmilk.encoding import dictionary_decode_batch
 
 import pyarrow as pa
 import pyarrow.flight
@@ -51,6 +52,8 @@ class SinkNode(pa.flight.FlightServerBase):
         source_node_id = None
         thread_id = None
 
+        use_dictionary_encoding = False
+
         try:
             incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
             if isinstance(incoming_path_info, dict):
@@ -58,6 +61,7 @@ class SinkNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
+                use_dictionary_encoding = incoming_path_info.get("use_dictionary_encoding", False)
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 
@@ -67,6 +71,10 @@ class SinkNode(pa.flight.FlightServerBase):
         result = []
         for chunk in reader:
             batch = chunk.data
+            
+            if use_dictionary_encoding:
+                batch = dictionary_decode_batch(batch)
+            
             # execute and forward data here
             total_bytes += batch.nbytes
             if self.result_folder:
