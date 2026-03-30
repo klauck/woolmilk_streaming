@@ -207,16 +207,6 @@ if __name__ == "__main__":
         required=True,
         help="JSON schema definition for the data (required)",
     )
-    parser.add_argument(
-        "--use-compression",
-        action="store_true",
-        help="Use LZ4 compression for flight flight payload",
-    )
-    parser.add_argument(
-        "--use-dictionary-encoding",
-        action="store_true",
-        help="Dictionary-encode string columns before transmission",
-    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -226,8 +216,6 @@ if __name__ == "__main__":
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
     print(f" Schema         : {args.query_result_schema}")
-    print(f" Use Compression: {args.use_compression}")
-    print(f" Use Dict Enc   : {args.use_dictionary_encoding}")
     print("=" * 40 + "\n")
 
     port = args.port
