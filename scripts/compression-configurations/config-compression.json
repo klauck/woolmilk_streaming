@@ -10,6 +10,7 @@
          "server_address": "127.0.0.1:8017",
          "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
          "forward_node": "127.0.0.1:8027",
+         "use_buffering": true,
          "query_result_schema": {
             "fields": [
                { "name": "id", "type": "int64" },

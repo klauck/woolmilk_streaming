@@ -32,6 +32,7 @@ class ProcessingNode:
     forward_node: str
     query_result_schema: Dict
     query: Optional[str] = None
+    use_buffering: Optional[bool] = False
 
 
 @dataclass
@@ -279,6 +280,8 @@ class DeploymentRunner:
             if proc_node.query:
                 cmd.append("--query")
                 cmd.append(self.quote_if_remote(proc_node.query))
+            if proc_node.use_buffering:
+                cmd.append("--use-buffering")
 
             self._spawn_process(
                 "processing", proc_node.server_address, cmd, base_dir=base_dir, host=host

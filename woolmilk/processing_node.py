@@ -2,6 +2,7 @@ import argparse
 import json
 import threading
 import time
+import queue
 
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 from woolmilk.encoding import dictionary_decode_batch, dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
@@ -12,8 +13,9 @@ from datafusion import SessionContext
 
 
 class ProcessingNode(pa.flight.FlightServerBase):
-    def __init__(self, location, forward_node, sql_query, schema_json):
+    def __init__(self, location, forward_node, sql_query, schema_json, use_buffering=False):
         super().__init__(location)
+        self.use_buffering = use_buffering
         self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
@@ -118,9 +120,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
         cost_break_down = {"receiving": [], "querying": [], "sending": []}
         forward_start = start = time.time()
 
-        for chunk in reader:
-            batch = chunk.data
-            
+        def process_batch(batch, forward_start):
+            nonlocal total_bytes
             if use_dictionary_encoding:
                 batch = dictionary_decode_batch(batch)
 
@@ -128,7 +129,6 @@ class ProcessingNode(pa.flight.FlightServerBase):
             ctx.register_record_batches(self.default_table_name, [[batch]])
 
             result_df = ctx.sql(self.query)
-
             result = result_df.collect()
             processing_end = time.time()
 
@@ -140,15 +140,38 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 total_bytes += result_batch.nbytes
 
             ctx.deregister_table(self.default_table_name)
-
             forward_end = time.time()
+            
             forwarding_times.append((forward_start, forward_end))
-
             cost_break_down["receiving"].append(processing_start - forward_start)
             cost_break_down["querying"].append(processing_end - processing_start)
             cost_break_down["sending"].append(forward_end - processing_end)
+            return forward_end
 
-            forward_start = forward_end
+        if self.use_buffering:
+            print("using buffering...")
+            q = queue.Queue()
+            
+            def processing_worker():
+                f_start = forward_start
+                while True:
+                    batch = q.get()
+                    if batch is None:
+                        break
+                    f_start = process_batch(batch, f_start)
+
+            worker_thread = threading.Thread(target=processing_worker)
+            worker_thread.start()
+
+            for chunk in reader:
+                q.put(chunk.data)
+
+            # Signal end of stream
+            q.put(None)
+            worker_thread.join()
+        else:
+            for chunk in reader:
+                forward_start = process_batch(chunk.data, forward_start)
 
         forward_writer.done_writing()
         end = time.time()
@@ -207,6 +230,11 @@ if __name__ == "__main__":
         required=True,
         help="JSON schema definition for the data (required)",
     )
+    parser.add_argument(
+        "--use-buffering",
+        action="store_true",
+        help="Use buffering and queuing for incoming batches",
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -216,18 +244,21 @@ if __name__ == "__main__":
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
     print(f" Schema         : {args.query_result_schema}")
+    print(f" Use Buffering  : {args.use_buffering}")
     print("=" * 40 + "\n")
 
     port = args.port
     forward_node = args.forward_node
     sql_query = args.query
     schema_json = args.query_result_schema
+    use_buffering = args.use_buffering
 
     processing_node = ProcessingNode(
         f"grpc://0.0.0.0:{port}",
         forward_node,
         sql_query,
-        schema_json
+        schema_json,
+        use_buffering
     )
     print(f"WoolMilk processing node running on port {port}")
     processing_node.serve()
