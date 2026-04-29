@@ -15,12 +15,14 @@ import pyarrow as pa
 import pyarrow.flight as pf
 import pyarrow.parquet as pq
 
+#from tools.evaluation import OverheadEvaluation
 from tools.metrics import HealthStatus, HealthConfig, LIMIT, HealthResult
 from tools.metrics import Metric, MetricType, metrics_to_record_batch
 from tools.monitor import MonitorService, NodeType
 from tools.logger import LogService, LogType
 Logger: LogService | None = None
 
+#evaluation: OverheadEvaluation | None = None
 
 SHUTDOWN_FLAG: bool = False
 
@@ -105,6 +107,9 @@ class SinkNode(pf.FlightServerBase):
             if self.monitor:
                 self.monitor.metric_queue.put(Metric(address, MetricType.RECEIVE, duration_ns, batch.nbytes))
 
+            #if evaluation:
+            #   evaluation.add_event_metric(MetricType.RECEIVE, duration_ns, batch.nbytes, batch.num_rows)
+
             batch_mbytes = batch.nbytes / (10**6)
             duration_ms = duration_ns / (10**6)
             mbps = ((batch_mbytes / duration_ms) * 1000) if duration_ms > 0 else float("inf")
@@ -158,6 +163,9 @@ class SinkNode(pf.FlightServerBase):
 
                 if self.monitor:
                     self.monitor.metric_queue.put(Metric(str(path), MetricType.WRITE, duration_ns, batch.nbytes))
+
+                #if evaluation:
+                #   evaluation.add_event_metric(MetricType.WRITE, duration_ns, batch.nbytes, batch.num_rows)
 
                 batch_mbytes = batch.nbytes / (10 ** 6)
                 duration_ms = duration_ns / (10 ** 6)
@@ -236,6 +244,8 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
+    #evaluation = OverheadEvaluation(interval_sec=1.0)
+    #evaluation.start()
     args = parse_arguments()
 
     Logger = LogService(args.log_save_level, args.log_print_level)
@@ -264,3 +274,5 @@ if __name__ == "__main__":
         Logger.log("Bye!", LogType.INFO)
 
 
+        #evaluation.stop()
+        #evaluation.create_file(f"load3_monitor_sink_{args.port}")

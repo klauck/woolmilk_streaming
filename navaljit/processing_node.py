@@ -9,12 +9,15 @@ import pyarrow as pa
 import pyarrow.flight as pf
 from datafusion import SessionContext
 
+from tools.evaluation import OverheadEvaluation
 from tools.metrics import HealthConfig, LIMIT, HealthResult, metrics_to_record_batch, Metric, MetricType
 from tools.logger import LogType, LogService
 from tools.monitor import MonitorService, NodeType
 
 SHUTDOWN_FLAG = False
 Logger: LogService | None = None
+evaluation: OverheadEvaluation | None = None
+
 class WriteWorker:
     def __init__(self, current_address: str, client_address: str, queue_size: int):
         self.client_address = client_address
@@ -74,7 +77,6 @@ class ProcessingNode(pf.FlightServerBase):
 
 
     def do_put(self, context, descriptor: pf.FlightDescriptor, reader, writer):
-
         client_url = descriptor.path[0].decode("utf-8") if descriptor.path[0] else "Unknown Client"
         Logger.log(f"Got a new Put Channel from Client {client_url}", LogType.INFO)
 
@@ -88,7 +90,7 @@ class ProcessingNode(pf.FlightServerBase):
         self.received_batch(reader, process_queue, client_url)
 
         process_queue.put(None)
-        process_thread.join(3)
+        process_thread.join()
         self.process_threads.remove(process_thread)
 
 
@@ -114,6 +116,9 @@ class ProcessingNode(pf.FlightServerBase):
             duration_ns = end_time - start_time
             if self.monitor:
                 self.monitor.metric_queue.put(Metric(address, MetricType.RECEIVE, duration_ns, batch.nbytes))
+
+            #if evaluation:
+            #    evaluation.add_event_metric(MetricType.RECEIVE, duration_ns, batch.nbytes, batch.num_rows)
 
             batch_mbytes = batch.nbytes / (10 ** 6)
             duration_ms = duration_ns / (10 ** 6)
@@ -176,6 +181,9 @@ class ProcessingNode(pf.FlightServerBase):
 
             result_df = ctx.sql(self.query)
 
+
+            time.sleep(0.025)        #<--- Fake Bottleneck :)
+
             result = result_df.collect()
 
             for rbatch in result:
@@ -189,7 +197,10 @@ class ProcessingNode(pf.FlightServerBase):
             duration_ns = end_time - start_time
 
             if self.monitor:
-                self.monitor.metric_queue.put(Metric(client_url, MetricType.PROCESS, duration_ns, batch_bytes))
+                self.monitor.metric_queue.put(Metric(client_url, MetricType.PROCESS, duration_ns, batch.nbytes))
+
+            #if evaluation:
+            #    evaluation.add_event_metric(MetricType.PROCESS, duration_ns, batch.nbytes, batch.num_rows)
 
             batch_mbytes = batch_bytes / (10 ** 6)
             duration_ms = duration_ns / (10 ** 6)
@@ -206,7 +217,7 @@ class ProcessingNode(pf.FlightServerBase):
 
         for worker in workers:
             worker.queue.put(None)
-            worker.thread.join(5)
+            worker.thread.join()
             self.send_threads.remove(worker.thread)
 
     def send_batch(self, worker: WriteWorker, client_url: str):
@@ -237,6 +248,9 @@ class ProcessingNode(pf.FlightServerBase):
             if self.monitor:
                 self.monitor.metric_queue.put(Metric(client_url, MetricType.SEND, duration_ns, batch.nbytes))
 
+            #if evaluation:
+            #    evaluation.add_event_metric(MetricType.SEND, duration_ns, batch.nbytes, batch.num_rows)
+
             batch_mbytes = batch.nbytes / (10 ** 6)
             duration_ms = duration_ns / (10 ** 6)
             mbps = ((batch_mbytes / duration_ms) * 1000) if duration_ms > 0 else float("inf")
@@ -246,11 +260,9 @@ class ProcessingNode(pf.FlightServerBase):
             total_mbytes += batch_mbytes
             total_duration_ms += duration_ms
 
-            avg_mbps = ((total_mbytes / total_duration_ms) * 1000) if total_duration_ms > 0 else float("inf")
-            Logger.log(
-                f"[Send Batch] Complete send of processed Data From {client_url} in {total_duration_ms:.2f}ms with size {total_mbytes:.2f} MB. [{avg_mbps:.2f}MB/s]",
-                LogType.INFO)
-
+        avg_mbps = ((total_mbytes / total_duration_ms) * 1000) if total_duration_ms > 0 else float("inf")
+        Logger.log(
+            f"[Send Batch] Complete send of processed Data From {client_url} in {total_duration_ms:.2f}ms with size {total_mbytes:.2f} MB. [{avg_mbps:.2f}MB/s]",                LogType.INFO)
         worker.writer.done_writing()
 
 
@@ -315,6 +327,8 @@ def parse_arguments():
     return args
 
 if __name__ == "__main__":
+    #evaluation = OverheadEvaluation(interval_sec=1.0)
+    #evaluation.start()
     args = parse_arguments()
 
     Logger = LogService(args.log_save_level, args.log_print_level)
@@ -343,3 +357,6 @@ if __name__ == "__main__":
         Logger.log("Shutting down WoolMilk Source Node", LogType.INFO)
         processing_node.shutdown()
         Logger.log("Shutdown Completed!", LogType.INFO)
+
+        #evaluation.stop()
+        #evaluation.create_file(f"load3_monitor_processing_{args.port}")

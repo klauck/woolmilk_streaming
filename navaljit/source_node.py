@@ -3,18 +3,21 @@ import json
 import queue
 import threading
 import time
-from queue import Queue, ShutDown
+
+from queue import Queue
 from typing import Iterator
 
 import pyarrow as pa
 import pyarrow.flight as pf
 import pyarrow.parquet as pq
 
+from tools.evaluation import OverheadEvaluation
 from tools.metrics import Metric, MetricType, HealthResult, metrics_to_record_batch, HealthConfig, LIMIT
 from tools.monitor import MonitorService, NodeType
 from tools.logger import LogService, LogType
 Logger: LogService | None = None
 monitor: MonitorService | None = None
+evaluation: OverheadEvaluation | None = None
 
 SHUTDOWN_FLAG = False
 
@@ -116,6 +119,8 @@ def send_batch(worker: WriteWorker):
         if monitor:
             monitor.metric_queue.put(Metric(worker.address, MetricType.SEND, duration_ns, batch.nbytes))
 
+        #if evaluation:
+        #   evaluation.add_event_metric(MetricType.SEND, duration_ns, batch.nbytes, batch.num_rows)
     try:
         worker.writer.done_writing()
         avg_mbps = mbytes_total / (send_duration_total / 1000) if send_duration_total > 0 else float("inf")
@@ -243,7 +248,7 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--overall_batches",
+        "--overall-batches",
         type=int,
         help="Number of overall batches to send (Limit, -1 if uncapped)",
         default=-1,
@@ -257,7 +262,7 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--log-save-level", type=LogType, default=LogType.WARN, help="Log level"
+        "--log-save-level", type=LogType, default=LogType.INFO, help="Log level"
     )
     parser.add_argument(
         "--log-print-level", type=LogType, default=LogType.DEBUG, help="Log level"
@@ -299,6 +304,10 @@ def parse_arguments() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
+    #evaluation = OverheadEvaluation(interval_sec=1.0)
+    #evaluation.start()
+
+
     args = parse_arguments()
 
     Logger = LogService(args.log_save_level, args.log_print_level)
@@ -337,3 +346,6 @@ if __name__ == "__main__":
         source_node.shutdown()
         server_thread.join(timeout=3)
         Logger.log("Bye!", LogType.INFO)
+
+        #evaluation.stop()
+        #evaluation.create_file(f"load3_monitor_source_{args.port}")

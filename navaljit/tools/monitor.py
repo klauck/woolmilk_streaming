@@ -90,22 +90,24 @@ class MonitorService:
     def check_health(self) -> HealthResult:
         cpu = round(self.proc.cpu_percent() / psutil.cpu_count(), 2)
         memory = round(self.proc.memory_percent(), 2)
+        memory_bytes = self.proc.memory_info().rss
+        memory_mb = round(memory_bytes / (1024 * 1024), 2)
 
         if self.health_config is None:
             self.logger.log("MonitorService::check_health::MetricConfig is not defined", LogType.ERROR)
             self._internal_error = True
 
         if self._internal_error:
-            return HealthResult(HealthStatus.ERROR, cpu, memory)
+            return HealthResult(HealthStatus.ERROR, cpu, memory_mb)
 
         if (cpu >= self.health_config.cpu_limit.critical
         or memory >= self.health_config.mem_limit.critical):
             self.logger.log("MonitorService::check_health::MetricConfig CPU limit exceeded", LogType.WARN)
-            return HealthResult(HealthStatus.CRITICAL, cpu, memory)
+            return HealthResult(HealthStatus.CRITICAL, cpu, memory_mb)
 
         if (cpu >= self.health_config.cpu_limit.warn
         or memory >= self.health_config.mem_limit.warn):
             self.logger.log("MonitorService::check_health::MetricConfig CPU Warn exceeded", LogType.WARN)
-            return HealthResult(HealthStatus.WARN, cpu, memory)
+            return HealthResult(HealthStatus.WARN, cpu, memory_mb)
 
-        return HealthResult(HealthStatus.OK, cpu, memory)
+        return HealthResult(HealthStatus.OK, cpu, memory_mb)
