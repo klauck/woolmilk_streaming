@@ -1,5 +1,5 @@
 datafusion==46.0.0
-pyarrow==20.0.0
+pyarrow==23.0.1
 
 # remote deployment
 paramiko
@@ -8,3 +8,5 @@ paramiko
 flake8
 isort
 black
+
+pandas

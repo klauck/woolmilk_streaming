@@ -166,7 +166,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--query-result-schema",
         type=str,
-        required=True,
+        # default='{"fields": [{"name": "id", "type": "int64"}]}',
+        default='{"fields": [{"name": "id", "type": "int64"}, {"name": "name", "type": "string"},{"name": "email_address", "type": "string"}, {"name": "credit_card", "type": "string"}, {"name": "city", "type": "string"}, {"name": "state", "type": "string"}, {"name": "extra", "type": "string"}, {"name": "timestamp", "type": "int64"}]}',
         help="JSON schema definition for the data (required)",
     )
     args = parser.parse_args()
