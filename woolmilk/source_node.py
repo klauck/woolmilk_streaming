@@ -6,13 +6,17 @@ import threading
 import time
 from fractions import Fraction
 from pathlib import Path
-import time
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
 
-from woolmilk.encoding import dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
+from woolmilk.encoding import (
+    dictionary_encode_batch,
+    dictionary_encode_schema,
+    get_compressed_flight_options,
+)
+
 
 class NodeStatus:
     IDLE = "IDLE"
@@ -20,6 +24,7 @@ class NodeStatus:
     DATA_GENERATED = "DATA_GENERATED"
     SENDING_DATA = "SENDING_DATA"
     RECEIVING_DATA = "RECEIVING_DATA"
+
 
 class SourceNodeActions:
     GENERATE_DATA = "GENERATE_DATA"
@@ -176,10 +181,8 @@ class SourceNode(flight.FlightServerBase):
             path_info["query"] = self.query
         encoded_path = json.dumps(path_info)
 
-        client = flight.FlightClient(
-            f"grpc://{processing_node[0]}:{processing_node[1]}"
-        )
-        
+        client = flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
+
         target_schema = schema
         if self.use_dictionary_encoding:
             target_schema = dictionary_encode_schema(schema)
@@ -189,7 +192,9 @@ class SourceNode(flight.FlightServerBase):
             call_options = get_compressed_flight_options()
 
         writer, _ = client.do_put(
-            flight.FlightDescriptor.for_path(encoded_path), target_schema, options=call_options
+            flight.FlightDescriptor.for_path(encoded_path),
+            target_schema,
+            options=call_options,
         )
 
         start = time.time()
@@ -436,7 +441,9 @@ if __name__ == "__main__":
     event_type = args.stream.split("_")[1]
 
     source_node = SourceNode(
-        location=f"grpc://{args.source_server_address}" if args.source_server_address else None,
+        location=(
+            f"grpc://{args.source_server_address}" if args.source_server_address else None
+        ),
         processing_nodes=processing_nodes,
         overall_tuples=args.overall_tuples,
         tuples_per_batch=args.tuples_per_batch,

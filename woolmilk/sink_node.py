@@ -4,12 +4,12 @@ import os
 import threading
 import time
 
-from woolmilk.source_node import NodeStatus, SourceNodeActions
-from woolmilk.encoding import dictionary_decode_batch
-
 import pyarrow as pa
 import pyarrow.flight
 import pyarrow.parquet as pq
+
+from woolmilk.encoding import dictionary_decode_batch
+from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
 class SinkNode(pa.flight.FlightServerBase):
@@ -61,7 +61,9 @@ class SinkNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
-                use_dictionary_encoding = incoming_path_info.get("use_dictionary_encoding", False)
+                use_dictionary_encoding = incoming_path_info.get(
+                    "use_dictionary_encoding", False
+                )
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 

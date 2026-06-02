@@ -18,14 +18,16 @@ from run_cluster import (
     parse_config,
 )
 
+
 @dataclass
 class ExperimentConfig:
     iterations: int
     source_nodes: List[SourceNode]
     name: Optional[str] = None
 
+
 @dataclass
-class ClusterConfig: 
+class ClusterConfig:
     node_type: str
     server_address: str
 
@@ -154,9 +156,8 @@ def collect_cluster_nodes_logs(cluster_nodes, current_experiment_dir):
         print(result)
         for data in result:
             log_bytes = data.body.to_pybytes().decode("utf-8")
-            file_name = (
-                current_experiment_dir
-                / (node.node_type + "__" + node.server_address.replace(":", "_") + ".json")
+            file_name = current_experiment_dir / (
+                node.node_type + "__" + node.server_address.replace(":", "_") + ".json"
             )
             with open(file_name, "w+") as f:
                 f.write(log_bytes)

@@ -1,15 +1,20 @@
 import argparse
 import json
+import queue
 import threading
 import time
-import queue
-
-from woolmilk.source_node import NodeStatus, SourceNodeActions
-from woolmilk.encoding import dictionary_decode_batch, dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
 
 import pyarrow as pa
 import pyarrow.flight
 from datafusion import SessionConfig, SessionContext
+
+from woolmilk.encoding import (
+    dictionary_decode_batch,
+    dictionary_encode_batch,
+    dictionary_encode_schema,
+    get_compressed_flight_options,
+)
+from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 DEFAULT_DATAFUSION_BATCH_SIZE = 8192
 
@@ -94,7 +99,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
-                use_dictionary_encoding = incoming_path_info.get("use_dictionary_encoding", False)
+                use_dictionary_encoding = incoming_path_info.get(
+                    "use_dictionary_encoding", False
+                )
                 use_compression = incoming_path_info.get("use_compression", False)
                 use_buffering = incoming_path_info.get("use_buffering", False)
                 tuples_per_batch = incoming_path_info.get(
@@ -179,10 +186,16 @@ class ProcessingNode(pa.flight.FlightServerBase):
                     result_batch = dictionary_encode_batch(result_batch)
                     encoding_total += time.time() - enc_start
 
-                outgoing_id = batch_id if batch_id is None or len(result) == 1 else f"{batch_id}.{j}"
+                outgoing_id = (
+                    batch_id
+                    if batch_id is None or len(result) == 1
+                    else f"{batch_id}.{j}"
+                )
                 send_start = time.time()
                 if outgoing_id is not None:
-                    forward_writer.write_with_metadata(result_batch, outgoing_id.encode("utf-8"))
+                    forward_writer.write_with_metadata(
+                        result_batch, outgoing_id.encode("utf-8")
+                    )
                 else:
                     forward_writer.write_batch(result_batch)
                 sending_total += time.time() - send_start
@@ -191,7 +204,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
 
             forward_end = time.time()
 
-            forwarding_times.append((batch_in_hand_t, forward_end, batch_id, batch_output_bytes))
+            forwarding_times.append(
+                (batch_in_hand_t, forward_end, batch_id, batch_output_bytes)
+            )
             cost_break_down["decoding"].append(decoding_end - decoding_start)
             cost_break_down["querying"].append(querying_end - querying_start)
             cost_break_down["encoding"].append(encoding_total)
