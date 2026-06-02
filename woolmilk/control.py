@@ -4,9 +4,10 @@ from typing import List
 
 from pyarrow import flight
 
-from woolmilk.source_node import SourceNodeActions, NodeStatus
+from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 DEFAULT_SLEEP_DURATION = 1
+
 
 def wait_until_status(nodes, target_status: str, timeout: int | None = None):
     """Wait until all nodes reach a specific target status."""
@@ -16,9 +17,7 @@ def wait_until_status(nodes, target_status: str, timeout: int | None = None):
         for node in list(nodes_to_wait):
             try:
                 client = flight.FlightClient(f"grpc://{node.server_address}")
-                result = list(
-                    client.do_action(SourceNodeActions.GET_STATUS)
-                )
+                result = list(client.do_action(SourceNodeActions.GET_STATUS))
 
                 if result:
                     status = result[0].body.to_pybytes().decode("utf-8")
@@ -38,6 +37,7 @@ def wait_until_status(nodes, target_status: str, timeout: int | None = None):
 
     if len(nodes_to_wait) > 0:
         raise RuntimeError(f"Timeout reached while waiting for status {target_status}.")
+
 
 def trigger_action(nodes, action):
     """Trigger an action on all nodes."""

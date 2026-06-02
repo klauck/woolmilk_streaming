@@ -3,11 +3,11 @@ import json
 import threading
 import time
 
-from woolmilk.source_node import NodeStatus, SourceNodeActions
-
 import pyarrow as pa
 import pyarrow.flight
 from datafusion import SessionContext
+
+from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
 class ProcessingNode(pa.flight.FlightServerBase):

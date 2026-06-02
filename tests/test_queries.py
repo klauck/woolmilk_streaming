@@ -100,7 +100,7 @@ class TestQueries(unittest.TestCase):
         )
         self.addCleanup(self.cleanup_proc, source)
         source.wait()
-        
+
         time.sleep(1)
 
         # Compare expected and actual results
@@ -134,7 +134,7 @@ class TestQueries(unittest.TestCase):
         self.addCleanup(self.cleanup_proc, source)
 
         source.wait()
-        
+
         time.sleep(1)
 
         # Compare expected and actual results
@@ -194,9 +194,9 @@ class TestQueries(unittest.TestCase):
             ]
         )
         self.addCleanup(self.cleanup_proc, source)
-        
+
         source.wait()
-        
+
         time.sleep(1)
 
         # Compare expected and actual results
@@ -268,11 +268,10 @@ class TestQueries(unittest.TestCase):
 
             self.addCleanup(self.cleanup_proc, source)
             sources.append(source)
-            
 
         for source in sources:
             source.wait()
-        
+
         time.sleep(1)
 
         # Compare expected and actual results

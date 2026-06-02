@@ -18,6 +18,7 @@ from run_cluster import (
     parse_config,
 )
 
+
 @dataclass
 class ExperimentConfig:
     iterations: int

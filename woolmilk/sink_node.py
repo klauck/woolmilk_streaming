@@ -4,11 +4,11 @@ import os
 import threading
 import time
 
-from woolmilk.source_node import NodeStatus, SourceNodeActions
-
 import pyarrow as pa
 import pyarrow.flight
 import pyarrow.parquet as pq
+
+from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
 class SinkNode(pa.flight.FlightServerBase):

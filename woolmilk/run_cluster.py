@@ -8,8 +8,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-from woolmilk.control import wait_until_completion, prepare_source_nodes, start_sending, wait_until_status
+
+from woolmilk.control import (
+    prepare_source_nodes,
+    start_sending,
+    wait_until_completion,
+    wait_until_status,
+)
 from woolmilk.source_node import NodeStatus
+
 
 @dataclass
 class RemoteServerConfig:
@@ -342,7 +349,7 @@ class DeploymentRunner:
                 if source_node.server_address is not None
                 else f"{host}_{i}"
             )
-            
+
             self._spawn_process(
                 "source", node_identifier, cmd, base_dir=base_dir, host=host
             )
@@ -401,7 +408,7 @@ class DeploymentRunner:
                 if node_type in ["sink", "processing", "source"]:
                     if ":" not in node_identifier:
                         continue
-                    
+
                     host, port = node_identifier.split(":")
                     server_config = self.get_remote_server_config(host)
                     ssh_cmd = self.get_ssh_connection_command(server_config, host)
@@ -456,12 +463,13 @@ class DeploymentRunner:
         print("\nWaiting for pipeline completion...")
         print("Waiting for source nodes...")
         wait_until_completion(self.config.source_nodes, timeout)
-        
+
         print("Waiting for processing nodes...")
         wait_until_completion(self.config.processing_nodes, timeout)
 
         print("Waiting for sink nodes...")
         wait_until_completion(self.config.sink_nodes, timeout)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WoolMilk Streaming Deployment")
