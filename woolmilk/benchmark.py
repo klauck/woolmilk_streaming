@@ -8,7 +8,8 @@ from time import sleep
 from typing import Dict, List, Optional
 
 import pyarrow as pa
-import pyarrow.flight
+from control import prepare_source_nodes, start_sending, wait_until_completion
+from pyarrow import flight
 from run_cluster import (
     Config,
     DeploymentRunner,
@@ -17,12 +18,16 @@ from run_cluster import (
     parse_config,
 )
 
-
 @dataclass
 class ExperimentConfig:
     iterations: int
     source_nodes: List[SourceNode]
     name: Optional[str] = None
+
+@dataclass
+class ClusterConfig: 
+    node_type: str
+    server_address: str
 
 
 def parse_benchmark_config(config_file: Path):
@@ -34,7 +39,9 @@ def parse_benchmark_config(config_file: Path):
         print('No experiments specified, expected list "source_nodes_experiments"')
         exit(1)
 
-    cluster_nodes = benchmark_config.get("cluster_nodes", [])
+    cluster_nodes: List[ClusterConfig] = []
+    for node in benchmark_config.get("cluster_nodes", []):
+        cluster_nodes.append(ClusterConfig(**node))
 
     experiments: List[ExperimentConfig] = []
 
@@ -72,7 +79,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
     combined_config = parse_benchmark_config(config_path)
     experiments: List[ExperimentConfig] = combined_config["experiments"]
     remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
-    cluster_nodes = combined_config["cluster_nodes"]
+    cluster_nodes: List[ClusterConfig] = combined_config["cluster_nodes"]
 
     print("Starting benchmark...")
 
@@ -83,10 +90,15 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        if experiment.name:
-            experiment_base_dir = Path(experiment_dir) / f"{timestamp}_{experiment.name}"
+        if mode == "local":
+            experiment_base_dir = Path(experiment_dir).resolve()
         else:
-            experiment_base_dir = Path(experiment_dir) / f"{timestamp}"
+            experiment_base_dir = Path(experiment_dir)
+
+        if experiment.name:
+            experiment_base_dir = experiment_base_dir / f"{timestamp}_{experiment.name}"
+        else:
+            experiment_base_dir = experiment_base_dir / f"{timestamp}"
 
         for iteration in range(experiment.iterations):
             print(
@@ -118,34 +130,38 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             )
 
             runner.deploy()
-            sleep(15)
 
-            # collect log files for specified cluster nodes:
-            for node in cluster_nodes:
-                client = pa.flight.FlightClient(f"grpc://{node['address']}")
-                result = client.do_action("get_logs")
-                print(result)
-                for data in result:
-                    log_bytes = data.body.to_pybytes().decode("utf-8")
-                    file_name = (
-                        Path(__file__).parent
-                        / current_experiment_dir
-                        / (
-                            node["type"]
-                            + "__"
-                            + node["address"].replace(":", "_")
-                            + ".json"
-                        )
-                    )
-                    with open(file_name, "w+") as f:
-                        f.write(log_bytes)
-                    print(json.loads(log_bytes))
-                client.do_action("delete_logs")
+            prepare_source_nodes(experiment.source_nodes)
+            start_sending(experiment.source_nodes)
+            print("waiting for source nodes to finish")
+            wait_until_completion(experiment.source_nodes)
+            print("waiting for cluster nodes to finish")
+            wait_until_completion(cluster_nodes)
+
+            collect_cluster_nodes_logs(cluster_nodes, current_experiment_dir)
 
             runner.cleanup()
             print(
                 f"            Completed iteration {iteration + 1}/{experiment.iterations}"
             )
+
+
+def collect_cluster_nodes_logs(cluster_nodes, current_experiment_dir):
+    # collect log files for specified cluster nodes:
+    for node in cluster_nodes:
+        client = flight.FlightClient(f"grpc://{node.server_address}")
+        result = client.do_action("get_logs")
+        print(result)
+        for data in result:
+            log_bytes = data.body.to_pybytes().decode("utf-8")
+            file_name = (
+                current_experiment_dir
+                / (node.node_type + "__" + node.server_address.replace(":", "_") + ".json")
+            )
+            with open(file_name, "w+") as f:
+                f.write(log_bytes)
+            print(json.loads(log_bytes))
+        client.do_action("delete_logs")
 
 
 if __name__ == "__main__":

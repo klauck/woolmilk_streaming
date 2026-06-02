@@ -4,6 +4,9 @@ import os
 import threading
 import time
 
+from woolmilk.source_node import NodeStatus, SourceNodeActions
+from woolmilk.encoding import dictionary_decode_batch
+
 import pyarrow as pa
 import pyarrow.flight
 import pyarrow.parquet as pq
@@ -19,6 +22,8 @@ class SinkNode(pa.flight.FlightServerBase):
         self.file_counter_lock = threading.Lock()
         self.logs = []
         self.logs_lock = threading.Lock()
+        self.open_requests = 0
+        self.open_requests_lock = threading.Lock()
 
     def do_action(self, context, action):
         if action.type == "get_logs":
@@ -28,14 +33,26 @@ class SinkNode(pa.flight.FlightServerBase):
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
+        elif action.type == SourceNodeActions.GET_STATUS:
+            with self.open_requests_lock:
+                if self.open_requests == 0:
+                    status = NodeStatus.IDLE
+                else:
+                    status = NodeStatus.RECEIVING_DATA
+            yield pyarrow.flight.Result(status.encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
+        with self.open_requests_lock:
+            self.open_requests += 1
+
         experiment_id = None
         iteration_id = None
         source_node_id = None
         thread_id = None
+
+        use_dictionary_encoding = False
 
         try:
             incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
@@ -44,22 +61,41 @@ class SinkNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
+                use_dictionary_encoding = incoming_path_info.get("use_dictionary_encoding", False)
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 
+        def decode_metadata(meta):
+            if meta is None:
+                return None
+            try:
+                return bytes(meta).decode("utf-8")
+            except Exception:
+                return None
+
         total_bytes = 0
         receive_times = []
-        start = receive_start = time.time()
+        work_times = []
+        batch_start = start = time.time()
         result = []
         for chunk in reader:
+            batch_work_start = time.time()
             batch = chunk.data
-            # execute and forward data here
-            total_bytes += batch.nbytes
+            batch_id = decode_metadata(chunk.app_metadata)
+
+            if use_dictionary_encoding:
+                batch = dictionary_decode_batch(batch)
+
+            batch_bytes = batch.nbytes
+            total_bytes += batch_bytes
             if self.result_folder:
                 result.append(batch)
-            receive_end = time.time()
-            receive_times.append((receive_start, receive_end))
-            receive_start = receive_end
+
+            batch_work_end = time.time()
+            work_times.append((batch_work_start, batch_work_end, batch_id, batch_bytes))
+
+            receive_times.append((batch_start, batch_work_end, batch_id, batch_bytes))
+            batch_start = batch_work_end
         end = time.time()
 
         duration = end - start
@@ -77,6 +113,7 @@ class SinkNode(pa.flight.FlightServerBase):
             "MBps": f"{mbps:.2f}",
             "Gbps": f"{gbps:.4f}",
             "receive_times": receive_times,
+            "work_times": work_times,
             "end_time": end,
         }
         with self.logs_lock:
@@ -94,6 +131,9 @@ class SinkNode(pa.flight.FlightServerBase):
                 table = pa.Table.from_batches(result)
                 pq.write_table(table, f"{self.result_folder}/{local_id}.parquet")
                 print(f"Wrote .. {self.result_folder}/{local_id}.parquet")
+
+        with self.open_requests_lock:
+            self.open_requests -= 1
 
 
 if __name__ == "__main__":

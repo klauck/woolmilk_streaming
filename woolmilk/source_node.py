@@ -6,10 +6,245 @@ import threading
 import time
 from fractions import Fraction
 from pathlib import Path
+import time
 
 import pyarrow as pa
-import pyarrow.flight
 import pyarrow.parquet as pq
+from pyarrow import flight
+
+from woolmilk.encoding import dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
+
+class NodeStatus:
+    IDLE = "IDLE"
+    GENERATING_DATA = "GENERATING_DATA"
+    DATA_GENERATED = "DATA_GENERATED"
+    SENDING_DATA = "SENDING_DATA"
+    RECEIVING_DATA = "RECEIVING_DATA"
+
+class SourceNodeActions:
+    GENERATE_DATA = "GENERATE_DATA"
+    SEND_DATA = "SEND_DATA"
+    GET_STATUS = "GET_STATUS"
+
+
+class SourceNode(flight.FlightServerBase):
+    def __init__(
+        self,
+        location,
+        processing_nodes,
+        overall_tuples,
+        tuples_per_batch,
+        stream,
+        generator_executable,
+        offset,
+        step,
+        input_folder,
+        store_input,
+        experiment_id,
+        iteration_id,
+        source_node_id,
+        batches_per_second=None,
+        use_compression=False,
+        use_dictionary_encoding=False,
+        use_buffering=False,
+        query=None,
+    ):
+        super().__init__(location)
+        self.location = location
+        self.current_status = NodeStatus.IDLE
+        self.processing_nodes = processing_nodes
+        self.overall_tuples = overall_tuples
+        self.tuples_per_batch = tuples_per_batch
+        self.stream = stream
+        self.generator_executable = generator_executable
+        self.offset = offset
+        self.step = step
+        self.input_folder = input_folder
+        self.store_input = store_input
+        self.experiment_id = experiment_id
+        self.iteration_id = iteration_id
+        self.source_node_id = source_node_id
+        self.batches_per_second_per_thread = (
+            batches_per_second / len(processing_nodes) if batches_per_second else None
+        )
+        self.batches_per_second = batches_per_second
+        self.use_compression = use_compression
+        self.use_dictionary_encoding = use_dictionary_encoding
+        self.use_buffering = use_buffering
+        self.query = query
+        self.thread_tables = [None] * len(processing_nodes)
+        self.threads = []
+        self.completed_threads = 0
+        self.lock = threading.Lock()
+
+    def start(self):
+        print(f"WoolMilk source node running at {self.location}")
+        self.serve()
+
+    def do_action(self, context, action):
+        if action.type == SourceNodeActions.GET_STATUS:
+            yield flight.Result(self.current_status.encode("utf-8"))
+        elif action.type == SourceNodeActions.GENERATE_DATA:
+            self.current_status = NodeStatus.GENERATING_DATA
+            self.generate_data()
+            yield flight.Result(self.current_status.encode("utf-8"))
+        elif action.type == SourceNodeActions.SEND_DATA:
+            self.current_status = NodeStatus.SENDING_DATA
+            self.start_streaming()
+            yield flight.Result(self.current_status.encode("utf-8"))
+
+    def generate_data(self):
+        tuples_per_thread = self.overall_tuples // len(self.processing_nodes)
+
+        for thread_id in range(len(self.processing_nodes)):
+            thread_offset = self.offset + thread_id
+            path = (
+                Path(self.input_folder)
+                / f"{self.stream}_{tuples_per_thread}_{thread_offset}_{self.step}.parquet"
+            )
+
+            if path.exists():
+                parquet_file = pq.ParquetFile(path)
+                self.thread_tables[thread_id] = parquet_file.read()
+            else:
+                table = generate_table(
+                    number_of_tuples=tuples_per_thread,
+                    stream=self.stream,
+                    generator_executable=self.generator_executable,
+                    offset=thread_offset,
+                    step=self.step,
+                )
+                if self.store_input:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    pq.write_table(
+                        table,
+                        path,
+                        row_group_size=self.tuples_per_batch,
+                        compression="snappy",
+                    )
+                    print(f"Wrote .. {path}")
+                self.thread_tables[thread_id] = table
+
+        self.current_status = NodeStatus.DATA_GENERATED
+
+    def start_streaming(self):
+        # if any none value in thread_tables, raise error
+        if any(t is None for t in self.thread_tables):
+            raise RuntimeError("Data not generated. Call GENERATE_DATA action first.")
+
+        self.threads = []
+        for thread_id in range(len(self.processing_nodes)):
+            table = self.thread_tables[thread_id]
+            t = threading.Thread(
+                target=self.stream_data,
+                args=(
+                    thread_id,
+                    table.schema,
+                    table.to_batches(max_chunksize=self.tuples_per_batch),
+                    self.processing_nodes[thread_id],
+                    self.experiment_id,
+                    self.iteration_id,
+                    self.source_node_id,
+                ),
+                daemon=True,
+            )
+            self.threads.append(t)
+            t.start()
+
+    def stream_data(
+        self,
+        thread_id,
+        schema,
+        batches,
+        processing_node,
+        experiment_id=None,
+        iteration_id=None,
+        source_node_id=None,
+    ):
+        print(f"SEND_TIME: {time.time()}")
+        path_info = {
+            "experiment_id": experiment_id,
+            "iteration_id": iteration_id,
+            "source_node_id": source_node_id,
+            "thread_id": thread_id,
+            "use_compression": self.use_compression,
+            "use_dictionary_encoding": self.use_dictionary_encoding,
+            "use_buffering": self.use_buffering,
+            "tuples_per_batch": self.tuples_per_batch,
+        }
+        if self.query:
+            path_info["query"] = self.query
+        encoded_path = json.dumps(path_info)
+
+        client = flight.FlightClient(
+            f"grpc://{processing_node[0]}:{processing_node[1]}"
+        )
+        
+        target_schema = schema
+        if self.use_dictionary_encoding:
+            target_schema = dictionary_encode_schema(schema)
+
+        call_options = None
+        if self.use_compression:
+            call_options = get_compressed_flight_options()
+
+        writer, _ = client.do_put(
+            flight.FlightDescriptor.for_path(encoded_path), target_schema, options=call_options
+        )
+
+        start = time.time()
+        send_times = []
+        total_bytes = 0
+
+        interval = None
+        if self.batches_per_second_per_thread:
+            interval = float(1 / self.batches_per_second_per_thread)
+
+        for i, batch in enumerate(batches):
+            now = time.time()
+            if interval and start + i * interval > now:
+                time.sleep(start + i * interval - now)
+                send_start = time.time()
+            else:
+                send_start = now
+
+            if self.use_dictionary_encoding:
+                batch = dictionary_encode_batch(batch)
+
+            batch_id = f"{source_node_id}:{thread_id}:{i}"
+            writer.write_with_metadata(batch, batch_id.encode("utf-8"))
+            batch_bytes = batch.nbytes
+            total_bytes += batch_bytes
+            send_end = time.time()
+            send_times.append((send_start, send_end, batch_id, batch_bytes))
+
+        writer.done_writing()
+
+        end = time.time()
+
+        duration = end - start
+        gbps = (total_bytes * 8) / (duration * 1000**3)
+        mbps = total_bytes / (duration * 1000**2)
+
+        log = {
+            "thread": thread_id,
+            "experiment_id": experiment_id,
+            "iteration_id": iteration_id,
+            "source_node_id": source_node_id,
+            "send_times": send_times,
+            "total_bytes": total_bytes,
+            "start_time": start,
+            "end_time": end,
+            "gbps": f"{gbps:.4f}",
+            "mbps": f"{mbps:.2f}",
+        }
+
+        print(f"WM_LOG= {json.dumps(log)}")
+
+        with self.lock:
+            self.completed_threads += 1
+            if self.completed_threads == len(self.processing_nodes):
+                self.current_status = NodeStatus.IDLE
 
 
 def generate_table(
@@ -55,103 +290,6 @@ def generate_table(
 
     print("Done.")
     return pa.Table.from_pylist(records)
-
-
-def stream_data(
-    thread_id,
-    input_folder,
-    stream,
-    generator_executable,
-    offset,
-    step,
-    processing_node,
-    number_of_tuples,
-    tuples_per_batch,
-    store_input,
-    experiment_id=None,
-    iteration_id=None,
-    source_node_id=None,
-    batches_per_second_per_thread=None,
-):
-    # generate (cached) Parquet file for input
-    path = Path(input_folder) / f"{stream}_{number_of_tuples}_{offset}_{step}.parquet"
-    if not path.exists():
-        table = generate_table(
-            number_of_tuples, stream, generator_executable, offset, step
-        )
-        if store_input:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            print(f"Wrote .. {path}")
-            pq.write_table(
-                table, path, row_group_size=tuples_per_batch, compression="snappy"
-            )
-        schema = table.schema
-    else:
-        parquet_file = pq.ParquetFile(path)
-        schema = parquet_file.schema_arrow
-        table = parquet_file.read()
-
-    # table = table.drop_columns(["date_time"])
-    # schema = schema.append(pa.field("timestamp", pa.int64()))
-
-    path_info = {
-        "experiment_id": experiment_id,
-        "iteration_id": iteration_id,
-        "source_node_id": source_node_id,
-        "thread_id": thread_id,
-    }
-    encoded_path = json.dumps(path_info)
-
-    client = pa.flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
-    writer, _ = client.do_put(pa.flight.FlightDescriptor.for_path(encoded_path), schema)
-
-    start = time.time()
-    send_times = []
-    total_bytes = 0
-
-    interval = None
-    if batches_per_second_per_thread:
-        # how much time between batches
-        # when bps = 1.5
-        # then bpspt = 1.5 / number of threads (2) = 0.75
-        # then interval = 1 / 0.75 = 1.333
-        interval = float(1 / batches_per_second_per_thread)
-
-    for i, batch in enumerate(table.to_batches(max_chunksize=tuples_per_batch)):
-
-        now = time.time()
-        if batches_per_second_per_thread and start + i * interval > now:
-            time.sleep(start + i * interval - now)
-            send_start = time.time()
-        else:
-            send_start = now
-        writer.write_batch(batch)
-        total_bytes += batch.nbytes
-        send_end = time.time()
-        send_times.append((send_start, send_end))
-
-    writer.done_writing()
-
-    end = time.time()
-
-    duration = end - start
-    gbps = (total_bytes * 8) / (duration * 1000**3)
-    mbps = total_bytes / (duration * 1000**2)
-
-    log = {
-        "thread": thread_id,
-        "experiment_id": experiment_id,
-        "iteration_id": iteration_id,
-        "source_node_id": source_node_id,
-        "send_times": send_times,
-        "total_bytes": total_bytes,
-        "start_time": start,
-        "end_time": end,
-        "gbps": f"{gbps:.4f}",
-        "mbps": f"{mbps:.2f}",
-    }
-
-    print(f"WM_LOG= {json.dumps(log)}")
 
 
 if __name__ == "__main__":
@@ -215,10 +353,37 @@ if __name__ == "__main__":
         help="Unique ID for the source node",
     )
     parser.add_argument(
+        "--source-server-address",
+        type=str,
+        default=None,
+        help="Address where source flight server starts",
+    )
+    parser.add_argument(
         "--batches-per-second",
         type=str,
         default=None,
         help="Number of batches sent per second (e.g. 1.5 or 3/2)",
+    )
+    parser.add_argument(
+        "--use-compression",
+        action="store_true",
+        help="Use LZ4 compression for flight flight payload",
+    )
+    parser.add_argument(
+        "--use-dictionary-encoding",
+        action="store_true",
+        help="Dictionary-encode string columns before transmission",
+    )
+    parser.add_argument(
+        "--use-buffering",
+        action="store_true",
+        help="Enable buffering on processing nodes for this source's data",
+    )
+    parser.add_argument(
+        "--query",
+        type=str,
+        default=None,
+        help="SQL query to send via path_info; overrides the processing node's default --query",
     )
     args = parser.parse_args()
 
@@ -231,11 +396,9 @@ if __name__ == "__main__":
         args.step = len(processing_nodes)
 
     batches_per_second = None
-    batches_per_second_per_thread = None
     if args.batches_per_second:
         batches_per_second = Fraction(args.batches_per_second)
-        assert batches_per_second > 0
-        batches_per_second_per_thread = batches_per_second / len(processing_nodes)
+        assert batches_per_second > 0, "batches_per_second must be positive"
 
     print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
@@ -252,7 +415,12 @@ if __name__ == "__main__":
     print(f" Experiment ID              : {args.experiment_id}")
     print(f" Iteration ID               : {args.iteration_id}")
     print(f" Source Node ID             : {args.source_node_id}")
+    print(f" Source Server Address      : {args.source_server_address}")
     print(f" Batches Per Second         : {batches_per_second}")
+    print(f" Use Compression            : {args.use_compression}")
+    print(f" Use Dictionary Encoding    : {args.use_dictionary_encoding}")
+    print(f" Use Buffering              : {args.use_buffering}")
+    print(f" Query (override)           : {args.query}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -265,29 +433,37 @@ if __name__ == "__main__":
         f"number of processing nodes ({len(processing_nodes)})"
     )
 
-    threads = []
-    for thread_id in range(len(processing_nodes)):
-        t = threading.Thread(
-            target=stream_data,
-            args=(
-                thread_id,
-                args.input_folder,
-                args.stream,
-                args.generator_executable,
-                args.offset + thread_id,
-                args.step,
-                processing_nodes[thread_id],
-                args.overall_tuples // len(processing_nodes),
-                args.tuples_per_batch,
-                args.store_input,
-                args.experiment_id,
-                args.iteration_id,
-                args.source_node_id,
-                batches_per_second_per_thread,
-            ),
-        )
-        threads.append(t)
-        t.start()
+    event_type = args.stream.split("_")[1]
 
-    for t in threads:
-        t.join()
+    source_node = SourceNode(
+        location=f"grpc://{args.source_server_address}" if args.source_server_address else None,
+        processing_nodes=processing_nodes,
+        overall_tuples=args.overall_tuples,
+        tuples_per_batch=args.tuples_per_batch,
+        stream=args.stream,
+        generator_executable=args.generator_executable,
+        offset=args.offset,
+        step=args.step,
+        input_folder=args.input_folder,
+        store_input=args.store_input,
+        experiment_id=args.experiment_id,
+        iteration_id=args.iteration_id,
+        source_node_id=args.source_node_id,
+        batches_per_second=batches_per_second,
+        use_compression=args.use_compression,
+        use_dictionary_encoding=args.use_dictionary_encoding,
+        use_buffering=args.use_buffering,
+        query=args.query,
+    )
+
+    if args.source_server_address:
+        source_node.start()
+    else:
+        print("Generating data...")
+        source_node.generate_data()
+        print("Streaming data...")
+        source_node.start_streaming()
+
+        while source_node.current_status != NodeStatus.IDLE:
+            print("Waiting for threads to finish...")
+            time.sleep(1)
