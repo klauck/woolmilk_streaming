@@ -4,11 +4,10 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from time import sleep
 from typing import Dict, List, Optional
 
-import pyarrow as pa
-import pyarrow.flight
+from control import prepare_source_nodes, start_sending, wait_until_completion
+from pyarrow import flight
 from run_cluster import (
     Config,
     DeploymentRunner,
@@ -118,34 +117,35 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             )
 
             runner.deploy()
-            sleep(15)
 
-            # collect log files for specified cluster nodes:
-            for node in cluster_nodes:
-                client = pa.flight.FlightClient(f"grpc://{node['address']}")
-                result = client.do_action("get_logs")
-                print(result)
-                for data in result:
-                    log_bytes = data.body.to_pybytes().decode("utf-8")
-                    file_name = (
-                        Path(__file__).parent
-                        / current_experiment_dir
-                        / (
-                            node["type"]
-                            + "__"
-                            + node["address"].replace(":", "_")
-                            + ".json"
-                        )
-                    )
-                    with open(file_name, "w+") as f:
-                        f.write(log_bytes)
-                    print(json.loads(log_bytes))
-                client.do_action("delete_logs")
+            prepare_source_nodes(experiment.source_nodes)
+            start_sending(experiment.source_nodes)
+            wait_until_completion(experiment.source_nodes)
+            collect_cluster_nodes_logs(cluster_nodes, current_experiment_dir)
 
             runner.cleanup()
             print(
                 f"            Completed iteration {iteration + 1}/{experiment.iterations}"
             )
+
+
+def collect_cluster_nodes_logs(cluster_nodes, current_experiment_dir):
+    # collect log files for specified cluster nodes:
+    for node in cluster_nodes:
+        client = flight.FlightClient(f"grpc://{node['address']}")
+        result = client.do_action("get_logs")
+        print(result)
+        for data in result:
+            log_bytes = data.body.to_pybytes().decode("utf-8")
+            file_name = (
+                Path(__file__).parent
+                / current_experiment_dir
+                / (node["type"] + "__" + node["address"].replace(":", "_") + ".json")
+            )
+            with open(file_name, "w+") as f:
+                f.write(log_bytes)
+            print(json.loads(log_bytes))
+        client.do_action("delete_logs")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,8 @@ import pyarrow as pa
 import pyarrow.flight
 import pyarrow.parquet as pq
 
+from woolmilk.source_node import NodeStatus, SourceNodeActions
+
 
 class SinkNode(pa.flight.FlightServerBase):
     def __init__(self, location, result_folder=None):
@@ -19,6 +21,8 @@ class SinkNode(pa.flight.FlightServerBase):
         self.file_counter_lock = threading.Lock()
         self.logs = []
         self.logs_lock = threading.Lock()
+        self.open_requests = 0
+        self.open_requests_lock = threading.Lock()
 
     def do_action(self, context, action):
         if action.type == "get_logs":
@@ -28,10 +32,20 @@ class SinkNode(pa.flight.FlightServerBase):
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
+        elif action.type == SourceNodeActions.GET_STATUS:
+            with self.open_requests_lock:
+                if self.open_requests == 0:
+                    status = NodeStatus.IDLE
+                else:
+                    status = NodeStatus.RECEIVING_DATA
+            yield pyarrow.flight.Result(status.encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
+        with self.open_requests_lock:
+            self.open_requests += 1
+
         experiment_id = None
         iteration_id = None
         source_node_id = None
@@ -94,6 +108,9 @@ class SinkNode(pa.flight.FlightServerBase):
                 table = pa.Table.from_batches(result)
                 pq.write_table(table, f"{self.result_folder}/{local_id}.parquet")
                 print(f"Wrote .. {self.result_folder}/{local_id}.parquet")
+
+        with self.open_requests_lock:
+            self.open_requests -= 1
 
 
 if __name__ == "__main__":

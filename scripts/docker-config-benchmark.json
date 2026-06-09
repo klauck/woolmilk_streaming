@@ -23,14 +23,16 @@
          "tuples_per_batch": 10000,
          "overall_tuples": 100000,
          "stream": "nexmark_person",
-         "deployment_server": "woolmilk-source"
+         "deployment_server": "woolmilk-source",
+         "server_address": "woolmilk-source:8210"
       },
       {
          "processing_nodes": ["woolmilk-processing:9017"],
          "tuples_per_batch": 10000,
          "overall_tuples": 100000,
          "stream": "nexmark_person",
-         "deployment_server": "woolmilk-source"
+         "deployment_server": "woolmilk-source",
+         "server_address": "woolmilk-source:8211"
       }
    ],
    "source_nodes_experiments": [

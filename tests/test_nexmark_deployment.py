@@ -1,5 +1,4 @@
 import shutil
-import time
 import unittest
 from pathlib import Path
 
@@ -37,11 +36,9 @@ class TestNexmarkDeployment(unittest.TestCase):
 
     def test_nexmark_Q1(self):
         config = parse_config(self.test_dir / "configurations" / "nexmark_Q1.json")
-
         runner = DeploymentRunner(config, "logs")
-        runner.deploy()
-        time.sleep(2)
-        runner.cleanup()
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
 
         # Collect actual results
         actual_table = self._collect_parquet_results(self.result_folder).sort_by(
@@ -72,11 +69,9 @@ class TestNexmarkDeployment(unittest.TestCase):
 
     def test_nexmark_Q2(self):
         config = parse_config(self.test_dir / "configurations" / "nexmark_Q2.json")
-
         runner = DeploymentRunner(config, "logs")
-        runner.deploy()
-        time.sleep(2)
-        runner.cleanup()
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
 
         # Collect actual results
         actual_table = self._collect_parquet_results(self.result_folder).sort_by(

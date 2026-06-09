@@ -1,6 +1,5 @@
 import os
 import shutil
-import time
 import unittest
 from pathlib import Path
 
@@ -31,12 +30,11 @@ class TestDeployment(unittest.TestCase):
 
     def test_single_processing_node(self):
         config = parse_config(
-            os.path.join(self.test_dir, "configurations/single_processing_node.json")
+            self.test_dir + "/configurations/single_processing_node.json"
         )
         runner = DeploymentRunner(config, "logs")
-        runner.deploy()
-        time.sleep(2)
-        runner.cleanup()
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -57,13 +55,10 @@ class TestDeployment(unittest.TestCase):
         self.assertTrue(actual_table.equals(expected_table))
 
     def test_two_processing_nodes(self):
-        config = parse_config(
-            os.path.join(self.test_dir, "configurations/two_processing_nodes.json")
-        )
+        config = parse_config(self.test_dir + "/configurations/two_processing_nodes.json")
         runner = DeploymentRunner(config, "logs")
-        runner.deploy()
-        time.sleep(2)
-        runner.cleanup()
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()

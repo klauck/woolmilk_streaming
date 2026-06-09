@@ -31,6 +31,8 @@ class TestQueries(unittest.TestCase):
                 self.result_folder,
             ]
         )
+        self.addCleanup(self.cleanup_proc, self.sink)
+
         self.processing_node = subprocess.Popen(
             [
                 "python",
@@ -49,6 +51,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
+        self.addCleanup(self.cleanup_proc, self.processing_node)
 
         ctx = datafusion.SessionContext()
         bid = woolmilk.source_node.generate_table(self.overall_tuples, "nexmark_bid")
@@ -63,12 +66,19 @@ class TestQueries(unittest.TestCase):
         # Wait for processing node and sink to be ready to accept connections
         time.sleep(1)
 
-    def tearDown(self):
-        self.processing_node.terminate()
-        self.processing_node.wait()
+    def cleanup_proc(self, proc):
+        try:
+            proc.terminate()
+            proc.wait(timeout=2)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
 
-        self.sink.terminate()
-        self.sink.wait()
+    def tearDown(self):
+        # Remaining procs will be handled by addCleanup
+        pass
 
     def test_single_processing_node(self):
         source = subprocess.Popen(
@@ -87,6 +97,7 @@ class TestQueries(unittest.TestCase):
                 "../tests/input",
             ]
         )
+        self.addCleanup(self.cleanup_proc, source)
         source.wait()
 
         time.sleep(1)
@@ -119,6 +130,8 @@ class TestQueries(unittest.TestCase):
                 "../tests/input",
             ]
         )
+        self.addCleanup(self.cleanup_proc, source)
+
         source.wait()
 
         time.sleep(1)
@@ -160,6 +173,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
+        self.addCleanup(self.cleanup_proc, processing_node2)
         time.sleep(1)
 
         source = subprocess.Popen(
@@ -178,11 +192,11 @@ class TestQueries(unittest.TestCase):
                 "../tests/input",
             ]
         )
+        self.addCleanup(self.cleanup_proc, source)
+
         source.wait()
 
         time.sleep(1)
-        processing_node2.terminate()
-        processing_node2.wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()
@@ -222,6 +236,7 @@ class TestQueries(unittest.TestCase):
                 "OR auction = 2001 OR auction = 2019 OR auction = 2087",
             ]
         )
+        self.addCleanup(self.cleanup_proc, processing_node2)
         time.sleep(1)
 
         number_of_source_nodes = 2
@@ -248,13 +263,14 @@ class TestQueries(unittest.TestCase):
                     "../tests/input",
                 ]
             )
+
+            self.addCleanup(self.cleanup_proc, source)
             sources.append(source)
+
         for source in sources:
             source.wait()
 
         time.sleep(1)
-        processing_node2.terminate()
-        processing_node2.wait()
 
         # Compare expected and actual results
         ctx = datafusion.SessionContext()

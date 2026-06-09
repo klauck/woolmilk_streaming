@@ -55,7 +55,8 @@
          "stream": "nexmark_person",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,
-         "deployment_server": "woolmilk-source"
+         "deployment_server": "woolmilk-source",
+         "server_address": "woolmilk-source:8210"
       }
    ]
 }

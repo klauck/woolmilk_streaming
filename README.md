@@ -27,6 +27,11 @@ Install the requirements including DataFusion and PyArrow
 pip install -r requirements.txt
 ```
 
+Install WoolMilk in editable mode to enable package-style imports during development
+```
+pip install -e .
+```
+
 Install the [nexmark data generator](https://github.com/risingwavelabs/nexmark-rs)
 
 ```bash

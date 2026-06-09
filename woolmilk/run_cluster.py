@@ -9,6 +9,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from woolmilk.control import (
+    prepare_source_nodes,
+    start_sending,
+    wait_until_completion,
+    wait_until_status,
+)
+from woolmilk.source_node import NodeStatus
+
 
 @dataclass
 class RemoteServerConfig:
@@ -39,6 +47,7 @@ class SourceNode:
     stream: str
     overall_tuples: int
     tuples_per_batch: int
+    server_address: str | None = None
     step: int = -1
     deployment_server: Optional[str] = "127.0.0.1"
     store_input: Optional[bool] = False
@@ -327,12 +336,22 @@ class DeploymentRunner:
                 cmd.append("--source-node-id")
                 cmd.append(str(source_node.id))
 
+            if source_node.server_address is not None:
+                cmd.append("--source-server-address")
+                cmd.append(source_node.server_address)
+
             if source_node.batches_per_second is not None:
                 cmd.append("--batches-per-second")
                 cmd.append(str(source_node.batches_per_second))
 
+            node_identifier = (
+                source_node.server_address
+                if source_node.server_address is not None
+                else f"{host}_{i}"
+            )
+
             self._spawn_process(
-                "source", f"{host}_{i}", cmd, base_dir=base_dir, host=host
+                "source", node_identifier, cmd, base_dir=base_dir, host=host
             )
 
     def get_ssh_connection_command(
@@ -386,7 +405,10 @@ class DeploymentRunner:
         for node_type, node_identifier, proc in self.processes:
             print(f"    Terminate process ({node_type}, {node_identifier}, {proc})")
             if self.mode == "remote":
-                if node_type in ["sink", "processing"]:
+                if node_type in ["sink", "processing", "source"]:
+                    if ":" not in node_identifier:
+                        continue
+
                     host, port = node_identifier.split(":")
                     server_config = self.get_remote_server_config(host)
                     ssh_cmd = self.get_ssh_connection_command(server_config, host)
@@ -427,6 +449,26 @@ class DeploymentRunner:
             print(f"Error during deployment: {e}")
             self.cleanup()
             sys.exit(1)
+
+    def deploy_and_wait(self, timeout=None):
+        """Deploy the entire system and wait for completion"""
+        self.deploy()
+
+        wait_until_status(self.config.sink_nodes, NodeStatus.IDLE, timeout)
+        wait_until_status(self.config.processing_nodes, NodeStatus.IDLE, timeout)
+
+        prepare_source_nodes(self.config.source_nodes, timeout)
+        start_sending(self.config.source_nodes)
+
+        print("\nWaiting for pipeline completion...")
+        print("Waiting for source nodes...")
+        wait_until_completion(self.config.source_nodes, timeout)
+
+        print("Waiting for processing nodes...")
+        wait_until_completion(self.config.processing_nodes, timeout)
+
+        print("Waiting for sink nodes...")
+        wait_until_completion(self.config.sink_nodes, timeout)
 
 
 if __name__ == "__main__":
