@@ -1,7 +1,6 @@
 import os
 import shutil
 import subprocess
-import sys
 import time
 import unittest
 from pathlib import Path
@@ -244,7 +243,6 @@ class TestQueries(unittest.TestCase):
         number_of_processing_nodes = 2
         sources = []
         for source_id in range(number_of_source_nodes):
-            server_address = f"127.0.0.1:{8210 + source_id}"
             source = subprocess.Popen(
                 [
                     "python",
