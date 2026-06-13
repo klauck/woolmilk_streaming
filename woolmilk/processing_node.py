@@ -1,20 +1,26 @@
 import argparse
 import json
+import queue
 import threading
 import time
-import queue
 
-from woolmilk.source_node import NodeStatus, SourceNodeActions
-from woolmilk.encoding import dictionary_decode_batch, dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
 import pyarrow as pa
 import pyarrow.flight
 from datafusion import SessionContext
 
+from woolmilk.encoding import (
+    dictionary_decode_batch,
+    dictionary_encode_batch,
+    dictionary_encode_schema,
+    get_compressed_flight_options,
+)
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
 class ProcessingNode(pa.flight.FlightServerBase):
-    def __init__(self, location, forward_node, sql_query, schema_json, use_buffering=False):
+    def __init__(
+        self, location, forward_node, sql_query, schema_json, use_buffering=False
+    ):
         super().__init__(location)
         self.use_buffering = use_buffering
         self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
@@ -93,7 +99,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
-                use_dictionary_encoding = incoming_path_info.get("use_dictionary_encoding", False)
+                use_dictionary_encoding = incoming_path_info.get(
+                    "use_dictionary_encoding", False
+                )
                 use_compression = incoming_path_info.get("use_compression", False)
 
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
@@ -136,13 +144,13 @@ class ProcessingNode(pa.flight.FlightServerBase):
             for result_batch in result:
                 if use_dictionary_encoding:
                     result_batch = dictionary_encode_batch(result_batch)
-                    
+
                 forward_writer.write_batch(result_batch)
                 total_bytes += result_batch.nbytes
 
             ctx.deregister_table(self.default_table_name)
             forward_end = time.time()
-            
+
             forwarding_times.append((forward_start, forward_end))
             cost_break_down["receiving"].append(processing_start - forward_start)
             cost_break_down["querying"].append(processing_end - processing_start)
@@ -152,7 +160,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
         if self.use_buffering:
             print("using buffering...")
             q = queue.Queue()
-            
+
             def processing_worker():
                 f_start = forward_start
                 while True:
@@ -255,11 +263,7 @@ if __name__ == "__main__":
     use_buffering = args.use_buffering
 
     processing_node = ProcessingNode(
-        f"grpc://0.0.0.0:{port}",
-        forward_node,
-        sql_query,
-        schema_json,
-        use_buffering
+        f"grpc://0.0.0.0:{port}", forward_node, sql_query, schema_json, use_buffering
     )
     print(f"WoolMilk processing node running on port {port}")
     processing_node.serve()

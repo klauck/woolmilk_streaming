@@ -11,7 +11,12 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
 
-from woolmilk.encoding import dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
+from woolmilk.encoding import (
+    dictionary_encode_batch,
+    dictionary_encode_schema,
+    get_compressed_flight_options,
+)
+
 
 class NodeStatus:
     IDLE = "IDLE"
@@ -168,10 +173,8 @@ class SourceNode(flight.FlightServerBase):
         }
         encoded_path = json.dumps(path_info)
 
-        client = flight.FlightClient(
-            f"grpc://{processing_node[0]}:{processing_node[1]}"
-        )
-        
+        client = flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
+
         target_schema = schema
         if self.use_dictionary_encoding:
             target_schema = dictionary_encode_schema(schema)
@@ -181,7 +184,9 @@ class SourceNode(flight.FlightServerBase):
             call_options = get_compressed_flight_options()
 
         writer, _ = client.do_put(
-            flight.FlightDescriptor.for_path(encoded_path), target_schema, options=call_options
+            flight.FlightDescriptor.for_path(encoded_path),
+            target_schema,
+            options=call_options,
         )
 
         start = time.time()
@@ -199,7 +204,7 @@ class SourceNode(flight.FlightServerBase):
                 send_start = time.time()
             else:
                 send_start = now
-                
+
             if self.use_dictionary_encoding:
                 batch = dictionary_encode_batch(batch)
 

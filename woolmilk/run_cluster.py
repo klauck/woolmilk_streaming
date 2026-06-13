@@ -348,10 +348,10 @@ class DeploymentRunner:
             if source_node.batches_per_second is not None:
                 cmd.append("--batches-per-second")
                 cmd.append(str(source_node.batches_per_second))
-                
+
             if source_node.use_compression:
                 cmd.append("--use-compression")
-                
+
             if source_node.use_dictionary_encoding:
                 cmd.append("--use-dictionary-encoding")
 
