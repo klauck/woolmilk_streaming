@@ -1,6 +1,5 @@
 import os
 import shutil
-import time
 import unittest
 from pathlib import Path
 
@@ -30,7 +29,9 @@ class TestDeployment(unittest.TestCase):
             shutil.rmtree(self.result_folder)
 
     def test_single_processing_node(self):
-        config = parse_config(self.test_dir + "/configurations/single_processing_node.json")
+        config = parse_config(
+            self.test_dir + "/configurations/single_processing_node.json"
+        )
         runner = DeploymentRunner(config, "logs")
         self.addCleanup(runner.cleanup)
         runner.deploy_and_wait()

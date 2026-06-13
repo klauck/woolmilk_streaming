@@ -6,7 +6,6 @@ import time
 
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 from woolmilk.encoding import dictionary_decode_batch
-
 import pyarrow as pa
 import pyarrow.flight
 import pyarrow.parquet as pq

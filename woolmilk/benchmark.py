@@ -4,10 +4,8 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from time import sleep
 from typing import Dict, List, Optional
 
-import pyarrow as pa
 from control import prepare_source_nodes, start_sending, wait_until_completion
 from pyarrow import flight
 from run_cluster import (
@@ -17,6 +15,7 @@ from run_cluster import (
     SourceNode,
     parse_config,
 )
+
 
 @dataclass
 class ExperimentConfig:

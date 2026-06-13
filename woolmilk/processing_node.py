@@ -6,7 +6,6 @@ import queue
 
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 from woolmilk.encoding import dictionary_decode_batch, dictionary_encode_batch, dictionary_encode_schema, get_compressed_flight_options
-
 import pyarrow as pa
 import pyarrow.flight
 from datafusion import SessionContext

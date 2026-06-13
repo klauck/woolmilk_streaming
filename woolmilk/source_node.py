@@ -6,7 +6,6 @@ import threading
 import time
 from fractions import Fraction
 from pathlib import Path
-import time
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -20,6 +19,7 @@ class NodeStatus:
     DATA_GENERATED = "DATA_GENERATED"
     SENDING_DATA = "SENDING_DATA"
     RECEIVING_DATA = "RECEIVING_DATA"
+
 
 class SourceNodeActions:
     GENERATE_DATA = "GENERATE_DATA"
@@ -413,7 +413,9 @@ if __name__ == "__main__":
     event_type = args.stream.split("_")[1]
 
     source_node = SourceNode(
-        location=f"grpc://{args.source_server_address}" if args.source_server_address else None,
+        location=(
+            f"grpc://{args.source_server_address}" if args.source_server_address else None
+        ),
         processing_nodes=processing_nodes,
         overall_tuples=args.overall_tuples,
         tuples_per_batch=args.tuples_per_batch,
