@@ -10,6 +10,7 @@ import pyarrow.parquet as pq
 
 from woolmilk.encoding import dictionary_decode_batch
 from woolmilk.source_node import NodeStatus, SourceNodeActions
+from woolmilk.wire import decode_batch_metadata
 
 
 class SinkNode(pa.flight.FlightServerBase):
@@ -67,14 +68,6 @@ class SinkNode(pa.flight.FlightServerBase):
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 
-        def decode_metadata(meta):
-            if meta is None:
-                return None
-            try:
-                return bytes(meta).decode("utf-8")
-            except Exception:
-                return None
-
         total_bytes = 0
         receive_times = []
         work_times = []
@@ -83,7 +76,7 @@ class SinkNode(pa.flight.FlightServerBase):
         for chunk in reader:
             batch_work_start = time.time()
             batch = chunk.data
-            batch_id = decode_metadata(chunk.app_metadata)
+            batch_id = decode_batch_metadata(chunk.app_metadata)["id"]
 
             if use_dictionary_encoding:
                 batch = dictionary_decode_batch(batch)

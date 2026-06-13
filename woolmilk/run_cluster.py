@@ -39,6 +39,8 @@ class ProcessingNode:
     forward_node: str
     query_result_schema: Dict
     query: Optional[str] = None
+    window_size: Optional[int] = None
+    window_slide: Optional[int] = None
 
 
 @dataclass
@@ -61,6 +63,8 @@ class SourceNode:
     use_dictionary_encoding: Optional[bool] = False
     use_buffering: Optional[bool] = False
     query: Optional[str] = None
+    window_size: Optional[int] = None
+    window_slide: Optional[int] = None
 
 
 @dataclass
@@ -360,6 +364,14 @@ class DeploymentRunner:
             if source_node.query:
                 cmd.append("--query")
                 cmd.append(self.quote_if_remote(source_node.query))
+
+            if source_node.window_size:
+                cmd.append("--window-size")
+                cmd.append(str(source_node.window_size))
+
+            if source_node.window_slide:
+                cmd.append("--window-slide")
+                cmd.append(str(source_node.window_slide))
 
             node_identifier = (
                 source_node.server_address

@@ -1,0 +1,31 @@
+{
+   "sink_nodes": [
+      {
+         "server_address": "127.0.0.1:8027",
+         "result_folder": "results"
+      }
+   ],
+   "processing_nodes": [
+      {
+         "server_address": "127.0.0.1:8017",
+         "query": "SELECT COUNT(*) AS c FROM nexmark_data",
+         "forward_node": "127.0.0.1:8027",
+         "query_result_schema": {"fields":[{"name":"c","type":"int64"}]},
+         "window_size": 60,
+         "window_slide": 10
+      }
+   ],
+   "source_nodes": [
+      {
+         "processing_nodes": ["127.0.0.1:8017"],
+         "stream": "nexmark_person",
+         "store_input": true,
+         "overall_tuples": 1000000,
+         "tuples_per_batch": 100000,
+         "deployment_server": "127.0.0.1",
+         "server_address": "127.0.0.1:8210",
+         "window_size": 60,
+         "window_slide": 10
+      }
+   ]
+}

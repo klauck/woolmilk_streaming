@@ -15,6 +15,8 @@ from woolmilk.encoding import (
     get_compressed_flight_options,
 )
 from woolmilk.source_node import NodeStatus, SourceNodeActions
+from woolmilk.windowed_operator import WindowedOperator
+from woolmilk.wire import decode_batch_metadata, encode_batch_metadata
 
 DEFAULT_DATAFUSION_BATCH_SIZE = 8192
 
@@ -74,6 +76,83 @@ class ProcessingNode(pa.flight.FlightServerBase):
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
+    def _run_windowed(
+        self,
+        reader,
+        forward_writer,
+        window_size,
+        window_slide,
+        query,
+        output_schema,
+        experiment_id,
+        iteration_id,
+        source_node_id,
+        thread_id,
+    ):
+        forwarding_times = []
+
+        def emit(batch, meta):
+            send_start = time.time()
+            batch_id = f"window:{meta['window_start']}-{meta['window_end']}"
+            forward_writer.write_with_metadata(batch, encode_batch_metadata(batch_id))
+            send_end = time.time()
+            forwarding_times.append((send_start, send_end, batch_id, batch.nbytes))
+
+        op = WindowedOperator(
+            window_size_s=window_size,
+            window_slide_s=window_slide,
+            query=query,
+            output_schema=output_schema,
+            emit_fn=emit,
+        )
+
+        source_key = (source_node_id, thread_id)
+        op.register_source(source_key)
+
+        receiving_times = []
+        start = time.time()
+        recv_start = time.time()
+        for chunk in reader:
+            recv_end = time.time()
+            receiving_times.append(recv_end - recv_start)
+            meta = decode_batch_metadata(chunk.app_metadata)
+            op.consume(source_key, chunk.data, meta["wm"])
+            recv_start = time.time()
+
+        op.mark_source_finished(source_key)
+        op.flush_all()
+        forward_writer.done_writing()
+
+        end = time.time()
+        duration = end - start
+        stats = op.stats()
+        gbps = (stats["output_bytes"] * 8) / (duration * 1000**3) if duration > 0 else 0
+        mbps = stats["output_bytes"] / (duration * 1000**2) if duration > 0 else 0
+
+        log = {
+            "experiment_id": experiment_id,
+            "iteration_id": iteration_id,
+            "source_node_id": source_node_id,
+            "thread_id": thread_id,
+            "input_bytes": stats["input_bytes"],
+            "output_bytes": stats["output_bytes"],
+            "input_rows": stats["input_rows"],
+            "output_rows": stats["output_rows"],
+            "start_time": start,
+            "duration": duration,
+            "MBps": f"{mbps:.2f}",
+            "Gbps": f"{gbps:.4f}",
+            "receiving": sum(receiving_times),
+            "querying": stats["querying"],
+            "sending": stats["sending"],
+            "windows_emitted": stats["windows_emitted"],
+            "last_watermark": stats["last_watermark"],
+            "forward_times": forwarding_times,
+        }
+        with self.logs_lock:
+            self.logs.append(log)
+        print(json.dumps(log))
+
     def do_put(self, context, descriptor, reader, writer):
         with self.open_requests_lock:
             self.open_requests += 1
@@ -89,6 +168,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
         use_buffering = False  # Dynamic fallback
         tuples_per_batch = DEFAULT_DATAFUSION_BATCH_SIZE
         effective_query = self.query
+        window_size = 0
+        window_slide = 0
 
         incoming_path_info = {}
 
@@ -110,6 +191,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 path_query = incoming_path_info.get("query")
                 if path_query:
                     effective_query = path_query
+                window_size = incoming_path_info.get("window_size", 0)
+                window_slide = incoming_path_info.get("window_slide", 0)
 
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
@@ -133,6 +216,23 @@ class ProcessingNode(pa.flight.FlightServerBase):
             options=call_options,
         )
 
+        if window_size and window_size > 0:
+            self._run_windowed(
+                reader=reader,
+                forward_writer=forward_writer,
+                window_size=window_size,
+                window_slide=window_slide or window_size,
+                query=effective_query,
+                output_schema=target_schema,
+                experiment_id=experiment_id,
+                iteration_id=iteration_id,
+                source_node_id=source_node_id,
+                thread_id=thread_id,
+            )
+            with self.open_requests_lock:
+                self.open_requests -= 1
+            return
+
         input_bytes = 0
         output_bytes = 0
         input_rows = 0
@@ -148,18 +248,10 @@ class ProcessingNode(pa.flight.FlightServerBase):
         }
         start = time.time()
 
-        def decode_metadata(meta):
-            if meta is None:
-                return None
-            try:
-                return bytes(meta).decode("utf-8")
-            except Exception:
-                return None
-
         def process_batch(batch, batch_in_hand_t, incoming_metadata):
             nonlocal input_bytes, output_bytes, input_rows, output_rows
 
-            batch_id = decode_metadata(incoming_metadata)
+            batch_id = decode_batch_metadata(incoming_metadata)["id"]
 
             decoding_start = time.time()
             if use_dictionary_encoding:

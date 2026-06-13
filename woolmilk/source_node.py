@@ -8,6 +8,7 @@ from fractions import Fraction
 from pathlib import Path
 
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 from pyarrow import flight
 
@@ -16,6 +17,7 @@ from woolmilk.encoding import (
     dictionary_encode_schema,
     get_compressed_flight_options,
 )
+from woolmilk.wire import encode_batch_metadata
 
 
 class NodeStatus:
@@ -53,6 +55,8 @@ class SourceNode(flight.FlightServerBase):
         use_dictionary_encoding=False,
         use_buffering=False,
         query=None,
+        window_size=0,
+        window_slide=0,
     ):
         super().__init__(location)
         self.location = location
@@ -77,6 +81,8 @@ class SourceNode(flight.FlightServerBase):
         self.use_dictionary_encoding = use_dictionary_encoding
         self.use_buffering = use_buffering
         self.query = query
+        self.window_size = window_size
+        self.window_slide = window_slide
         self.thread_tables = [None] * len(processing_nodes)
         self.threads = []
         self.completed_threads = 0
@@ -177,6 +183,9 @@ class SourceNode(flight.FlightServerBase):
             "use_buffering": self.use_buffering,
             "tuples_per_batch": self.tuples_per_batch,
         }
+        if self.window_size:
+            path_info["window_size"] = self.window_size
+            path_info["window_slide"] = self.window_slide or self.window_size
         if self.query:
             path_info["query"] = self.query
         encoded_path = json.dumps(path_info)
@@ -217,7 +226,10 @@ class SourceNode(flight.FlightServerBase):
                 batch = dictionary_encode_batch(batch)
 
             batch_id = f"{source_node_id}:{thread_id}:{i}"
-            writer.write_with_metadata(batch, batch_id.encode("utf-8"))
+            watermark = None
+            if self.window_size:
+                watermark = int(pc.max(batch.column("date_time")).as_py())
+            writer.write_with_metadata(batch, encode_batch_metadata(batch_id, watermark))
             batch_bytes = batch.nbytes
             total_bytes += batch_bytes
             send_end = time.time()
@@ -390,6 +402,18 @@ if __name__ == "__main__":
         default=None,
         help="SQL query to send via path_info; overrides the processing node's default --query",
     )
+    parser.add_argument(
+        "--window-size",
+        type=int,
+        default=0,
+        help="Window size in seconds; 0 disables stateful windowing.",
+    )
+    parser.add_argument(
+        "--window-slide",
+        type=int,
+        default=0,
+        help="Window slide in seconds; if 0 and window-size>0 defaults to window-size (tumbling).",
+    )
     args = parser.parse_args()
 
     processing_nodes = []
@@ -426,6 +450,8 @@ if __name__ == "__main__":
     print(f" Use Dictionary Encoding    : {args.use_dictionary_encoding}")
     print(f" Use Buffering              : {args.use_buffering}")
     print(f" Query (override)           : {args.query}")
+    print(f" Window Size (s)            : {args.window_size}")
+    print(f" Window Slide (s)           : {args.window_slide}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -461,6 +487,8 @@ if __name__ == "__main__":
         use_dictionary_encoding=args.use_dictionary_encoding,
         use_buffering=args.use_buffering,
         query=args.query,
+        window_size=args.window_size,
+        window_slide=args.window_slide,
     )
 
     if args.source_server_address:
