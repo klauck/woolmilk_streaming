@@ -10,6 +10,8 @@ import pyarrow as pa
 import pyarrow.flight
 from datafusion import SessionContext
 
+from woolmilk.source_node import NodeStatus, SourceNodeActions
+
 
 class ProcessingNode(pa.flight.FlightServerBase):
     def __init__(self, location, forward_node, sql_query, schema_json, use_buffering=False):
