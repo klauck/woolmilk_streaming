@@ -222,7 +222,7 @@ class SourceNode(flight.FlightServerBase):
             total_bytes += batch_bytes
             send_end = time.time()
             send_times.append((send_start, send_end, batch_id, batch_bytes))
-
+            
         writer.done_writing()
 
         end = time.time()

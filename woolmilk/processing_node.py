@@ -18,6 +18,8 @@ from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 DEFAULT_DATAFUSION_BATCH_SIZE = 8192
 
+from woolmilk.source_node import NodeStatus, SourceNodeActions
+
 
 class ProcessingNode(pa.flight.FlightServerBase):
     def __init__(self, location, forward_node, sql_query, schema_json):
@@ -77,6 +79,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
     def do_put(self, context, descriptor, reader, writer):
         with self.open_requests_lock:
             self.open_requests += 1
+
+        ctx = SessionContext()
 
         # data for path info
         experiment_id = None
