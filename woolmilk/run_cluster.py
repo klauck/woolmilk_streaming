@@ -361,12 +361,6 @@ class DeploymentRunner:
                 else f"{host}_{i}"
             )
 
-            node_identifier = (
-                source_node.server_address
-                if source_node.server_address is not None
-                else f"{host}_{i}"
-            )
-
             self._spawn_process(
                 "source", node_identifier, cmd, base_dir=base_dir, host=host
             )
