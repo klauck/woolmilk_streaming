@@ -90,6 +90,7 @@ class SourceNode(flight.FlightServerBase):
             self.generate_data()
             yield flight.Result(self.current_status.encode("utf-8"))
         elif action.type == SourceNodeActions.SEND_DATA:
+            self.completed_threads = 0
             self.current_status = NodeStatus.SENDING_DATA
             self.start_streaming()
             yield flight.Result(self.current_status.encode("utf-8"))
@@ -129,7 +130,6 @@ class SourceNode(flight.FlightServerBase):
         self.current_status = NodeStatus.DATA_GENERATED
 
     def start_streaming(self):
-        # if any none value in thread_tables, raise error
         if any(t is None for t in self.thread_tables):
             raise RuntimeError("Data not generated. Call GENERATE_DATA action first.")
 
@@ -169,8 +169,6 @@ class SourceNode(flight.FlightServerBase):
             "iteration_id": iteration_id,
             "source_node_id": source_node_id,
             "thread_id": thread_id,
-            "compression": self.compression,
-            "encoding": self.encoding,
         }
         encoded_path = json.dumps(path_info)
 
@@ -210,11 +208,12 @@ class SourceNode(flight.FlightServerBase):
             if use_dictionary_encoding:
                 batch = dictionary_encode_batch(batch)
 
-            writer.write_batch(batch)
-            total_bytes += batch.nbytes
+            batch_id = f"{source_node_id}:{thread_id}:{i}"
+            writer.write_with_metadata(batch, batch_id.encode("utf-8"))
+            batch_bytes = batch.nbytes
+            total_bytes += batch_bytes
             send_end = time.time()
-            send_times.append((send_start, send_end))
-
+            send_times.append((send_start, send_end, batch_id, batch_bytes))
         writer.done_writing()
 
         end = time.time()
@@ -421,8 +420,6 @@ if __name__ == "__main__":
         f"tuples_per_batch ({args.tuples_per_batch}) * "
         f"number of processing nodes ({len(processing_nodes)})"
     )
-
-    event_type = args.stream.split("_")[1]
 
     source_node = SourceNode(
         location=(

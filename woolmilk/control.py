@@ -1,13 +1,17 @@
+import json
 from time import sleep
+from typing import Dict, Optional
 
 from pyarrow import flight
 
+from woolmilk.runtime_config import RuntimeConfig
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 DEFAULT_SLEEP_DURATION = 1
+SET_CONFIG_ACTION = "SET_CONFIG"
 
 
-def wait_until_status(nodes, target_status: str, timeout: int | None = None):
+def wait_until_status(nodes, target_status: str, timeout: Optional[int] = None):
     """Wait until all nodes reach a specific target status."""
     nodes_to_wait = list(nodes)
 
@@ -47,7 +51,30 @@ def trigger_action(nodes, action):
             print(f"Failed to trigger action for {node.server_address}: {e}")
 
 
-def prepare_source_nodes(nodes, timeout: int | None = None):
+def push_config(nodes, node_config: Dict[str, dict]):
+    """Push per-node RuntimeConfig via SET_CONFIG do_action.
+
+    node_config: { server_address (str) -> cfg dict (RuntimeConfig fields) }
+    Missing address -> empty RuntimeConfig pushed.
+    """
+    for node in nodes:
+        addr = node.server_address
+        cfg_dict = node_config.get(addr, {})
+        cfg = RuntimeConfig.from_dict(cfg_dict) if cfg_dict else RuntimeConfig()
+        body = cfg.to_json()
+        try:
+            client = flight.FlightClient(f"grpc://{addr}")
+            results = list(client.do_action(flight.Action(SET_CONFIG_ACTION, body)))
+            ack = results[0].body.to_pybytes().decode("utf-8") if results else ""
+            if ack.startswith("ERR"):
+                raise RuntimeError(f"SET_CONFIG rejected by {addr}: {ack}")
+            print(f"[{addr}] SET_CONFIG ack: {ack}")
+        except Exception as e:
+            print(f"Failed to push config to {addr}: {e}")
+            raise
+
+
+def prepare_source_nodes(nodes, timeout: Optional[int] = None):
     """Wait for source nodes to be ready and trigger data generation."""
     print("Preparing source nodes....")
     wait_until_status(nodes, NodeStatus.IDLE, timeout)
@@ -63,7 +90,7 @@ def start_sending(nodes):
     print("Done.")
 
 
-def wait_until_completion(nodes, timeout: int | None = None):
+def wait_until_completion(nodes, timeout: Optional[int] = None):
     """Wait until all nodes have finished their task (report IDLE)."""
     wait_until_status(nodes, NodeStatus.IDLE, timeout)
     print("All nodes finished.")

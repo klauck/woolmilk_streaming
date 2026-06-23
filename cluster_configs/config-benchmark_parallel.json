@@ -50,7 +50,7 @@
          "input_folder": "../input_data"
       }
    ],
-   "source_nodes_experiments": [
+   "experiments": [
       {
          "included_nodes": [2],
          "iterations": 1,
@@ -105,12 +105,12 @@
    ],
    "cluster_nodes": [
       {
-         "type": "sink",
-         "address": "192.168.2.63:8027"
+         "node_type": "sink",
+         "server_address": "192.168.2.63:8027"
       },
       {
-         "type": "sink",
-         "address": "192.168.2.64:8027"
+         "node_type": "sink",
+         "server_address": "192.168.2.64:8027"
       }
    ]
 }

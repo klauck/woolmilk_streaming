@@ -24,6 +24,7 @@
          "server_address": "192.168.2.63:8017",
          "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
          "forward_node": "192.168.2.64:8027",
+         "tuples_per_batch": 10000,
          "query_result_schema": {
             "fields": [
                { "name": "id", "type": "int64" },

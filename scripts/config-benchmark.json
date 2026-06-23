@@ -19,7 +19,7 @@
          "server_address": "127.0.0.1:8211"
       }
    ],
-   "source_nodes_experiments": [
+   "experiments": [
       {
          "included_nodes": [0, 1],
          "iterations": 2,
@@ -41,12 +41,12 @@
    ],
    "cluster_nodes": [
       {
-         "type": "processing",
-         "address": "127.0.0.1:8017"
+         "node_type": "processing",
+         "server_address": "127.0.0.1:8017"
       },
       {
-         "type": "sink",
-         "address": "127.0.0.1:8027"
+         "node_type": "sink",
+         "server_address": "127.0.0.1:8027"
       }
    ]
 }

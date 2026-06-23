@@ -1,3 +1,5 @@
+from typing import List
+
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.ipc as ipc
@@ -7,7 +9,7 @@ DEFAULT_COLUMNS_TO_ENCODE = ["city", "name"]
 
 
 def dictionary_encode_batch(
-    batch: pa.RecordBatch, columns: list[str] = DEFAULT_COLUMNS_TO_ENCODE
+    batch: pa.RecordBatch, columns: List[str] = DEFAULT_COLUMNS_TO_ENCODE
 ) -> pa.RecordBatch:
     print("dictionary encoding batches...")
     new_arrays = []
@@ -27,7 +29,7 @@ def dictionary_encode_batch(
 
 
 def dictionary_encode_schema(
-    schema: pa.Schema, columns: list[str] = DEFAULT_COLUMNS_TO_ENCODE
+    schema: pa.Schema, columns: List[str] = DEFAULT_COLUMNS_TO_ENCODE
 ) -> pa.Schema:
     print("dictionary encoding schema...")
     new_fields = []
