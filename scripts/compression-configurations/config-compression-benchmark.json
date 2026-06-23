@@ -10,7 +10,93 @@
          "server_address": "127.0.0.1:8210"
       }
    ],
-   "source_nodes_experiments": [
+   "node_configs": {
+      "zstd_dict": {
+         "127.0.0.1:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      },
+      "zstd_only": {
+         "127.0.0.1:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      },
+      "dict_only": {
+         "127.0.0.1:8017": {
+            "compression": null,
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      },
+      "baseline": {
+         "127.0.0.1:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      }
+   },
+   "experiments": [
       {
          "included_nodes": [0],
          "iterations": 1,
@@ -20,7 +106,8 @@
                "encoding": "dictionary"
             }
          ],
-         "name": "compression_with_encoding"
+         "name": "compression_with_encoding",
+         "node_config": "zstd_dict"
       },
       {
          "included_nodes": [0],
@@ -31,7 +118,8 @@
                "encoding": null
             }
          ],
-         "name": "compression_without_encoding"
+         "name": "compression_without_encoding",
+         "node_config": "zstd_only"
       },
       {
          "included_nodes": [0],
@@ -42,7 +130,8 @@
                "encoding": "dictionary"
             }
          ],
-         "name": "no_compression_with_encoding"
+         "name": "no_compression_with_encoding",
+         "node_config": "dict_only"
       },
       {
          "included_nodes": [0],
@@ -53,17 +142,18 @@
                "encoding": null
             }
          ],
-         "name": "no_compression_without_encoding"
+         "name": "no_compression_without_encoding",
+         "node_config": "baseline"
       }
    ],
    "cluster_nodes": [
       {
-         "type": "processing",
-         "address": "127.0.0.1:8017"
+         "node_type": "processing",
+         "server_address": "127.0.0.1:8017"
       },
       {
-         "type": "sink",
-         "address": "127.0.0.1:8027"
+         "node_type": "sink",
+         "server_address": "127.0.0.1:8027"
       }
    ]
 }

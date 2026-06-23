@@ -55,12 +55,15 @@ def push_config(nodes, node_config: Dict[str, dict]):
     """Push per-node RuntimeConfig via SET_CONFIG do_action.
 
     node_config: { server_address (str) -> cfg dict (RuntimeConfig fields) }
-    Missing address -> empty RuntimeConfig pushed.
+    Nodes without an entry are skipped (existing runtime_config preserved).
     """
     for node in nodes:
         addr = node.server_address
-        cfg_dict = node_config.get(addr, {})
-        cfg = RuntimeConfig.from_dict(cfg_dict) if cfg_dict else RuntimeConfig()
+        cfg_dict = node_config.get(addr)
+        if not cfg_dict:
+            print(f"[{addr}] no node_config entry, skipping push")
+            continue
+        cfg = RuntimeConfig.from_dict(cfg_dict)
         body = cfg.to_json()
         try:
             client = flight.FlightClient(f"grpc://{addr}")

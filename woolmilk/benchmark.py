@@ -133,9 +133,10 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 source_node.iteration_id = iteration
                 source_node.id = i
                 if source_node.server_address:
-                    src_cfg = experiment.node_config.get(source_node.server_address, {})
-                    source_node.compression = src_cfg.get("compression")
-                    source_node.encoding = src_cfg.get("encoding")
+                    src_cfg = experiment.node_config.get(source_node.server_address)
+                    if src_cfg:
+                        source_node.compression = src_cfg.get("compression")
+                        source_node.encoding = src_cfg.get("encoding")
 
             current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
             current_experiment_dir.mkdir(parents=True, exist_ok=True)
