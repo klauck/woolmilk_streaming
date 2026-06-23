@@ -58,8 +58,8 @@ class SourceNode:
     iteration_id: Optional[int] = None
     id: Optional[int] = None
     batches_per_second: Optional[str] = None
-    use_compression: Optional[bool] = False
-    use_dictionary_encoding: Optional[bool] = False
+    compression: Optional[str] = None
+    encoding: Optional[str] = None
 
 
 @dataclass
@@ -349,11 +349,13 @@ class DeploymentRunner:
                 cmd.append("--batches-per-second")
                 cmd.append(str(source_node.batches_per_second))
 
-            if source_node.use_compression:
-                cmd.append("--use-compression")
+            if source_node.compression:
+                cmd.append("--compression")
+                cmd.append(source_node.compression)
 
-            if source_node.use_dictionary_encoding:
-                cmd.append("--use-dictionary-encoding")
+            if source_node.encoding:
+                cmd.append("--encoding")
+                cmd.append(source_node.encoding)
 
             node_identifier = (
                 source_node.server_address

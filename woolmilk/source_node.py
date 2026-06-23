@@ -49,8 +49,8 @@ class SourceNode(flight.FlightServerBase):
         iteration_id,
         source_node_id,
         batches_per_second=None,
-        use_compression=False,
-        use_dictionary_encoding=False,
+        compression=None,
+        encoding=None,
     ):
         super().__init__(location)
         self.location = location
@@ -71,8 +71,8 @@ class SourceNode(flight.FlightServerBase):
             batches_per_second / len(processing_nodes) if batches_per_second else None
         )
         self.batches_per_second = batches_per_second
-        self.use_compression = use_compression
-        self.use_dictionary_encoding = use_dictionary_encoding
+        self.compression = compression
+        self.encoding = encoding
         self.thread_tables = [None] * len(processing_nodes)
         self.threads = []
         self.completed_threads = 0
@@ -136,6 +136,7 @@ class SourceNode(flight.FlightServerBase):
         self.threads = []
         for thread_id in range(len(self.processing_nodes)):
             table = self.thread_tables[thread_id]
+            assert table is not None
             t = threading.Thread(
                 target=self.stream_data,
                 args=(
@@ -168,20 +169,21 @@ class SourceNode(flight.FlightServerBase):
             "iteration_id": iteration_id,
             "source_node_id": source_node_id,
             "thread_id": thread_id,
-            "use_compression": self.use_compression,
-            "use_dictionary_encoding": self.use_dictionary_encoding,
+            "compression": self.compression,
+            "encoding": self.encoding,
         }
         encoded_path = json.dumps(path_info)
 
         client = flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
 
+        use_dictionary_encoding = self.encoding == "dictionary"
         target_schema = schema
-        if self.use_dictionary_encoding:
+        if use_dictionary_encoding:
             target_schema = dictionary_encode_schema(schema)
 
         call_options = None
-        if self.use_compression:
-            call_options = get_compressed_flight_options()
+        if self.compression:
+            call_options = get_compressed_flight_options(codec=self.compression)
 
         writer, _ = client.do_put(
             flight.FlightDescriptor.for_path(encoded_path),
@@ -205,7 +207,7 @@ class SourceNode(flight.FlightServerBase):
             else:
                 send_start = now
 
-            if self.use_dictionary_encoding:
+            if use_dictionary_encoding:
                 batch = dictionary_encode_batch(batch)
 
             writer.write_batch(batch)
@@ -268,6 +270,7 @@ def generate_table(
     print("Generate data..")
     print(f"  {event_type}   #tuples: {number_of_tuples}  offset: {offset}  step: {step}")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    assert proc.stdout is not None
     records = []
 
     try:
@@ -360,14 +363,18 @@ if __name__ == "__main__":
         help="Number of batches sent per second (e.g. 1.5 or 3/2)",
     )
     parser.add_argument(
-        "--use-compression",
-        action="store_true",
-        help="Use LZ4 compression for flight flight payload",
+        "--compression",
+        type=str,
+        choices=["zstd", "lz4"],
+        default=None,
+        help="Compression codec for outbound Flight payload",
     )
     parser.add_argument(
-        "--use-dictionary-encoding",
-        action="store_true",
-        help="Dictionary-encode string columns before transmission",
+        "--encoding",
+        type=str,
+        choices=["dictionary"],
+        default=None,
+        help="Encoding applied to string columns before transmission",
     )
     args = parser.parse_args()
 
@@ -401,8 +408,8 @@ if __name__ == "__main__":
     print(f" Source Node ID             : {args.source_node_id}")
     print(f" Source Server Address      : {args.source_server_address}")
     print(f" Batches Per Second         : {batches_per_second}")
-    print(f" Use Compression            : {args.use_compression}")
-    print(f" Use Dictionary Encoding    : {args.use_dictionary_encoding}")
+    print(f" Compression                : {args.compression}")
+    print(f" Encoding                   : {args.encoding}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -434,8 +441,8 @@ if __name__ == "__main__":
         iteration_id=args.iteration_id,
         source_node_id=args.source_node_id,
         batches_per_second=batches_per_second,
-        use_compression=args.use_compression,
-        use_dictionary_encoding=args.use_dictionary_encoding,
+        compression=args.compression,
+        encoding=args.encoding,
     )
 
     if args.source_server_address:

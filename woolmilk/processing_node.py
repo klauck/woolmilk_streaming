@@ -5,8 +5,8 @@ import threading
 import time
 
 import pyarrow as pa
-import pyarrow.flight
 from datafusion import SessionContext
+from pyarrow import flight
 
 from woolmilk.encoding import (
     dictionary_decode_batch,
@@ -17,13 +17,13 @@ from woolmilk.encoding import (
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
-class ProcessingNode(pa.flight.FlightServerBase):
+class ProcessingNode(flight.FlightServerBase):
     def __init__(
         self, location, forward_node, sql_query, schema_json, use_buffering=False
     ):
         super().__init__(location)
         self.use_buffering = use_buffering
-        self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
+        self.forwarding_client = flight.FlightClient(f"grpc://{forward_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
         self.logs = []
@@ -61,7 +61,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
         if action.type == "get_logs":
             with self.logs_lock:
                 logs = self.logs
-            yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
+            yield flight.Result(json.dumps(logs).encode("utf-8"))
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
@@ -71,7 +71,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
                     status = NodeStatus.IDLE
                 else:
                     status = NodeStatus.SENDING_DATA
-            yield pyarrow.flight.Result(status.encode("utf-8"))
+            yield flight.Result(status.encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
@@ -87,8 +87,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
         source_node_id = None
         thread_id = None
 
-        use_dictionary_encoding = False
-        use_compression = False
+        encoding = None
+        compression = None
 
         incoming_path_info = {}
 
@@ -99,10 +99,8 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
-                use_dictionary_encoding = incoming_path_info.get(
-                    "use_dictionary_encoding", False
-                )
-                use_compression = incoming_path_info.get("use_compression", False)
+                encoding = incoming_path_info.get("encoding")
+                compression = incoming_path_info.get("compression")
 
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
@@ -110,16 +108,17 @@ class ProcessingNode(pa.flight.FlightServerBase):
         # we forward same path information to the next node
         forwarded_path_info = json.dumps(incoming_path_info)
 
+        use_dictionary_encoding = encoding == "dictionary"
         target_schema = self.predefined_schema
         if use_dictionary_encoding:
             target_schema = dictionary_encode_schema(target_schema)
 
         call_options = None
-        if use_compression:
-            call_options = get_compressed_flight_options()
+        if compression:
+            call_options = get_compressed_flight_options(codec=compression)
 
         forward_writer, _ = self.forwarding_client.do_put(
-            pa.flight.FlightDescriptor.for_path(forwarded_path_info),
+            flight.FlightDescriptor.for_path(forwarded_path_info),
             schema=target_schema,
             options=call_options,
         )

@@ -16,8 +16,8 @@
          "iterations": 1,
          "overridden_params": [
             {
-               "use_compression": true,
-               "use_dictionary_encoding": true
+               "compression": "zstd",
+               "encoding": "dictionary"
             }
          ],
          "name": "compression_with_encoding"
@@ -27,8 +27,8 @@
          "iterations": 1,
          "overridden_params": [
             {
-               "use_compression": true,
-               "use_dictionary_encoding": false
+               "compression": "zstd",
+               "encoding": null
             }
          ],
          "name": "compression_without_encoding"
@@ -38,8 +38,8 @@
          "iterations": 1,
          "overridden_params": [
             {
-               "use_compression": false,
-               "use_dictionary_encoding": true
+               "compression": null,
+               "encoding": "dictionary"
             }
          ],
          "name": "no_compression_with_encoding"
@@ -49,8 +49,8 @@
          "iterations": 1,
          "overridden_params": [
             {
-               "use_compression": false,
-               "use_dictionary_encoding": false
+               "compression": null,
+               "encoding": null
             }
          ],
          "name": "no_compression_without_encoding"
