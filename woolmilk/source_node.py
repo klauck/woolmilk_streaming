@@ -380,7 +380,7 @@ if __name__ == "__main__":
         help="Encoding applied to string columns before transmission",
     )
     parser.add_argument(
-        "--columns_to_encode",
+        "--columns-to-encode",
         type=str,
         default=None,
         help="Columns to encode for transmission (attribute1,attribute2)",

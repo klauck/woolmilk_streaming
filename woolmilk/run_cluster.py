@@ -359,7 +359,7 @@ class DeploymentRunner:
                 cmd.append(source_node.encoding)
 
             if source_node.columns_to_encode:
-                cmd.append("--columns_to_encode")
+                cmd.append("--columns-to-encode")
                 columns_to_encode = ",".join(source_node.columns_to_encode)
                 cmd.append(columns_to_encode)
 
