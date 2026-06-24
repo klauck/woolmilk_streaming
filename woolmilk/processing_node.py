@@ -9,9 +9,9 @@ from datafusion import SessionContext
 from pyarrow import flight
 
 from woolmilk.encoding import (
+    set_schema_encoding,
     dictionary_decode_batch,
     dictionary_encode_batch,
-    dictionary_encode_schema,
     get_compressed_flight_options,
 )
 from woolmilk.source_node import NodeStatus, SourceNodeActions
@@ -100,6 +100,7 @@ class ProcessingNode(flight.FlightServerBase):
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
                 encoding = incoming_path_info.get("encoding")
+                columns_to_encode = incoming_path_info.get("columns_to_encode")
                 compression = incoming_path_info.get("compression")
 
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
@@ -111,7 +112,7 @@ class ProcessingNode(flight.FlightServerBase):
         use_dictionary_encoding = encoding == "dictionary"
         target_schema = self.predefined_schema
         if use_dictionary_encoding:
-            target_schema = dictionary_encode_schema(target_schema)
+            target_schema = set_schema_encoding(target_schema, columns_to_encode)
 
         call_options = None
         if compression:
@@ -142,7 +143,7 @@ class ProcessingNode(flight.FlightServerBase):
 
             for result_batch in result:
                 if use_dictionary_encoding:
-                    result_batch = dictionary_encode_batch(result_batch)
+                    result_batch = dictionary_encode_batch(result_batch, columns_to_encode)
 
                 forward_writer.write_batch(result_batch)
                 total_bytes += result_batch.nbytes

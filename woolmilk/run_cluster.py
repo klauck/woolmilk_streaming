@@ -60,6 +60,7 @@ class SourceNode:
     batches_per_second: Optional[str] = None
     compression: Optional[str] = None
     encoding: Optional[str] = None
+    columns_to_encode: Optional[List[str]] = None
 
 
 @dataclass
@@ -357,6 +358,11 @@ class DeploymentRunner:
                 cmd.append("--encoding")
                 cmd.append(source_node.encoding)
 
+            if source_node.columns_to_encode:
+                cmd.append("--columns_to_encode")
+                columns_to_encode = ",".join(source_node.columns_to_encode)
+                cmd.append(columns_to_encode)
+
             node_identifier = (
                 source_node.server_address
                 if source_node.server_address is not None
@@ -528,7 +534,7 @@ if __name__ == "__main__":
         local_log_dir=args.local_log_dir if args.local_log_dir else None,
         local_results_dir=args.local_results_dir if args.local_results_dir else None,
     )
-    runner.deploy()
+    runner.deploy_and_wait()
 
     time.sleep(2)
     print("Press any key to exit")
