@@ -39,6 +39,7 @@ class ProcessingNode:
     forward_node: str
     query_result_schema: Dict
     query: Optional[str] = None
+    use_buffering: Optional[bool] = False
 
 
 @dataclass
@@ -57,6 +58,9 @@ class SourceNode:
     iteration_id: Optional[int] = None
     id: Optional[int] = None
     batches_per_second: Optional[str] = None
+    compression: Optional[str] = None
+    encoding: Optional[str] = None
+    columns_to_encode: Optional[List[str]] = None
 
 
 @dataclass
@@ -284,6 +288,8 @@ class DeploymentRunner:
             if proc_node.query:
                 cmd.append("--query")
                 cmd.append(self.quote_if_remote(proc_node.query))
+            if proc_node.use_buffering:
+                cmd.append("--use-buffering")
 
             self._spawn_process(
                 "processing", proc_node.server_address, cmd, base_dir=base_dir, host=host
@@ -343,6 +349,19 @@ class DeploymentRunner:
             if source_node.batches_per_second is not None:
                 cmd.append("--batches-per-second")
                 cmd.append(str(source_node.batches_per_second))
+
+            if source_node.compression:
+                cmd.append("--compression")
+                cmd.append(source_node.compression)
+
+            if source_node.encoding:
+                cmd.append("--encoding")
+                cmd.append(source_node.encoding)
+
+            if source_node.columns_to_encode:
+                cmd.append("--columns-to-encode")
+                columns_to_encode = ",".join(source_node.columns_to_encode)
+                cmd.append(columns_to_encode)
 
             node_identifier = (
                 source_node.server_address
@@ -515,7 +534,7 @@ if __name__ == "__main__":
         local_log_dir=args.local_log_dir if args.local_log_dir else None,
         local_results_dir=args.local_results_dir if args.local_results_dir else None,
     )
-    runner.deploy()
+    runner.deploy_and_wait()
 
     time.sleep(2)
     print("Press any key to exit")

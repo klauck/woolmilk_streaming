@@ -11,6 +11,12 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
 
+from woolmilk.encoding import (
+    dictionary_encode_batch,
+    get_compressed_flight_options,
+    set_schema_encoding,
+)
+
 
 class NodeStatus:
     IDLE = "IDLE"
@@ -43,6 +49,9 @@ class SourceNode(flight.FlightServerBase):
         iteration_id,
         source_node_id,
         batches_per_second=None,
+        compression=None,
+        encoding=None,
+        columns_to_encode=None,
     ):
         super().__init__(location)
         self.location = location
@@ -63,6 +72,9 @@ class SourceNode(flight.FlightServerBase):
             batches_per_second / len(processing_nodes) if batches_per_second else None
         )
         self.batches_per_second = batches_per_second
+        self.compression = compression
+        self.encoding = encoding
+        self.columns_to_encode = columns_to_encode
         self.thread_tables = [None] * len(processing_nodes)
         self.threads = []
         self.completed_threads = 0
@@ -126,6 +138,7 @@ class SourceNode(flight.FlightServerBase):
         self.threads = []
         for thread_id in range(len(self.processing_nodes)):
             table = self.thread_tables[thread_id]
+            assert table is not None
             t = threading.Thread(
                 target=self.stream_data,
                 args=(
@@ -158,11 +171,28 @@ class SourceNode(flight.FlightServerBase):
             "iteration_id": iteration_id,
             "source_node_id": source_node_id,
             "thread_id": thread_id,
+            "compression": self.compression,
+            "encoding": self.encoding,
+            "columns_to_encode": self.columns_to_encode,
         }
         encoded_path = json.dumps(path_info)
 
         client = flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
-        writer, _ = client.do_put(flight.FlightDescriptor.for_path(encoded_path), schema)
+
+        use_dictionary_encoding = self.encoding == "dictionary"
+        target_schema = schema
+        if use_dictionary_encoding:
+            target_schema = set_schema_encoding(schema, self.columns_to_encode)
+
+        call_options = None
+        if self.compression:
+            call_options = get_compressed_flight_options(codec=self.compression)
+
+        writer, _ = client.do_put(
+            flight.FlightDescriptor.for_path(encoded_path),
+            target_schema,
+            options=call_options,
+        )
 
         start = time.time()
         send_times = []
@@ -179,6 +209,10 @@ class SourceNode(flight.FlightServerBase):
                 send_start = time.time()
             else:
                 send_start = now
+
+            if use_dictionary_encoding:
+                batch = dictionary_encode_batch(batch, self.columns_to_encode)
+
             writer.write_batch(batch)
             total_bytes += batch.nbytes
             send_end = time.time()
@@ -239,6 +273,7 @@ def generate_table(
     print("Generate data..")
     print(f"  {event_type}   #tuples: {number_of_tuples}  offset: {offset}  step: {step}")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    assert proc.stdout is not None
     records = []
 
     try:
@@ -330,6 +365,26 @@ if __name__ == "__main__":
         default=None,
         help="Number of batches sent per second (e.g. 1.5 or 3/2)",
     )
+    parser.add_argument(
+        "--compression",
+        type=str,
+        choices=["zstd", "lz4"],
+        default=None,
+        help="Compression codec for outbound Flight payload",
+    )
+    parser.add_argument(
+        "--encoding",
+        type=str,
+        choices=["dictionary"],
+        default=None,
+        help="Encoding applied to string columns before transmission",
+    )
+    parser.add_argument(
+        "--columns-to-encode",
+        type=str,
+        default=None,
+        help="Columns to encode for transmission (attribute1,attribute2)",
+    )
     args = parser.parse_args()
 
     processing_nodes = []
@@ -344,6 +399,11 @@ if __name__ == "__main__":
     if args.batches_per_second:
         batches_per_second = Fraction(args.batches_per_second)
         assert batches_per_second > 0, "batches_per_second must be positive"
+
+    if args.columns_to_encode:
+        columns_to_encode = args.columns_to_encode.split(",")
+    else:
+        columns_to_encode = None
 
     print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
@@ -362,6 +422,9 @@ if __name__ == "__main__":
     print(f" Source Node ID             : {args.source_node_id}")
     print(f" Source Server Address      : {args.source_server_address}")
     print(f" Batches Per Second         : {batches_per_second}")
+    print(f" Compression                : {args.compression}")
+    print(f" Encoding                   : {args.encoding}")
+    print(f" Columns to Encode          : {args.columns_to_encode}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -393,6 +456,9 @@ if __name__ == "__main__":
         iteration_id=args.iteration_id,
         source_node_id=args.source_node_id,
         batches_per_second=batches_per_second,
+        compression=args.compression,
+        encoding=args.encoding,
+        columns_to_encode=columns_to_encode,
     )
 
     if args.source_server_address:

@@ -5,13 +5,14 @@ import threading
 import time
 
 import pyarrow as pa
-import pyarrow.flight
 import pyarrow.parquet as pq
+from pyarrow import flight
 
+from woolmilk.encoding import dictionary_decode_batch
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
-class SinkNode(pa.flight.FlightServerBase):
+class SinkNode(flight.FlightServerBase):
     def __init__(self, location, result_folder=None):
         super().__init__(location)
         self.result_folder = result_folder
@@ -28,7 +29,7 @@ class SinkNode(pa.flight.FlightServerBase):
         if action.type == "get_logs":
             with self.logs_lock:
                 logs = self.logs
-            yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
+            yield flight.Result(json.dumps(logs).encode("utf-8"))
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
@@ -38,7 +39,7 @@ class SinkNode(pa.flight.FlightServerBase):
                     status = NodeStatus.IDLE
                 else:
                     status = NodeStatus.RECEIVING_DATA
-            yield pyarrow.flight.Result(status.encode("utf-8"))
+            yield flight.Result(status.encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
@@ -51,6 +52,8 @@ class SinkNode(pa.flight.FlightServerBase):
         source_node_id = None
         thread_id = None
 
+        encoding = None
+
         try:
             incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
             if isinstance(incoming_path_info, dict):
@@ -58,8 +61,11 @@ class SinkNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
+                encoding = incoming_path_info.get("encoding")
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
+
+        use_dictionary_encoding = encoding == "dictionary"
 
         total_bytes = 0
         receive_times = []
@@ -67,6 +73,10 @@ class SinkNode(pa.flight.FlightServerBase):
         result = []
         for chunk in reader:
             batch = chunk.data
+
+            if use_dictionary_encoding:
+                batch = dictionary_decode_batch(batch)
+
             # execute and forward data here
             total_bytes += batch.nbytes
             if self.result_folder:

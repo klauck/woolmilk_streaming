@@ -21,7 +21,9 @@
          "overall_tuples": 1000000,
          "tuples_per_batch": 100000,
          "deployment_server": "127.0.0.1",
-         "server_address": "127.0.0.1:8210"
+         "server_address": "127.0.0.1:8210",
+         "encoding": "dictionary",
+         "columns_to_encode": ["city", "name"]
       }
    ]
 }

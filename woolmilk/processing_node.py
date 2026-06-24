@@ -1,19 +1,29 @@
 import argparse
 import json
+import queue
 import threading
 import time
 
 import pyarrow as pa
-import pyarrow.flight
 from datafusion import SessionContext
+from pyarrow import flight
 
+from woolmilk.encoding import (
+    dictionary_decode_batch,
+    dictionary_encode_batch,
+    get_compressed_flight_options,
+    set_schema_encoding,
+)
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
-class ProcessingNode(pa.flight.FlightServerBase):
-    def __init__(self, location, forward_node, sql_query, schema_json):
+class ProcessingNode(flight.FlightServerBase):
+    def __init__(
+        self, location, forward_node, sql_query, schema_json, use_buffering=False
+    ):
         super().__init__(location)
-        self.forwarding_client = pa.flight.FlightClient(f"grpc://{forward_node}")
+        self.use_buffering = use_buffering
+        self.forwarding_client = flight.FlightClient(f"grpc://{forward_node}")
         self.query = sql_query
         self.default_table_name = "nexmark_data"
         self.logs = []
@@ -51,7 +61,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
         if action.type == "get_logs":
             with self.logs_lock:
                 logs = self.logs
-            yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
+            yield flight.Result(json.dumps(logs).encode("utf-8"))
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
@@ -61,7 +71,7 @@ class ProcessingNode(pa.flight.FlightServerBase):
                     status = NodeStatus.IDLE
                 else:
                     status = NodeStatus.SENDING_DATA
-            yield pyarrow.flight.Result(status.encode("utf-8"))
+            yield flight.Result(status.encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
@@ -77,6 +87,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
         source_node_id = None
         thread_id = None
 
+        encoding = None
+        compression = None
+
         incoming_path_info = {}
 
         try:
@@ -86,6 +99,9 @@ class ProcessingNode(pa.flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
+                encoding = incoming_path_info.get("encoding")
+                columns_to_encode = incoming_path_info.get("columns_to_encode")
+                compression = incoming_path_info.get("compression")
 
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
@@ -93,9 +109,19 @@ class ProcessingNode(pa.flight.FlightServerBase):
         # we forward same path information to the next node
         forwarded_path_info = json.dumps(incoming_path_info)
 
+        use_dictionary_encoding = encoding == "dictionary"
+        target_schema = self.predefined_schema
+        if use_dictionary_encoding:
+            target_schema = set_schema_encoding(target_schema, columns_to_encode)
+
+        call_options = None
+        if compression:
+            call_options = get_compressed_flight_options(codec=compression)
+
         forward_writer, _ = self.forwarding_client.do_put(
-            pa.flight.FlightDescriptor.for_path(forwarded_path_info),
-            schema=self.predefined_schema,
+            flight.FlightDescriptor.for_path(forwarded_path_info),
+            schema=target_schema,
+            options=call_options,
         )
 
         total_bytes = 0
@@ -103,31 +129,60 @@ class ProcessingNode(pa.flight.FlightServerBase):
         cost_break_down = {"receiving": [], "querying": [], "sending": []}
         forward_start = start = time.time()
 
-        for chunk in reader:
-            batch = chunk.data
+        def process_batch(batch, forward_start):
+            nonlocal total_bytes
+            if use_dictionary_encoding:
+                batch = dictionary_decode_batch(batch)
 
             processing_start = time.time()
             ctx.register_record_batches(self.default_table_name, [[batch]])
 
             result_df = ctx.sql(self.query)
-
             result = result_df.collect()
             processing_end = time.time()
 
             for result_batch in result:
+                if use_dictionary_encoding:
+                    result_batch = dictionary_encode_batch(
+                        result_batch, columns_to_encode
+                    )
+
                 forward_writer.write_batch(result_batch)
                 total_bytes += result_batch.nbytes
 
             ctx.deregister_table(self.default_table_name)
-
             forward_end = time.time()
-            forwarding_times.append((forward_start, forward_end))
 
+            forwarding_times.append((forward_start, forward_end))
             cost_break_down["receiving"].append(processing_start - forward_start)
             cost_break_down["querying"].append(processing_end - processing_start)
             cost_break_down["sending"].append(forward_end - processing_end)
+            return forward_end
 
-            forward_start = forward_end
+        if self.use_buffering:
+            print("using buffering...")
+            q = queue.Queue()
+
+            def processing_worker():
+                f_start = forward_start
+                while True:
+                    batch = q.get()
+                    if batch is None:
+                        break
+                    f_start = process_batch(batch, f_start)
+
+            worker_thread = threading.Thread(target=processing_worker)
+            worker_thread.start()
+
+            for chunk in reader:
+                q.put(chunk.data)
+
+            # Signal end of stream
+            q.put(None)
+            worker_thread.join()
+        else:
+            for chunk in reader:
+                forward_start = process_batch(chunk.data, forward_start)
 
         forward_writer.done_writing()
         end = time.time()
@@ -186,6 +241,11 @@ if __name__ == "__main__":
         required=True,
         help="JSON schema definition for the data (required)",
     )
+    parser.add_argument(
+        "--use-buffering",
+        action="store_true",
+        help="Use buffering and queuing for incoming batches",
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 40)
@@ -195,15 +255,17 @@ if __name__ == "__main__":
     print(f" Forward Node   : {args.forward_node}")
     print(f" SQL Query      : {args.query}")
     print(f" Schema         : {args.query_result_schema}")
+    print(f" Use Buffering  : {args.use_buffering}")
     print("=" * 40 + "\n")
 
     port = args.port
     forward_node = args.forward_node
     sql_query = args.query
     schema_json = args.query_result_schema
+    use_buffering = args.use_buffering
 
     processing_node = ProcessingNode(
-        f"grpc://0.0.0.0:{port}", forward_node, sql_query, schema_json
+        f"grpc://0.0.0.0:{port}", forward_node, sql_query, schema_json, use_buffering
     )
     print(f"WoolMilk processing node running on port {port}")
     processing_node.serve()
