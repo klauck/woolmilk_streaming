@@ -9,10 +9,10 @@ from datafusion import SessionContext
 from pyarrow import flight
 
 from woolmilk.encoding import (
-    set_schema_encoding,
     dictionary_decode_batch,
     dictionary_encode_batch,
     get_compressed_flight_options,
+    set_schema_encoding,
 )
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
@@ -143,7 +143,9 @@ class ProcessingNode(flight.FlightServerBase):
 
             for result_batch in result:
                 if use_dictionary_encoding:
-                    result_batch = dictionary_encode_batch(result_batch, columns_to_encode)
+                    result_batch = dictionary_encode_batch(
+                        result_batch, columns_to_encode
+                    )
 
                 forward_writer.write_batch(result_batch)
                 total_bytes += result_batch.nbytes

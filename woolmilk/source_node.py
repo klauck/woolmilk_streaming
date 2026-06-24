@@ -12,9 +12,9 @@ import pyarrow.parquet as pq
 from pyarrow import flight
 
 from woolmilk.encoding import (
-    set_schema_encoding,
     dictionary_encode_batch,
     get_compressed_flight_options,
+    set_schema_encoding,
 )
 
 
@@ -51,7 +51,7 @@ class SourceNode(flight.FlightServerBase):
         batches_per_second=None,
         compression=None,
         encoding=None,
-        columns_to_encode=None
+        columns_to_encode=None,
     ):
         super().__init__(location)
         self.location = location
@@ -458,7 +458,7 @@ if __name__ == "__main__":
         batches_per_second=batches_per_second,
         compression=args.compression,
         encoding=args.encoding,
-        columns_to_encode=columns_to_encode
+        columns_to_encode=columns_to_encode,
     )
 
     if args.source_server_address:

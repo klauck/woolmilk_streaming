@@ -62,7 +62,6 @@ class SinkNode(flight.FlightServerBase):
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
                 encoding = incoming_path_info.get("encoding")
-                columns_to_encode = incoming_path_info.get("columns_to_encode")
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 
