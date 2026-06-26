@@ -13,8 +13,8 @@ from pyarrow import flight
 
 from woolmilk.encoding import (
     dictionary_encode_batch,
-    dictionary_encode_schema,
     get_compressed_flight_options,
+    set_schema_encoding,
 )
 
 
@@ -51,6 +51,7 @@ class SourceNode(flight.FlightServerBase):
         batches_per_second=None,
         compression=None,
         encoding=None,
+        columns_to_encode=None,
     ):
         super().__init__(location)
         self.location = location
@@ -73,6 +74,7 @@ class SourceNode(flight.FlightServerBase):
         self.batches_per_second = batches_per_second
         self.compression = compression
         self.encoding = encoding
+        self.columns_to_encode = columns_to_encode
         self.thread_tables = [None] * len(processing_nodes)
         self.threads = []
         self.completed_threads = 0
@@ -177,7 +179,8 @@ class SourceNode(flight.FlightServerBase):
         use_dictionary_encoding = self.encoding == "dictionary"
         target_schema = schema
         if use_dictionary_encoding:
-            target_schema = dictionary_encode_schema(schema)
+            assert self.columns_to_encode is not None
+            target_schema = set_schema_encoding(schema, self.columns_to_encode)
 
         call_options = None
         if self.compression:
@@ -206,7 +209,8 @@ class SourceNode(flight.FlightServerBase):
                 send_start = now
 
             if use_dictionary_encoding:
-                batch = dictionary_encode_batch(batch)
+                assert self.columns_to_encode is not None
+                batch = dictionary_encode_batch(batch, self.columns_to_encode)
 
             batch_id = f"{source_node_id}:{thread_id}:{i}"
             writer.write_with_metadata(batch, batch_id.encode("utf-8"))
@@ -375,6 +379,12 @@ if __name__ == "__main__":
         default=None,
         help="Encoding applied to string columns before transmission",
     )
+    parser.add_argument(
+        "--columns-to-encode",
+        type=str,
+        default=None,
+        help="Comma-separated columns to dictionary-encode (e.g. city,name)",
+    )
     args = parser.parse_args()
 
     processing_nodes = []
@@ -389,6 +399,10 @@ if __name__ == "__main__":
     if args.batches_per_second:
         batches_per_second = Fraction(args.batches_per_second)
         assert batches_per_second > 0, "batches_per_second must be positive"
+
+    columns_to_encode = (
+        args.columns_to_encode.split(",") if args.columns_to_encode else None
+    )
 
     print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
@@ -409,6 +423,7 @@ if __name__ == "__main__":
     print(f" Batches Per Second         : {batches_per_second}")
     print(f" Compression                : {args.compression}")
     print(f" Encoding                   : {args.encoding}")
+    print(f" Columns to Encode          : {args.columns_to_encode}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -440,6 +455,7 @@ if __name__ == "__main__":
         batches_per_second=batches_per_second,
         compression=args.compression,
         encoding=args.encoding,
+        columns_to_encode=columns_to_encode,
     )
 
     if args.source_server_address:

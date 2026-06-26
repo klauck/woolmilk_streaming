@@ -11,8 +11,8 @@ from pyarrow import flight
 from woolmilk.encoding import (
     dictionary_decode_batch,
     dictionary_encode_batch,
-    dictionary_encode_schema,
     get_compressed_flight_options,
+    set_schema_encoding,
 )
 from woolmilk.runtime_config import RuntimeConfig
 from woolmilk.source_node import NodeStatus, SourceNodeActions
@@ -144,7 +144,8 @@ class ProcessingNode(flight.FlightServerBase):
         use_dictionary_encoding = cfg.encoding == "dictionary"
         target_schema = self.predefined_schema
         if use_dictionary_encoding:
-            target_schema = dictionary_encode_schema(target_schema)
+            assert cfg.columns_to_encode is not None
+            target_schema = set_schema_encoding(target_schema, cfg.columns_to_encode)
 
         call_options = None
         if cfg.compression:
@@ -201,8 +202,11 @@ class ProcessingNode(flight.FlightServerBase):
             for j, result_batch in enumerate(result):
                 output_rows += result_batch.num_rows
                 if use_dictionary_encoding:
+                    assert cfg.columns_to_encode is not None
                     enc_start = time.time()
-                    result_batch = dictionary_encode_batch(result_batch)
+                    result_batch = dictionary_encode_batch(
+                        result_batch, cfg.columns_to_encode
+                    )
                     encoding_total += time.time() - enc_start
 
                 outgoing_id = (
@@ -354,6 +358,12 @@ if __name__ == "__main__":
         help="Encoding applied to string columns on outbound Flight payload",
     )
     parser.add_argument(
+        "--columns-to-encode",
+        type=str,
+        default=None,
+        help="Comma-separated columns to dictionary-encode (e.g. city,name)",
+    )
+    parser.add_argument(
         "--use-buffering",
         action="store_true",
         help="Enable buffering on processing node",
@@ -376,9 +386,13 @@ if __name__ == "__main__":
     schema_dict = (
         json.loads(args.query_result_schema) if args.query_result_schema else None
     )
+    columns_to_encode = (
+        args.columns_to_encode.split(",") if args.columns_to_encode else None
+    )
     startup_cfg = RuntimeConfig(
         compression=args.compression,
         encoding=args.encoding,
+        columns_to_encode=columns_to_encode,
         use_buffering=args.use_buffering,
         tuples_per_batch=args.tuples_per_batch,
         query=args.query,

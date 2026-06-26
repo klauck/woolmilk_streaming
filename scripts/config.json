@@ -10,6 +10,8 @@
          "server_address": "127.0.0.1:8017",
          "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
          "forward_node": "127.0.0.1:8027",
+         "encoding": "dictionary",
+         "columns_to_encode": ["city", "name"],
          "query_result_schema": {"fields":[{"name":"id","type":"int64"},{"name":"name","type":"string"},{"name":"email_address","type":"string"},{"name":"credit_card","type":"string"},{"name":"city","type":"string"},{"name":"state","type":"string"},{"name":"date_time","type":"int64"},{"name":"extra","type":"string"}]}
       }
    ],
@@ -21,7 +23,9 @@
          "overall_tuples": 1000000,
          "tuples_per_batch": 100000,
          "deployment_server": "127.0.0.1",
-         "server_address": "127.0.0.1:8210"
+         "server_address": "127.0.0.1:8210",
+         "encoding": "dictionary",
+         "columns_to_encode": ["city", "name"]
       }
    ]
 }

@@ -41,6 +41,7 @@ class ProcessingNode:
     query_result_schema: Optional[Dict] = None
     compression: Optional[str] = None
     encoding: Optional[str] = None
+    columns_to_encode: Optional[List[str]] = None
     use_buffering: Optional[bool] = False
     tuples_per_batch: Optional[int] = None
 
@@ -63,6 +64,7 @@ class SourceNode:
     batches_per_second: Optional[str] = None
     compression: Optional[str] = None
     encoding: Optional[str] = None
+    columns_to_encode: Optional[List[str]] = None
 
 
 @dataclass
@@ -299,6 +301,9 @@ class DeploymentRunner:
             if proc_node.encoding:
                 cmd.append("--encoding")
                 cmd.append(proc_node.encoding)
+            if proc_node.columns_to_encode:
+                cmd.append("--columns-to-encode")
+                cmd.append(",".join(proc_node.columns_to_encode))
             if proc_node.use_buffering:
                 cmd.append("--use-buffering")
 
@@ -367,6 +372,9 @@ class DeploymentRunner:
             if source_node.encoding:
                 cmd.append("--encoding")
                 cmd.append(source_node.encoding)
+            if source_node.columns_to_encode:
+                cmd.append("--columns-to-encode")
+                cmd.append(",".join(source_node.columns_to_encode))
 
             node_identifier = (
                 source_node.server_address
@@ -539,7 +547,7 @@ if __name__ == "__main__":
         local_log_dir=args.local_log_dir if args.local_log_dir else None,
         local_results_dir=args.local_results_dir if args.local_results_dir else None,
     )
-    runner.deploy()
+    runner.deploy_and_wait()
 
     time.sleep(2)
     print("Press any key to exit")

@@ -15,6 +15,7 @@
          "127.0.0.1:8017": {
             "compression": "zstd",
             "encoding": "dictionary",
+            "columns_to_encode": ["city", "name"],
             "use_buffering": true,
             "tuples_per_batch": 100000,
             "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
@@ -57,6 +58,7 @@
          "127.0.0.1:8017": {
             "compression": null,
             "encoding": "dictionary",
+            "columns_to_encode": ["city", "name"],
             "use_buffering": true,
             "tuples_per_batch": 100000,
             "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
@@ -103,7 +105,8 @@
          "overridden_params": [
             {
                "compression": "zstd",
-               "encoding": "dictionary"
+               "encoding": "dictionary",
+               "columns_to_encode": ["city", "name"]
             }
          ],
          "name": "compression_with_encoding",
@@ -127,7 +130,8 @@
          "overridden_params": [
             {
                "compression": null,
-               "encoding": "dictionary"
+               "encoding": "dictionary",
+               "columns_to_encode": ["city", "name"]
             }
          ],
          "name": "no_compression_with_encoding",

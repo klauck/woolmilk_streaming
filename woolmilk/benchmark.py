@@ -14,7 +14,9 @@ from woolmilk.control import (
     push_config,
     start_sending,
     wait_until_completion,
+    wait_until_status,
 )
+from woolmilk.source_node import NodeStatus
 from woolmilk.run_cluster import (
     Config,
     DeploymentRunner,
@@ -158,6 +160,9 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
             )
 
             runner.deploy()
+
+            print("waiting for cluster nodes to be ready...")
+            wait_until_status(cluster_nodes, NodeStatus.IDLE)
 
             print("pushing SET_CONFIG to cluster nodes (processing + sink)...")
             push_config(cluster_nodes, experiment.node_config)
