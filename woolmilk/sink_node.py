@@ -5,15 +5,15 @@ import threading
 import time
 
 import pyarrow as pa
-import pyarrow.flight
 import pyarrow.parquet as pq
+from pyarrow import flight
 
 from woolmilk.encoding import dictionary_decode_batch
 from woolmilk.runtime_config import RuntimeConfig
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
-class SinkNode(pa.flight.FlightServerBase):
+class SinkNode(flight.FlightServerBase):
     def __init__(self, location, result_folder=None):
         super().__init__(location)
         self.result_folder = result_folder
@@ -32,7 +32,7 @@ class SinkNode(pa.flight.FlightServerBase):
         if action.type == "get_logs":
             with self.logs_lock:
                 logs = self.logs
-            yield pyarrow.flight.Result(json.dumps(logs).encode("utf-8"))
+            yield flight.Result(json.dumps(logs).encode("utf-8"))
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
@@ -40,19 +40,19 @@ class SinkNode(pa.flight.FlightServerBase):
             try:
                 cfg = RuntimeConfig.from_json(bytes(action.body.to_pybytes()))
             except Exception as e:
-                yield pyarrow.flight.Result(f"ERR:{e}".encode("utf-8"))
+                yield flight.Result(f"ERR:{e}".encode("utf-8"))
                 return
             with self.runtime_config_lock:
                 self.runtime_config = cfg
             print(f"SET_CONFIG applied: {cfg}")
-            yield pyarrow.flight.Result(b"OK")
+            yield flight.Result(b"OK")
         elif action.type == SourceNodeActions.GET_STATUS:
             with self.open_requests_lock:
                 if self.open_requests == 0:
                     status = NodeStatus.IDLE
                 else:
                     status = NodeStatus.RECEIVING_DATA
-            yield pyarrow.flight.Result(status.encode("utf-8"))
+            yield flight.Result(status.encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
@@ -75,14 +75,6 @@ class SinkNode(pa.flight.FlightServerBase):
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 
-        def decode_metadata(meta):
-            if meta is None:
-                return None
-            try:
-                return bytes(meta).decode("utf-8")
-            except Exception:
-                return None
-
         total_bytes = 0
         receive_times = []
         work_times = []
@@ -91,7 +83,11 @@ class SinkNode(pa.flight.FlightServerBase):
         for chunk in reader:
             batch_work_start = time.time()
             batch = chunk.data
-            batch_id = decode_metadata(chunk.app_metadata)
+            batch_id = (
+                bytes(chunk.app_metadata).decode("utf-8")
+                if chunk.app_metadata
+                else None
+            )
 
             batch = dictionary_decode_batch(batch)
 

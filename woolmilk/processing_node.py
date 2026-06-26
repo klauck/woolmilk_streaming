@@ -171,18 +171,14 @@ class ProcessingNode(flight.FlightServerBase):
         }
         start = time.time()
 
-        def decode_metadata(meta):
-            if meta is None:
-                return None
-            try:
-                return bytes(meta).decode("utf-8")
-            except Exception:
-                return None
-
         def process_batch(batch, batch_in_hand_t, incoming_metadata):
             nonlocal input_bytes, output_bytes, input_rows, output_rows
 
-            batch_id = decode_metadata(incoming_metadata)
+            batch_id = (
+                bytes(incoming_metadata).decode("utf-8")
+                if incoming_metadata
+                else None
+            )
 
             decoding_start = time.time()
             if use_dictionary_encoding:
