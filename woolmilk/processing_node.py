@@ -176,9 +176,7 @@ class ProcessingNode(flight.FlightServerBase):
             nonlocal input_bytes, output_bytes, input_rows, output_rows
 
             batch_id = (
-                bytes(incoming_metadata).decode("utf-8")
-                if incoming_metadata
-                else None
+                bytes(incoming_metadata).decode("utf-8") if incoming_metadata else None
             )
 
             decoding_start = time.time()

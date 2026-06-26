@@ -84,9 +84,7 @@ class SinkNode(flight.FlightServerBase):
             batch_work_start = time.time()
             batch = chunk.data
             batch_id = (
-                bytes(chunk.app_metadata).decode("utf-8")
-                if chunk.app_metadata
-                else None
+                bytes(chunk.app_metadata).decode("utf-8") if chunk.app_metadata else None
             )
 
             batch = dictionary_decode_batch(batch)

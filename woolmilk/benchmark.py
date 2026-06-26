@@ -16,7 +16,6 @@ from woolmilk.control import (
     wait_until_completion,
     wait_until_status,
 )
-from woolmilk.source_node import NodeStatus
 from woolmilk.run_cluster import (
     Config,
     DeploymentRunner,
@@ -24,6 +23,8 @@ from woolmilk.run_cluster import (
     SourceNode,
     parse_config,
 )
+from woolmilk.source_node import NodeStatus
+
 
 @dataclass
 class ExperimentConfig:
