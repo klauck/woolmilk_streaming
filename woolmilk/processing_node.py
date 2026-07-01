@@ -35,7 +35,6 @@ class ProcessingNode(flight.FlightServerBase):
         self.open_requests_lock = threading.Lock()
 
         self.runtime_config = runtime_config or RuntimeConfig()
-        self.runtime_config_lock = threading.Lock()
 
         self.predefined_schema = None
         if self.runtime_config.query_result_schema:
@@ -64,10 +63,6 @@ class ProcessingNode(flight.FlightServerBase):
 
         return pa.schema(fields)
 
-    def current_config(self) -> RuntimeConfig:
-        with self.runtime_config_lock:
-            return self.runtime_config
-
     def do_action(self, context, action):
         if action.type == ProcessingNodeActions.GET_LOGS:
             with self.logs_lock:
@@ -82,11 +77,10 @@ class ProcessingNode(flight.FlightServerBase):
             except Exception as e:
                 yield flight.Result(f"ERR:{e}".encode("utf-8"))
                 return
-            with self.runtime_config_lock:
-                self.runtime_config = cfg
-                if cfg.query_result_schema is not None:
-                    self.predefined_schema = self.parse_schema(
-                        json.dumps(cfg.query_result_schema)
+            self.runtime_config = cfg
+            if cfg.query_result_schema is not None:
+                self.predefined_schema = self.parse_schema(
+                    json.dumps(cfg.query_result_schema)
                     )
             print(f"SET_CONFIG applied: {cfg}")
             yield flight.Result(b"OK")
@@ -101,7 +95,7 @@ class ProcessingNode(flight.FlightServerBase):
             raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
-        cfg = self.current_config()
+        cfg = self.runtime_config
         if not cfg.query:
             raise flight.FlightServerError(
                 "SET_CONFIG not received: query is unset on this processing node"
