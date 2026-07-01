@@ -105,11 +105,25 @@ class ProcessingNode(flight.FlightServerBase):
                 "SET_CONFIG not received: "
                 "query_result_schema is unset on this processing node"
             )
-        query: str = cfg.query
 
         with self.open_requests_lock:
             self.open_requests += 1
 
+        ctx = SessionContext(SessionConfig().with_batch_size(cfg.tuples_per_batch))
+
+        # set runtime configuration for connection
+        query: str = cfg.query
+        use_dictionary_encoding = cfg.encoding == "dictionary"
+        target_schema = self.predefined_schema
+        if use_dictionary_encoding:
+            assert cfg.columns_to_encode is not None
+            target_schema = set_schema_encoding(target_schema, cfg.columns_to_encode)
+
+        call_options = None
+        if cfg.compression:
+            call_options = get_compressed_flight_options(codec=cfg.compression)
+
+        # Get and set benchmarking information
         experiment_id = None
         iteration_id = None
         source_node_id = None
@@ -123,7 +137,7 @@ class ProcessingNode(flight.FlightServerBase):
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
-            incoming_path_info = {}
+            pass
 
         forwarded_path_info = json.dumps(
             {
@@ -133,18 +147,6 @@ class ProcessingNode(flight.FlightServerBase):
                 "thread_id": thread_id,
             }
         )
-
-        ctx = SessionContext(SessionConfig().with_batch_size(cfg.tuples_per_batch))
-
-        use_dictionary_encoding = cfg.encoding == "dictionary"
-        target_schema = self.predefined_schema
-        if use_dictionary_encoding:
-            assert cfg.columns_to_encode is not None
-            target_schema = set_schema_encoding(target_schema, cfg.columns_to_encode)
-
-        call_options = None
-        if cfg.compression:
-            call_options = get_compressed_flight_options(codec=cfg.compression)
 
         forward_writer, _ = self.forwarding_client.do_put(
             flight.FlightDescriptor.for_path(forwarded_path_info),
