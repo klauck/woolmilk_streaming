@@ -1,5 +1,5 @@
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import List, Optional
 
 VALID_COMPRESSIONS = {None, "zstd", "lz4"}

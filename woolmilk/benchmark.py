@@ -6,7 +6,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import pyarrow as pa
 from pyarrow import flight
 
 from woolmilk.control import (

@@ -81,7 +81,7 @@ class ProcessingNode(flight.FlightServerBase):
             if cfg.query_result_schema is not None:
                 self.predefined_schema = self.parse_schema(
                     json.dumps(cfg.query_result_schema)
-                    )
+                )
             print(f"SET_CONFIG applied: {cfg}")
             yield flight.Result(b"OK")
         elif action.type == SourceNodeActions.GET_STATUS:
@@ -102,7 +102,8 @@ class ProcessingNode(flight.FlightServerBase):
             )
         if self.predefined_schema is None:
             raise flight.FlightServerError(
-                "SET_CONFIG not received: query_result_schema is unset on this processing node"
+                "SET_CONFIG not received: "
+                "query_result_schema is unset on this processing node"
             )
         query: str = cfg.query
 
