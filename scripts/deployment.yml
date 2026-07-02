@@ -41,3 +41,8 @@
         requirements: "{{ project_dest }}/requirements.txt"
         virtualenv: "{{ venv_path }}"
       ignore_errors: yes    # skips if no requirements.txt
+    - name: Install project in editable mode (pip install -e .)
+      pip:
+        name: "{{ project_dest }}"
+        editable: true
+        virtualenv: "{{ venv_path }}"
