@@ -98,12 +98,13 @@ class ProcessingNode(flight.FlightServerBase):
         cfg = self.runtime_config
         if not cfg.query:
             raise flight.FlightServerError(
-                "SET_CONFIG not received: query is unset on this processing node"
+                "Invalid runtime config: 'query' is unset. "
+                "Send SET_CONFIG with a 'query' field before sending data."
             )
         if self.predefined_schema is None:
             raise flight.FlightServerError(
-                "SET_CONFIG not received: "
-                "query_result_schema is unset on this processing node"
+                "Invalid runtime config: 'query_result_schema' is unset. "
+                "Send SET_CONFIG with a 'query_result_schema' before sending data."
             )
 
         with self.open_requests_lock:
@@ -368,14 +369,15 @@ if __name__ == "__main__":
     print("\n" + "=" * 40)
     print(" WoolMilk Processing Node Parameters")
     print("=" * 40)
-    print(f" Port           : {args.port}")
-    print(f" Forward Node   : {args.forward_node}")
-    print(f" SQL Query      : {args.query}")
-    print(f" Schema         : {args.query_result_schema}")
-    print(f" Compression    : {args.compression}")
-    print(f" Encoding       : {args.encoding}")
-    print(f" Use Buffering  : {args.use_buffering}")
-    print(f" Tuples/Batch   : {args.tuples_per_batch}")
+    print(f" Port               : {args.port}")
+    print(f" Forward Node       : {args.forward_node}")
+    print(f" SQL Query          : {args.query}")
+    print(f" Schema             : {args.query_result_schema}")
+    print(f" Compression        : {args.compression}")
+    print(f" Encoding           : {args.encoding}")
+    print(f" Columns to encode  : {args.columns_to_encode}")
+    print(f" Use Buffering      : {args.use_buffering}")
+    print(f" Tuples/Batch       : {args.tuples_per_batch}")
     print("=" * 40 + "\n")
 
     schema_dict = (

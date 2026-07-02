@@ -26,7 +26,6 @@ class SinkNode(flight.FlightServerBase):
         self.open_requests = 0
         self.open_requests_lock = threading.Lock()
         self.runtime_config = RuntimeConfig()
-        self.runtime_config_lock = threading.Lock()
 
     def do_action(self, context, action):
         if action.type == "get_logs":
@@ -42,8 +41,7 @@ class SinkNode(flight.FlightServerBase):
             except Exception as e:
                 yield flight.Result(f"ERR:{e}".encode("utf-8"))
                 return
-            with self.runtime_config_lock:
-                self.runtime_config = cfg
+            self.runtime_config = cfg
             print(f"SET_CONFIG applied: {cfg}")
             yield flight.Result(b"OK")
         elif action.type == SourceNodeActions.GET_STATUS:

@@ -139,6 +139,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                     if src_cfg:
                         source_node.compression = src_cfg.get("compression")
                         source_node.encoding = src_cfg.get("encoding")
+                        source_node.columns_to_encode = src_cfg.get("columns_to_encode")
 
             current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
             current_experiment_dir.mkdir(parents=True, exist_ok=True)

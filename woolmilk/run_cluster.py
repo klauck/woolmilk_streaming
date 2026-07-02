@@ -376,11 +376,6 @@ class DeploymentRunner:
                 cmd.append("--columns-to-encode")
                 cmd.append(",".join(source_node.columns_to_encode))
 
-            if source_node.columns_to_encode:
-                cmd.append("--columns-to-encode")
-                columns_to_encode = ",".join(source_node.columns_to_encode)
-                cmd.append(columns_to_encode)
-
             node_identifier = (
                 source_node.server_address
                 if source_node.server_address is not None
