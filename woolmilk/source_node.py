@@ -171,6 +171,9 @@ class SourceNode(flight.FlightServerBase):
             "iteration_id": iteration_id,
             "source_node_id": source_node_id,
             "thread_id": thread_id,
+            "compression": self.compression,
+            "encoding": self.encoding,
+            "columns_to_encode": self.columns_to_encode,
         }
         encoded_path = json.dumps(path_info)
 

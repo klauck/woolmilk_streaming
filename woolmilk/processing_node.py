@@ -149,6 +149,15 @@ class ProcessingNode(flight.FlightServerBase):
             }
         )
 
+        use_dictionary_encoding = encoding == "dictionary"
+        target_schema = self.predefined_schema
+        if use_dictionary_encoding:
+            target_schema = set_schema_encoding(target_schema, columns_to_encode)
+
+        call_options = None
+        if compression:
+            call_options = get_compressed_flight_options(codec=compression)
+
         forward_writer, _ = self.forwarding_client.do_put(
             flight.FlightDescriptor.for_path(forwarded_path_info),
             schema=target_schema,
@@ -363,6 +372,11 @@ if __name__ == "__main__":
         "--use-buffering",
         action="store_true",
         help="Enable buffering on processing node",
+    )
+    parser.add_argument(
+        "--use-buffering",
+        action="store_true",
+        help="Use buffering and queuing for incoming batches",
     )
     args = parser.parse_args()
 

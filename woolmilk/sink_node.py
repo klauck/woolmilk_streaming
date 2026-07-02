@@ -63,6 +63,8 @@ class SinkNode(flight.FlightServerBase):
         source_node_id = None
         thread_id = None
 
+        encoding = None
+
         try:
             incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
             if isinstance(incoming_path_info, dict):
@@ -70,8 +72,11 @@ class SinkNode(flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
+                encoding = incoming_path_info.get("encoding")
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
+
+        use_dictionary_encoding = encoding == "dictionary"
 
         total_bytes = 0
         receive_times = []
