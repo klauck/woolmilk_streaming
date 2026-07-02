@@ -35,47 +35,73 @@
          "input_folder": "../input_data"
       }
    ],
-   "source_nodes_experiments": [
+   "node_configs": {
+      "default": {
+         "192.168.2.63:8017": {
+            "tuples_per_batch": 10000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      }
+   },
+   "experiments": [
       {
+         "name": "single_source_threads_1",
          "included_nodes": [0],
          "iterations": 1,
-         "overridden_params": [
-            {
-               "overall_tuples": 2000000
-            }
-         ],
-         "name": "single_source_threads_1"
+         "node_config": "default",
+         "overridden_params": [{ "overall_tuples": 2000000 }]
       },
       {
+         "name": "single_source_threads_2",
          "included_nodes": [0],
          "iterations": 1,
+         "node_config": "default",
          "overridden_params": [
             {
                "overall_tuples": 2000000,
                "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
             }
-         ],
-         "name": "single_source_threads_2"
+         ]
       },
       {
+         "name": "single_source_threads_4",
          "included_nodes": [0],
          "iterations": 1,
+         "node_config": "default",
          "overridden_params": [
             {
                "overall_tuples": 2000000,
-               "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017", "192.168.2.63:8017", "192.168.2.63:8017"]
+               "processing_nodes": [
+                  "192.168.2.63:8017",
+                  "192.168.2.63:8017",
+                  "192.168.2.63:8017",
+                  "192.168.2.63:8017"
+               ]
             }
-         ],
-         "name": "single_source_threads_4"
+         ]
+      },
+      {
+         "name": "two_sources_threads_1",
+         "included_nodes": [0, 1],
+         "iterations": 1,
+         "node_config": "default"
       },
       {
          "included_nodes": [0, 1],
          "iterations": 1,
-         "name": "two_sources_threads_1"
-      },
-      {
-         "included_nodes": [0, 1],
-         "iterations": 1,
+         "node_config": "default",
          "overridden_params": [
             {
                "processing_nodes": ["192.168.2.63:8017", "192.168.2.63:8017"]
@@ -89,12 +115,12 @@
    ],
    "cluster_nodes": [
       {
-         "type": "processing",
-         "address": "192.168.2.63:8017"
+         "node_type": "processing",
+         "server_address": "192.168.2.63:8017"
       },
       {
-         "type": "sink",
-         "address": "192.168.2.64:8027"
+         "node_type": "sink",
+         "server_address": "192.168.2.64:8027"
       }
    ]
 }

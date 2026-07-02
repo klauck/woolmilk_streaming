@@ -92,6 +92,7 @@ class SourceNode(flight.FlightServerBase):
             self.generate_data()
             yield flight.Result(self.current_status.encode("utf-8"))
         elif action.type == SourceNodeActions.SEND_DATA:
+            self.completed_threads = 0
             self.current_status = NodeStatus.SENDING_DATA
             self.start_streaming()
             yield flight.Result(self.current_status.encode("utf-8"))
@@ -131,7 +132,6 @@ class SourceNode(flight.FlightServerBase):
         self.current_status = NodeStatus.DATA_GENERATED
 
     def start_streaming(self):
-        # if any none value in thread_tables, raise error
         if any(t is None for t in self.thread_tables):
             raise RuntimeError("Data not generated. Call GENERATE_DATA action first.")
 
@@ -171,9 +171,6 @@ class SourceNode(flight.FlightServerBase):
             "iteration_id": iteration_id,
             "source_node_id": source_node_id,
             "thread_id": thread_id,
-            "compression": self.compression,
-            "encoding": self.encoding,
-            "columns_to_encode": self.columns_to_encode,
         }
         encoded_path = json.dumps(path_info)
 
@@ -182,6 +179,7 @@ class SourceNode(flight.FlightServerBase):
         use_dictionary_encoding = self.encoding == "dictionary"
         target_schema = schema
         if use_dictionary_encoding:
+            assert self.columns_to_encode is not None
             target_schema = set_schema_encoding(schema, self.columns_to_encode)
 
         call_options = None
@@ -211,13 +209,15 @@ class SourceNode(flight.FlightServerBase):
                 send_start = now
 
             if use_dictionary_encoding:
+                assert self.columns_to_encode is not None
                 batch = dictionary_encode_batch(batch, self.columns_to_encode)
 
-            writer.write_batch(batch)
-            total_bytes += batch.nbytes
+            batch_id = f"{source_node_id}:{thread_id}:{i}"
+            writer.write_with_metadata(batch, batch_id.encode("utf-8"))
+            batch_bytes = batch.nbytes
+            total_bytes += batch_bytes
             send_end = time.time()
-            send_times.append((send_start, send_end))
-
+            send_times.append((send_start, send_end, batch_id, batch_bytes))
         writer.done_writing()
 
         end = time.time()
@@ -383,7 +383,7 @@ if __name__ == "__main__":
         "--columns-to-encode",
         type=str,
         default=None,
-        help="Columns to encode for transmission (attribute1,attribute2)",
+        help="Comma-separated columns to dictionary-encode (e.g. city,name)",
     )
     args = parser.parse_args()
 
@@ -400,10 +400,9 @@ if __name__ == "__main__":
         batches_per_second = Fraction(args.batches_per_second)
         assert batches_per_second > 0, "batches_per_second must be positive"
 
-    if args.columns_to_encode:
-        columns_to_encode = args.columns_to_encode.split(",")
-    else:
-        columns_to_encode = None
+    columns_to_encode = (
+        args.columns_to_encode.split(",") if args.columns_to_encode else None
+    )
 
     print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
@@ -436,8 +435,6 @@ if __name__ == "__main__":
         f"tuples_per_batch ({args.tuples_per_batch}) * "
         f"number of processing nodes ({len(processing_nodes)})"
     )
-
-    event_type = args.stream.split("_")[1]
 
     source_node = SourceNode(
         location=(

@@ -1,10 +1,12 @@
+from typing import List
+
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.ipc as ipc
 from pyarrow import flight
 
 
-def set_schema_encoding(schema: pa.Schema, columns: list[str]) -> pa.Schema:
+def set_schema_encoding(schema: pa.Schema, columns: List[str]) -> pa.Schema:
     print("dictionary encoding schema...")
     new_fields = []
     for field in schema:
@@ -17,7 +19,7 @@ def set_schema_encoding(schema: pa.Schema, columns: list[str]) -> pa.Schema:
     return pa.schema(new_fields)
 
 
-def dictionary_encode_batch(batch: pa.RecordBatch, columns: list[str]) -> pa.RecordBatch:
+def dictionary_encode_batch(batch: pa.RecordBatch, columns: List[str]) -> pa.RecordBatch:
     print("dictionary encoding batches...")
     new_arrays = []
     new_fields = []
