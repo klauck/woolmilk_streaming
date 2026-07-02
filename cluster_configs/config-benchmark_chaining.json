@@ -35,7 +35,7 @@
          "input_folder": "../input_data"
       }
    ],
-   "source_nodes_experiments": [
+   "experiments": [
       {
          "included_nodes": [0, 1],
          "iterations": 1,
@@ -83,20 +83,20 @@
    ],
    "cluster_nodes": [
       {
-         "type": "processing",
-         "address": "192.168.2.63:8017"
+         "node_type": "processing",
+         "server_address": "192.168.2.63:8017"
       },
       {
-         "type": "processing",
-         "address": "192.168.2.64:8017"
+         "node_type": "processing",
+         "server_address": "192.168.2.64:8017"
       },
       {
-         "type": "processing",
-         "address": "192.168.2.65:8017"
+         "node_type": "processing",
+         "server_address": "192.168.2.65:8017"
       },
       {
-         "type": "sink",
-         "address": "192.168.2.66:8027"
+         "node_type": "sink",
+         "server_address": "192.168.2.66:8027"
       }
    ]
 }

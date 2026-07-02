@@ -37,9 +37,13 @@ class SinkNode:
 class ProcessingNode:
     server_address: str
     forward_node: str
-    query_result_schema: Dict
     query: Optional[str] = None
+    query_result_schema: Optional[Dict] = None
+    compression: Optional[str] = None
+    encoding: Optional[str] = None
+    columns_to_encode: Optional[List[str]] = None
     use_buffering: Optional[bool] = False
+    tuples_per_batch: Optional[int] = None
 
 
 @dataclass
@@ -48,7 +52,7 @@ class SourceNode:
     stream: str
     overall_tuples: int
     tuples_per_batch: int
-    server_address: str | None = None
+    server_address: Optional[str] = None
     step: int = -1
     deployment_server: Optional[str] = "127.0.0.1"
     store_input: Optional[bool] = False
@@ -83,10 +87,7 @@ def parse_config(json_path: Path) -> Config:
 
     sink_nodes = [SinkNode(**sn) for sn in data.get("sink_nodes", [])]
     processing_nodes = [ProcessingNode(**pn) for pn in data.get("processing_nodes", [])]
-
-    source_nodes = []
-    for sn in data.get("source_nodes", []):
-        source_nodes.append(SourceNode(**sn))
+    source_nodes = [SourceNode(**sn) for sn in data.get("source_nodes", [])]
 
     return Config(
         sink_nodes=sink_nodes,
@@ -282,12 +283,27 @@ class DeploymentRunner:
                 str(port),
                 "--forward-node",
                 proc_node.forward_node,
-                "--query-result-schema",
-                self.quote_if_remote(json.dumps(proc_node.query_result_schema)),
             ]
-            if proc_node.query:
+            if proc_node.query is not None:
                 cmd.append("--query")
                 cmd.append(self.quote_if_remote(proc_node.query))
+            if proc_node.query_result_schema is not None:
+                cmd.append("--query-result-schema")
+                cmd.append(
+                    self.quote_if_remote(json.dumps(proc_node.query_result_schema))
+                )
+            if proc_node.tuples_per_batch is not None:
+                cmd.append("--tuples-per-batch")
+                cmd.append(str(proc_node.tuples_per_batch))
+            if proc_node.compression:
+                cmd.append("--compression")
+                cmd.append(proc_node.compression)
+            if proc_node.encoding:
+                cmd.append("--encoding")
+                cmd.append(proc_node.encoding)
+            if proc_node.columns_to_encode:
+                cmd.append("--columns-to-encode")
+                cmd.append(",".join(proc_node.columns_to_encode))
             if proc_node.use_buffering:
                 cmd.append("--use-buffering")
 
@@ -353,15 +369,12 @@ class DeploymentRunner:
             if source_node.compression:
                 cmd.append("--compression")
                 cmd.append(source_node.compression)
-
             if source_node.encoding:
                 cmd.append("--encoding")
                 cmd.append(source_node.encoding)
-
             if source_node.columns_to_encode:
                 cmd.append("--columns-to-encode")
-                columns_to_encode = ",".join(source_node.columns_to_encode)
-                cmd.append(columns_to_encode)
+                cmd.append(",".join(source_node.columns_to_encode))
 
             node_identifier = (
                 source_node.server_address

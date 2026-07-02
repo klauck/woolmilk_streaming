@@ -9,6 +9,7 @@ import pyarrow.parquet as pq
 from pyarrow import flight
 
 from woolmilk.encoding import dictionary_decode_batch
+from woolmilk.runtime_config import RuntimeConfig
 from woolmilk.source_node import NodeStatus, SourceNodeActions
 
 
@@ -24,6 +25,7 @@ class SinkNode(flight.FlightServerBase):
         self.logs_lock = threading.Lock()
         self.open_requests = 0
         self.open_requests_lock = threading.Lock()
+        self.runtime_config = RuntimeConfig()
 
     def do_action(self, context, action):
         if action.type == "get_logs":
@@ -33,6 +35,15 @@ class SinkNode(flight.FlightServerBase):
         elif action.type == "delete_logs":
             with self.logs_lock:
                 self.logs = []
+        elif action.type == "SET_CONFIG":
+            try:
+                cfg = RuntimeConfig.from_json(bytes(action.body.to_pybytes()))
+            except Exception as e:
+                yield flight.Result(f"ERR:{e}".encode("utf-8"))
+                return
+            self.runtime_config = cfg
+            print(f"SET_CONFIG applied: {cfg}")
+            yield flight.Result(b"OK")
         elif action.type == SourceNodeActions.GET_STATUS:
             with self.open_requests_lock:
                 if self.open_requests == 0:
@@ -52,8 +63,6 @@ class SinkNode(flight.FlightServerBase):
         source_node_id = None
         thread_id = None
 
-        encoding = None
-
         try:
             incoming_path_info = json.loads(descriptor.path[0].decode("utf-8"))
             if isinstance(incoming_path_info, dict):
@@ -61,29 +70,33 @@ class SinkNode(flight.FlightServerBase):
                 iteration_id = incoming_path_info.get("iteration_id")
                 source_node_id = incoming_path_info.get("source_node_id")
                 thread_id = incoming_path_info.get("thread_id")
-                encoding = incoming_path_info.get("encoding")
         except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
             pass
 
-        use_dictionary_encoding = encoding == "dictionary"
-
         total_bytes = 0
         receive_times = []
-        start = receive_start = time.time()
+        work_times = []
+        batch_start = start = time.time()
         result = []
         for chunk in reader:
+            batch_work_start = time.time()
             batch = chunk.data
+            batch_id = (
+                bytes(chunk.app_metadata).decode("utf-8") if chunk.app_metadata else None
+            )
 
-            if use_dictionary_encoding:
-                batch = dictionary_decode_batch(batch)
+            batch = dictionary_decode_batch(batch)
 
-            # execute and forward data here
-            total_bytes += batch.nbytes
+            batch_bytes = batch.nbytes
+            total_bytes += batch_bytes
             if self.result_folder:
                 result.append(batch)
-            receive_end = time.time()
-            receive_times.append((receive_start, receive_end))
-            receive_start = receive_end
+
+            batch_work_end = time.time()
+            work_times.append((batch_work_start, batch_work_end, batch_id, batch_bytes))
+
+            receive_times.append((batch_start, batch_work_end, batch_id, batch_bytes))
+            batch_start = batch_work_end
         end = time.time()
 
         duration = end - start
@@ -101,6 +114,7 @@ class SinkNode(flight.FlightServerBase):
             "MBps": f"{mbps:.2f}",
             "Gbps": f"{gbps:.4f}",
             "receive_times": receive_times,
+            "work_times": work_times,
             "end_time": end,
         }
         with self.logs_lock:

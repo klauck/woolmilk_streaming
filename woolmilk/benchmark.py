@@ -1,61 +1,94 @@
 import argparse
 import copy
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from control import prepare_source_nodes, start_sending, wait_until_completion
 from pyarrow import flight
-from run_cluster import (
+
+from woolmilk.control import (
+    prepare_source_nodes,
+    push_config,
+    start_sending,
+    wait_until_completion,
+    wait_until_status,
+)
+from woolmilk.run_cluster import (
     Config,
     DeploymentRunner,
     RemoteServerConfig,
     SourceNode,
     parse_config,
 )
+from woolmilk.source_node import NodeStatus
 
 
 @dataclass
 class ExperimentConfig:
     iterations: int
     source_nodes: List[SourceNode]
+    node_config: Dict[str, dict] = field(default_factory=dict)
     name: Optional[str] = None
+
+
+@dataclass
+class ClusterConfig:
+    node_type: str
+    server_address: str
 
 
 def parse_benchmark_config(config_file: Path):
     config = parse_config(config_file)
 
     benchmark_config = json.loads(config_file.read_text())
-    source_experiments = benchmark_config.get("source_nodes_experiments", None)
+    source_experiments = benchmark_config.get("experiments", None)
     if not source_experiments:
-        print('No experiments specified, expected list "source_nodes_experiments"')
+        print('No experiments specified, expected list "experiments"')
         exit(1)
 
-    cluster_nodes = benchmark_config.get("cluster_nodes", [])
+    cluster_nodes: List[ClusterConfig] = []
+    for node in benchmark_config.get("cluster_nodes", []):
+        cluster_nodes.append(ClusterConfig(**node))
+
+    node_configs: Dict[str, dict] = benchmark_config.get("node_configs", {})
 
     experiments: List[ExperimentConfig] = []
 
     for experiment in source_experiments:
         experiment_source_nodes = []
+        ref = experiment.get("node_config", {})
+        if isinstance(ref, str):
+            if ref not in node_configs:
+                raise ValueError(
+                    f"Experiment {experiment.get('name')!r} references unknown "
+                    f"node_config {ref!r} (defined keys: {list(node_configs)})."
+                )
+            node_config = dict(node_configs[ref])
+        elif isinstance(ref, dict):
+            node_config = dict(ref)
+        else:
+            raise ValueError(
+                f"Experiment {experiment.get('name')!r} node_config must be str or dict."
+            )
+
+        overridden_params = experiment.get("overridden_params", [])
+        if overridden_params:
+            assert len(overridden_params) == len(experiment["included_nodes"])
 
         for i, source_node_offset in enumerate(experiment["included_nodes"]):
             included_source_node = copy.deepcopy(config.source_nodes[source_node_offset])
-
-            if "overridden_params" in experiment:
-                assert len(experiment["overridden_params"]) == len(
-                    experiment["included_nodes"]
-                )
-                for key, value in experiment["overridden_params"][i].items():
+            if overridden_params:
+                for key, value in overridden_params[i].items():
                     setattr(included_source_node, key, value)
-
             experiment_source_nodes.append(included_source_node)
 
         experiments.append(
             ExperimentConfig(
                 iterations=experiment["iterations"],
                 source_nodes=experiment_source_nodes,
+                node_config=node_config,
                 name=experiment.get("name"),
             )
         )
@@ -71,7 +104,7 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
     combined_config = parse_benchmark_config(config_path)
     experiments: List[ExperimentConfig] = combined_config["experiments"]
     remote_servers: Dict[str, RemoteServerConfig] = combined_config["remote_servers"]
-    cluster_nodes = combined_config["cluster_nodes"]
+    cluster_nodes: List[ClusterConfig] = combined_config["cluster_nodes"]
 
     print("Starting benchmark...")
 
@@ -82,10 +115,15 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        if experiment.name:
-            experiment_base_dir = Path(experiment_dir) / f"{timestamp}_{experiment.name}"
+        if mode == "local":
+            experiment_base_dir = Path(experiment_dir).resolve()
         else:
-            experiment_base_dir = Path(experiment_dir) / f"{timestamp}"
+            experiment_base_dir = Path(experiment_dir)
+
+        if experiment.name:
+            experiment_base_dir = experiment_base_dir / f"{timestamp}_{experiment.name}"
+        else:
+            experiment_base_dir = experiment_base_dir / f"{timestamp}"
 
         for iteration in range(experiment.iterations):
             print(
@@ -96,6 +134,12 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
                 source_node.experiment_id = experiment_id
                 source_node.iteration_id = iteration
                 source_node.id = i
+                if source_node.server_address:
+                    src_cfg = experiment.node_config.get(source_node.server_address)
+                    if src_cfg:
+                        source_node.compression = src_cfg.get("compression")
+                        source_node.encoding = src_cfg.get("encoding")
+                        source_node.columns_to_encode = src_cfg.get("columns_to_encode")
 
             current_experiment_dir = experiment_base_dir / f"itr_{iteration}"
             current_experiment_dir.mkdir(parents=True, exist_ok=True)
@@ -118,9 +162,19 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 
             runner.deploy()
 
+            print("waiting for cluster nodes to be ready...")
+            wait_until_status(cluster_nodes, NodeStatus.IDLE)
+
+            print("pushing SET_CONFIG to cluster nodes (processing + sink)...")
+            push_config(cluster_nodes, experiment.node_config)
+
             prepare_source_nodes(experiment.source_nodes)
             start_sending(experiment.source_nodes)
+            print("waiting for source nodes to finish")
             wait_until_completion(experiment.source_nodes)
+            print("waiting for cluster nodes to finish")
+            wait_until_completion(cluster_nodes)
+
             collect_cluster_nodes_logs(cluster_nodes, current_experiment_dir)
 
             runner.cleanup()
@@ -132,15 +186,13 @@ def benchmark(config_path: Path, experiment_dir: str, mode: str):
 def collect_cluster_nodes_logs(cluster_nodes, current_experiment_dir):
     # collect log files for specified cluster nodes:
     for node in cluster_nodes:
-        client = flight.FlightClient(f"grpc://{node['address']}")
+        client = flight.FlightClient(f"grpc://{node.server_address}")
         result = client.do_action("get_logs")
         print(result)
         for data in result:
             log_bytes = data.body.to_pybytes().decode("utf-8")
-            file_name = (
-                Path(__file__).parent
-                / current_experiment_dir
-                / (node["type"] + "__" + node["address"].replace(":", "_") + ".json")
+            file_name = current_experiment_dir / (
+                node.node_type + "__" + node.server_address.replace(":", "_") + ".json"
             )
             with open(file_name, "w+") as f:
                 f.write(log_bytes)

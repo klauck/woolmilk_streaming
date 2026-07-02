@@ -1,23 +1,34 @@
 {
+   "config": {
+      "remote_servers": {
+         "192.168.2.80": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+         }
+      }
+   },
    "source_nodes": [
       {
-         "processing_nodes": ["127.0.0.1:8017"],
-         "tuples_per_batch": 100000,
+         "processing_nodes": ["192.168.2.81:8017"],
+         "tuples_per_batch": 10000,
          "overall_tuples": 1000000,
          "stream": "nexmark_person",
-         "deployment_server": "127.0.0.1",
-         "generator_executable": "nexmark",
-         "server_address": "127.0.0.1:8210"
+         "deployment_server": "192.168.2.80",
+         "generator_executable": "/home/picocluster/.cargo/bin/nexmark",
+         "server_address": "192.168.2.80:8017",
+         "store_input": true,
+         "input_folder": "../input_data"
       }
    ],
    "node_configs": {
       "zstd_dict": {
-         "127.0.0.1:8017": {
+         "192.168.2.81:8017": {
             "compression": "zstd",
             "encoding": "dictionary",
             "columns_to_encode": ["city", "name"],
             "use_buffering": true,
-            "tuples_per_batch": 100000,
+            "tuples_per_batch": 10000,
             "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
             "query_result_schema": {
                "fields": [
@@ -34,11 +45,11 @@
          }
       },
       "zstd_only": {
-         "127.0.0.1:8017": {
+         "192.168.2.81:8017": {
             "compression": "zstd",
             "encoding": null,
             "use_buffering": true,
-            "tuples_per_batch": 100000,
+            "tuples_per_batch": 10000,
             "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
             "query_result_schema": {
                "fields": [
@@ -55,12 +66,12 @@
          }
       },
       "dict_only": {
-         "127.0.0.1:8017": {
+         "192.168.2.81:8017": {
             "compression": null,
             "encoding": "dictionary",
             "columns_to_encode": ["city", "name"],
             "use_buffering": true,
-            "tuples_per_batch": 100000,
+            "tuples_per_batch": 10000,
             "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
             "query_result_schema": {
                "fields": [
@@ -77,11 +88,11 @@
          }
       },
       "baseline": {
-         "127.0.0.1:8017": {
+         "192.168.2.81:8017": {
             "compression": null,
             "encoding": null,
             "use_buffering": true,
-            "tuples_per_batch": 100000,
+            "tuples_per_batch": 10000,
             "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
             "query_result_schema": {
                "fields": [
@@ -153,11 +164,11 @@
    "cluster_nodes": [
       {
          "node_type": "processing",
-         "server_address": "127.0.0.1:8017"
+         "server_address": "192.168.2.81:8017"
       },
       {
          "node_type": "sink",
-         "server_address": "127.0.0.1:8027"
+         "server_address": "192.168.2.82:8027"
       }
    ]
 }
