@@ -1,0 +1,41 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.81": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+         },
+         "192.168.2.82": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+         }
+      }
+   },
+   "sink_nodes": [
+      {
+         "server_address": "192.168.2.82:8027"
+      }
+   ],
+   "processing_nodes": [
+      {
+         "server_address": "192.168.2.81:8017",
+         "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+         "forward_node": "192.168.2.82:8027",
+         "tuples_per_batch": 10000,
+         "query_result_schema": {
+            "fields": [
+               { "name": "id", "type": "int64" },
+               { "name": "name", "type": "string" },
+               { "name": "email_address", "type": "string" },
+               { "name": "credit_card", "type": "string" },
+               { "name": "city", "type": "string" },
+               { "name": "state", "type": "string" },
+               { "name": "date_time", "type": "int64" },
+               { "name": "extra", "type": "string" }
+            ]
+         }
+      }
+   ]
+}
