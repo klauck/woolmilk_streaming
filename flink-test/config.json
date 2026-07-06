@@ -1,0 +1,16 @@
+{
+  "pipelines": [
+    {
+      "name": "pipeline_1",
+      "source_csv": "/opt/flink-test/data/person_1.csv",
+      "query": "SELECT * FROM person_source_1 WHERE name > 'H'",
+      "sink_dir": "/opt/flink-test/results/sink_1"
+    },
+    {
+      "name": "pipeline_2",
+      "source_csv": "/opt/flink-test/data/person_2.csv",
+      "query": "SELECT * FROM person_source_2 WHERE name > 'H'",
+      "sink_dir": "/opt/flink-test/results/sink_2"
+    }
+  ]
+}
