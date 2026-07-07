@@ -53,12 +53,9 @@ NODES = {
 }
 
 TOPOLOGY = """
-s1 -> p1, p1, p1
-s2 -> p2, p2, p2
-p1 -> p3
-p2 -> p4
-p3 -> sn1
-p4 -> sn2
+s1,s2 -> p1,p2
+p1 -> sn1
+p2 -> sn2
 """
 
 SETTINGS = {
@@ -90,16 +87,25 @@ BATCH_BPS_MATRIX = [
 ]
 
 OPT_MODES = [
-    {"name": "none", "comp": None, "enc": None},
-    {"name": "enc", "comp": None, "enc": "dictionary"},
-    {"name": "comp", "comp": "zstd", "enc": None},
-    {"name": "comp_enc", "comp": "zstd", "enc": "dictionary"},
+    {"comp": None, "enc": None},
+    {"comp": None, "enc": "dictionary"},
+    {"comp": "zstd", "enc": None},
+    {"comp": "zstd", "enc": "dictionary"},
 ]
 
 QUERIES = [
     ("gtH", "SELECT * FROM nexmark_data WHERE name > 'H'"),
     ("ltH", "SELECT * FROM nexmark_data WHERE name < 'H'"),
 ]
+
+
+def opt_name(opt):
+    parts = []
+    if opt["comp"]:
+        parts.append("comp")
+    if opt["enc"]:
+        parts.append("enc")
+    return "_".join(parts) or "none"
 
 
 def host_of(address):
@@ -257,7 +263,7 @@ def build_benchmark(nodes, out, s):
                     params["columns_to_encode"] = s["columns_to_encode"]
                 batch_k = batch // 1000
                 bps_str = f"{bps}bps" if bps is not None else "maxbps"
-                name = f"{bps_str}_{batch_k}k_{opt['name']}_{tag}"
+                name = f"{bps_str}_{batch_k}k_{opt_name(opt)}_{tag}"
                 node_configs[name] = profile
                 experiments.append(
                     {
