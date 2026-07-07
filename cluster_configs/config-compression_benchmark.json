@@ -12,7 +12,7 @@
       {
          "processing_nodes": ["192.168.2.81:8017"],
          "tuples_per_batch": 10000,
-         "overall_tuples": 1000000,
+         "overall_tuples": 4000000,
          "stream": "nexmark_person",
          "deployment_server": "192.168.2.80",
          "generator_executable": "/home/picocluster/.cargo/bin/nexmark",
@@ -107,12 +107,98 @@
                ]
             }
          }
+      },
+      "zstd_dict_unbuffered": {
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": ["city", "name"],
+            "use_buffering": false,
+            "tuples_per_batch": 10000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      },
+      "zstd_only_unbuffered": {
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 10000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      },
+      "dict_only_unbuffered": {
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": ["city", "name"],
+            "use_buffering": false,
+            "tuples_per_batch": 10000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
+      },
+      "baseline_unbuffered": {
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 10000,
+            "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  { "name": "id", "type": "int64" },
+                  { "name": "name", "type": "string" },
+                  { "name": "email_address", "type": "string" },
+                  { "name": "credit_card", "type": "string" },
+                  { "name": "city", "type": "string" },
+                  { "name": "state", "type": "string" },
+                  { "name": "date_time", "type": "int64" },
+                  { "name": "extra", "type": "string" }
+               ]
+            }
+         }
       }
    },
    "experiments": [
       {
          "included_nodes": [0],
-         "iterations": 1,
+         "iterations": 5,
          "overridden_params": [
             {
                "compression": "zstd",
@@ -120,24 +206,24 @@
                "columns_to_encode": ["city", "name"]
             }
          ],
-         "name": "compression_with_encoding",
+         "name": "99999bps_10k_buffered_comp_enc_gtH",
          "node_config": "zstd_dict"
       },
       {
          "included_nodes": [0],
-         "iterations": 1,
+         "iterations": 5,
          "overridden_params": [
             {
                "compression": "zstd",
                "encoding": null
             }
          ],
-         "name": "compression_without_encoding",
+         "name": "99999bps_10k_buffered_comp_gtH",
          "node_config": "zstd_only"
       },
       {
          "included_nodes": [0],
-         "iterations": 1,
+         "iterations": 5,
          "overridden_params": [
             {
                "compression": null,
@@ -145,20 +231,70 @@
                "columns_to_encode": ["city", "name"]
             }
          ],
-         "name": "no_compression_with_encoding",
+         "name": "99999bps_10k_buffered_enc_gtH",
          "node_config": "dict_only"
       },
       {
          "included_nodes": [0],
-         "iterations": 1,
+         "iterations": 5,
          "overridden_params": [
             {
                "compression": null,
                "encoding": null
             }
          ],
-         "name": "no_compression_without_encoding",
+         "name": "99999bps_10k_buffered_none_gtH",
          "node_config": "baseline"
+      },
+      {
+         "included_nodes": [0],
+         "iterations": 5,
+         "overridden_params": [
+            {
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": ["city", "name"]
+            }
+         ],
+         "name": "99999bps_10k_unbuffered_comp_enc_gtH",
+         "node_config": "zstd_dict_unbuffered"
+      },
+      {
+         "included_nodes": [0],
+         "iterations": 5,
+         "overridden_params": [
+            {
+               "compression": "zstd",
+               "encoding": null
+            }
+         ],
+         "name": "99999bps_10k_unbuffered_comp_gtH",
+         "node_config": "zstd_only_unbuffered"
+      },
+      {
+         "included_nodes": [0],
+         "iterations": 5,
+         "overridden_params": [
+            {
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": ["city", "name"]
+            }
+         ],
+         "name": "99999bps_10k_unbuffered_enc_gtH",
+         "node_config": "dict_only_unbuffered"
+      },
+      {
+         "included_nodes": [0],
+         "iterations": 5,
+         "overridden_params": [
+            {
+               "compression": null,
+               "encoding": null
+            }
+         ],
+         "name": "99999bps_10k_unbuffered_none_gtH",
+         "node_config": "baseline_unbuffered"
       }
    ],
    "cluster_nodes": [
