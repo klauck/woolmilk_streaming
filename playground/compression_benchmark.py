@@ -36,19 +36,22 @@ def serialize(batch):
     return sink.getvalue()
 
 
-def levels(codec):
+def levels(codec, max_level):
     if not pa.Codec.supports_compression_level(codec):
         return [None]
     low = max(1, pa.Codec.minimum_compression_level(codec))
-    high = pa.Codec.maximum_compression_level(codec)
+    if max_level:
+        high = min(max_level, pa.Codec.maximum_compression_level(codec))
+    else:
+        high = pa.Codec.maximum_compression_level(codec)
     return list(range(low, high + 1))
 
 
-def run(table, batch_size):
-    print(f"{'codec':<10}{'level':>7}{'orig':>12}{'comp':>12}{'ratio':>8}{'ms':>10}")
+def run(table, batch_size, max_level):
+    print(f"{'codec':<10}{'level':>7}{'orig (MB)':>12}{'comp (MB)':>12}{'ratio':>8}{'ms':>10}")
     print("-" * 59)
     for codec in CODECS:
-        for lvl in levels(codec):
+        for lvl in levels(codec, max_level):
             codec_obj = pa.Codec(codec, compression_level=lvl) if lvl is not None else pa.Codec(codec)
             orig = 0
             comp = 0
@@ -69,20 +72,21 @@ def run(table, batch_size):
                 print(f"{codec:<10}{'-':>7}{'not supported one-shot':>42}")
                 break
             level_str = "-" if lvl is None else str(lvl)
-            print(f"{codec:<10}{level_str:>7}{orig:>12}{comp:>12}{orig / comp:>8.2f}{elapsed * 1000:>10.2f}")
+            print(f"{codec:<10}{level_str:>7}{orig/10**6:>12.2f}{comp/10**6:>12.2f}{orig / comp:>8.2f}{elapsed * 1000:>10.2f}")
 
 
 def parse_args():
     ap = argparse.ArgumentParser(description="Benchmark pyarrow compression codecs and levels")
     ap.add_argument("--input-file", dest="input_file", default=None, help="parquet file to read; random data if omitted")
     ap.add_argument("--batch_size", type=int, default=10_000)
+    ap.add_argument("--max_level", type=int, default=None)
     return ap.parse_args()
 
 
 def main():
     args = parse_args()
     table = pq.read_table(args.input_file) if args.input_file else make_data(ROWS)
-    run(table, args.batch_size)
+    run(table, args.batch_size, args.max_level)
 
 
 if __name__ == "__main__":
