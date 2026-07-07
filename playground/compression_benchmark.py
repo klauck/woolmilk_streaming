@@ -1,7 +1,9 @@
+import argparse
 import random
 import time
 
 import pyarrow as pa
+import pyarrow.parquet as pq
 
 CODECS = ["snappy", "lz4_frame", "lz4_raw", "zstd", "gzip", "brotli", "bz2"]
 ROWS = 200_000
@@ -27,10 +29,10 @@ def make_data(n):
     )
 
 
-def serialize(table):
+def serialize(batch):
     sink = pa.BufferOutputStream()
-    with pa.ipc.new_stream(sink, table.schema) as writer:
-        writer.write_table(table)
+    with pa.ipc.new_stream(sink, batch.schema) as writer:
+        writer.write_batch(batch)
     return sink.getvalue()
 
 
@@ -42,24 +44,46 @@ def levels(codec):
     return list(range(low, high + 1))
 
 
-def run():
-    buf = serialize(make_data(ROWS))
-    orig = len(buf)
+def run(table, batch_size):
     print(f"{'codec':<10}{'level':>7}{'orig':>12}{'comp':>12}{'ratio':>8}{'ms':>10}")
     print("-" * 59)
     for codec in CODECS:
         for lvl in levels(codec):
             codec_obj = pa.Codec(codec, compression_level=lvl) if lvl is not None else pa.Codec(codec)
-            try:
-                start = time.perf_counter()
-                out = codec_obj.compress(buf)
-                ms = (time.perf_counter() - start) * 1000
-            except pa.ArrowNotImplementedError:
+            orig = 0
+            comp = 0
+            elapsed = 0.0
+            failed = False
+            for batch in table.to_reader(max_chunksize=batch_size):
+                buf = serialize(batch)
+                try:
+                    start = time.perf_counter()
+                    out = codec_obj.compress(buf)
+                    elapsed += time.perf_counter() - start
+                except pa.ArrowNotImplementedError:
+                    failed = True
+                    break
+                orig += len(buf)
+                comp += len(out)
+            if failed:
                 print(f"{codec:<10}{'-':>7}{'not supported one-shot':>42}")
                 break
             level_str = "-" if lvl is None else str(lvl)
-            print(f"{codec:<10}{level_str:>7}{orig:>12}{len(out):>12}{orig / len(out):>8.2f}{ms:>10.2f}")
+            print(f"{codec:<10}{level_str:>7}{orig:>12}{comp:>12}{orig / comp:>8.2f}{elapsed * 1000:>10.2f}")
+
+
+def parse_args():
+    ap = argparse.ArgumentParser(description="Benchmark pyarrow compression codecs and levels")
+    ap.add_argument("--input-file", dest="input_file", default=None, help="parquet file to read; random data if omitted")
+    ap.add_argument("--batch_size", type=int, default=10_000)
+    return ap.parse_args()
+
+
+def main():
+    args = parse_args()
+    table = pq.read_table(args.input_file) if args.input_file else make_data(ROWS)
+    run(table, args.batch_size)
 
 
 if __name__ == "__main__":
-    run()
+    main()
