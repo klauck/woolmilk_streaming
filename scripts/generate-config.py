@@ -1,7 +1,7 @@
 """Generate WoolMilk cluster + benchmark configs from a topology string.
 
 Define nodes in NODES (name -> type + address), draw the graph in TOPOLOGY,
-then run this file. No CLI args.
+then run this file.
 
 TOPOLOGY syntax:
     - one flow per line, left to right, groups joined by '->'
@@ -293,7 +293,6 @@ def build_benchmark(nodes, out, s):
                     "batches_per_second": bps,
                     "compression": opt["comp"],
                     "encoding": opt["enc"],
-                    "use_buffering": opt["buffering"],
                 }
                 if opt["enc"]:
                     params["columns_to_encode"] = s["columns_to_encode"]
