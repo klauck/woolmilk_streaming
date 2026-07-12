@@ -52,60 +52,98 @@ NODES = {
     "sn2": {"type": "sink", "addr": "127.0.0.1:8821"},
 }
 
+NODES = {
+    "s1": {"type": "source", "addr": "192.168.2.80:8007"},
+    # "p1": {"type": "processing", "addr": "192.168.2.81:8017"},
+    "sn1": {"type": "sink", "addr": "192.168.2.82:8027"},
+}
+
 TOPOLOGY = """
-s1,s2 -> p1,p2
+s1 -> p1
 p1 -> sn1
-p2 -> sn2
+"""
+
+TOPOLOGY = """
+s1 -> sn1
 """
 
 SETTINGS = {
     "stream": "nexmark_person",
-    "overall_tuples": 1_000_000,
-    "tuples_per_batch": 50_000,
+    "overall_tuples": 4_000_000,
+    "tuples_per_batch": 10_000,
     "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
     "batches_per_second": None,
     "compression": None,
     "encoding": None,
     "columns_to_encode": ["city", "name"],
-    "use_buffering": False,
+    "use_buffering": True,
     "result_folder": "results",
     "input_folder": "input_data",
     "store_input": True,
     "generator_executable": "nexmark",
-    "iterations": 3,
+    "iterations": 5,
 }
 
-REMOTE_SERVERS = {}
+REMOTE_SERVERS = {
+    "192.168.2.80": {
+        "username": "picocluster",
+        "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+        "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+    },
+    "192.168.2.81": {
+        "username": "picocluster",
+        "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+        "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+    },
+    "192.168.2.82": {
+        "username": "picocluster",
+        "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+        "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+    }
+}
 
 BATCH_BPS_MATRIX = [
-    (50000, "10"),
-    (25000, "20"),
-    (10000, "50"),
+    # (50000, "10"),
+    # (25000, "20"),
+    # (10000, "50"),
+    (100000, None),
     (50000, None),
     (25000, None),
     (10000, None),
+    (5000, None),
 ]
 
 OPT_MODES = [
-    {"comp": None, "enc": None},
-    {"comp": None, "enc": "dictionary"},
-    {"comp": "zstd", "enc": None},
-    {"comp": "zstd", "enc": "dictionary"},
+    {"comp": None, "enc": None, "buffering": True},
+    {"comp": None, "enc": "dictionary", "buffering": True},
+    {"comp": "zstd", "enc": None, "buffering": True},
+    {"comp": "zstd", "enc": "dictionary", "buffering": True},
+    # {"comp": None, "enc": None, "buffering": False},
+    # {"comp": None, "enc": "dictionary", "buffering": False},
+    # {"comp": "zstd", "enc": None, "buffering": False},
+    # {"comp": "zstd", "enc": "dictionary", "buffering": False},
 ]
 
 QUERIES = [
+    # ("all", "SELECT * FROM nexmark_data"),
     ("gtH", "SELECT * FROM nexmark_data WHERE name > 'H'"),
-    ("ltH", "SELECT * FROM nexmark_data WHERE name < 'H'"),
+    # ("ltH", "SELECT * FROM nexmark_data WHERE name < 'H'"),
+    # ("ltm", "SELECT * FROM nexmark_data WHERE name > 'm'"),
 ]
 
 
 def opt_name(opt):
+    if opt["buffering"]:
+        base_name = "buffered_"
+    else:
+        base_name = "unbuffered_"
     parts = []
     if opt["comp"]:
         parts.append("comp")
     if opt["enc"]:
         parts.append("enc")
-    return "_".join(parts) or "none"
+    compression_name = "_".join(parts) or "none"
+    return base_name + compression_name
 
 
 def host_of(address):
@@ -159,9 +197,6 @@ def build_graph(counts, nodes):
                 raise ValueError(f"source {n} has incoming edges {i}: sources are entry points")
             if not o:
                 raise ValueError(f"source {n} has no outgoing edge")
-            for d in distinct:
-                if nodes[d]["type"] != "processing":
-                    raise ValueError(f"source {n} -> {d}: a source must feed a processing node")
         elif t == "processing":
             if not i:
                 raise ValueError(f"processing {n} has no incoming edge (nothing feeds it)")
@@ -245,7 +280,7 @@ def build_benchmark(nodes, out, s):
                     cfg = {
                         "compression": opt["comp"],
                         "encoding": opt["enc"],
-                        "use_buffering": s["use_buffering"],
+                        "use_buffering": opt["buffering"],
                         "tuples_per_batch": batch,
                         "query": sql,
                         "query_result_schema": QUERY_RESULT_SCHEMA,
@@ -258,6 +293,7 @@ def build_benchmark(nodes, out, s):
                     "batches_per_second": bps,
                     "compression": opt["comp"],
                     "encoding": opt["enc"],
+                    "use_buffering": opt["buffering"],
                 }
                 if opt["enc"]:
                     params["columns_to_encode"] = s["columns_to_encode"]
