@@ -8,6 +8,7 @@ from fractions import Fraction
 from pathlib import Path
 
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 from pyarrow import flight
 
@@ -212,8 +213,15 @@ class SourceNode(flight.FlightServerBase):
                 assert self.columns_to_encode is not None
                 batch = dictionary_encode_batch(batch, self.columns_to_encode)
 
+            watermark = pc.max(batch.column("date_time")).as_py()
             batch_id = f"{source_node_id}:{thread_id}:{i}"
-            writer.write_with_metadata(batch, batch_id.encode("utf-8"))
+
+            batch_meta_data = {
+                "watermark": watermark,
+                "batch_id": batch_id
+            }
+
+            writer.write_with_metadata(batch, json.dumps(batch_meta_data).encode("utf-8"))
             batch_bytes = batch.nbytes
             total_bytes += batch_bytes
             send_end = time.time()
