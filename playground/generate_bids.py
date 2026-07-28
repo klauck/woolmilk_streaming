@@ -8,12 +8,12 @@ ROWS = 20_000_000
 COLUMNS = ["auction", "bidder", "price", "channel", "date_time"]
 START_TIMESTAMP = 1785180000000
 INCREMENT = 1
-OUT = "playground/bids.parquet"
+OUT = f"nexmark_bid_{ROWS}_0_1.parquet"
 
 
 def main():
     gen = NexmarkDataGenerator(
-        chunk_size=100_000,
+        chunk_size=10_000,
         no_records=ROWS,
         event_type="bid",
         executable="nexmark",
