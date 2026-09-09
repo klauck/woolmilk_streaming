@@ -41,6 +41,18 @@ QUERY_RESULT_SCHEMA = {
     ]
 }
 
+QUERY_RESULT_SCHEMA = {
+    "fields": [
+        {"name": "auction", "type": "int64"},
+        {"name": "bidder", "type": "int64"},
+        {"name": "price", "type": "int64"},
+        {"name": "channel", "type": "string"},
+        {"name": "url", "type": "string"},
+        {"name": "date_time", "type": "int64"},
+        {"name": "extra", "type": "string"},
+    ]
+}
+
 NODES = {
     "s1": {"type": "source", "addr": "127.0.0.1:8210"},
     "s2": {"type": "source", "addr": "127.0.0.1:8211"},
@@ -54,34 +66,37 @@ NODES = {
 
 NODES = {
     "s1": {"type": "source", "addr": "192.168.2.80:8007"},
-    # "p1": {"type": "processing", "addr": "192.168.2.81:8017"},
+    "p1": {"type": "processing", "addr": "192.168.2.81:8017"},
     "sn1": {"type": "sink", "addr": "192.168.2.82:8027"},
 }
 
 TOPOLOGY = """
 s1 -> p1
 p1 -> sn1
+
+s1 -> p1
+p1 -> sn1
 """
 
-TOPOLOGY = """
-s1 -> sn1
-"""
+# TOPOLOGY = """
+# s1 -> sn1
+# """
 
 SETTINGS = {
-    "stream": "nexmark_person",
-    "overall_tuples": 4_000_000,
+    "stream": "nexmark_bid",
+    "overall_tuples": 5_000_000,
     "tuples_per_batch": 10_000,
     "query": "SELECT * FROM nexmark_data WHERE name > 'H'",
     "batches_per_second": None,
     "compression": None,
     "encoding": None,
-    "columns_to_encode": ["city", "name"],
+    "columns_to_encode": ["channel"],
     "use_buffering": True,
     "result_folder": "results",
     "input_folder": "input_data",
     "store_input": True,
     "generator_executable": "nexmark",
-    "iterations": 5,
+    "iterations": 3,
 }
 
 REMOTE_SERVERS = {
@@ -115,13 +130,17 @@ BATCH_BPS_MATRIX = [
 
 OPT_MODES = [
     {"comp": None, "enc": None, "buffering": True},
-    {"comp": None, "enc": "dictionary", "buffering": True},
+    # {"comp": None, "enc": "dictionary", "buffering": True},
     {"comp": "zstd", "enc": None, "buffering": True},
-    {"comp": "zstd", "enc": "dictionary", "buffering": True},
-    # {"comp": None, "enc": None, "buffering": False},
+    # {"comp": "zstd", "enc": "dictionary", "buffering": True},
+    {"comp": "lz4", "enc": None, "buffering": True},
+    # {"comp": "lz4", "enc": "dictionary", "buffering": True},
+    {"comp": None, "enc": None, "buffering": False},
     # {"comp": None, "enc": "dictionary", "buffering": False},
-    # {"comp": "zstd", "enc": None, "buffering": False},
+    {"comp": "zstd", "enc": None, "buffering": False},
     # {"comp": "zstd", "enc": "dictionary", "buffering": False},
+    {"comp": "lz4", "enc": None, "buffering": False},
+    # {"comp": "lz4", "enc": "dictionary", "buffering": False},
 ]
 
 QUERIES = [
@@ -129,6 +148,13 @@ QUERIES = [
     ("gtH", "SELECT * FROM nexmark_data WHERE name > 'H'"),
     # ("ltH", "SELECT * FROM nexmark_data WHERE name < 'H'"),
     # ("ltm", "SELECT * FROM nexmark_data WHERE name > 'm'"),
+]
+
+QUERIES = [
+    ("all", "SELECT * FROM nexmark_data"),
+    ("gtA", "SELECT * FROM nexmark_data WHERE channel > 'A'"),
+    ("ltH", "SELECT * FROM nexmark_data WHERE channel < 'H'"),
+    ("gtz", "SELECT * FROM nexmark_data WHERE channel > 'z'"),
 ]
 
 
