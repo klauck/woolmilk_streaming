@@ -23,20 +23,22 @@ def encode_column(batch, column):
 
 
 def run(table, batch_sizes, columns):
-    print(f"{'column':<14}{'batch':>10}{'orig (MB)':>12}{'enc (MB)':>12}{'ratio':>8}{'ms':>10}")
-    print("-" * 66)
+    print(f"{'column':<14}{'avg. batch size':>14}{'orig (MB)':>12}{'enc (MB)':>12}{'ratio':>8}{'ms':>10}")
+    print("-" * 70)
     for column in columns:
         for batch_size in batch_sizes:
             orig = 0
             enc = 0
             elapsed = 0.0
+            acutal_batch_sizes = []
             for batch in table.to_reader(max_chunksize=batch_size):
+                acutal_batch_sizes.append(batch.num_rows)
                 orig += ipc_size(batch)
                 start = time.perf_counter()
                 encoded = encode_column(batch, column)
                 elapsed += time.perf_counter() - start
                 enc += ipc_size(encoded)
-            print(f"{column:<14}{batch_size:>10}{orig / 10**6:>12.2f}{enc / 10**6:>12.2f}{orig / enc:>8.2f}{elapsed * 1000:>10.2f}")
+            print(f"{column:<14}{sum(acutal_batch_sizes)/len(acutal_batch_sizes):>14}{orig / 10**6:>12.2f}{enc / 10**6:>12.2f}{orig / enc:>8.2f}{elapsed * 1000:>10.2f}")
 
 
 def parse_args():
@@ -49,7 +51,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    table = pq.read_table(args.input_file)
+    table = pq.read_table(args.input_file).combine_chunks()
     columns = [c.strip() for c in args.columns.split(",")]
     batch_sizes = [int(b) for b in args.batch_size.split(",")]
     run(table, batch_sizes, columns)
