@@ -8,7 +8,7 @@ from woolmilk.data_generator import NexmarkDataGenerator
 # COLUMNS = ["auction", "bidder", "price", "channel", "date_time"]
 # ROWS = 10_000_000
 # COLUMNS = ["auction", "bidder", "price", "channel", "url", "date_time"]
-# ROWS = 5_000_000
+ROWS = 5_000_000
 COLUMNS = ["auction", "bidder", "price", "channel", "url", "date_time", "extra"]
 START_TIMESTAMP = 1785180000000
 INCREMENT = 1

@@ -28,19 +28,21 @@ import argparse
 import json
 import os
 
-QUERY_RESULT_SCHEMA = {
-    "fields": [
-        {"name": "id", "type": "int64"},
-        {"name": "name", "type": "string"},
-        {"name": "email_address", "type": "string"},
-        {"name": "credit_card", "type": "string"},
-        {"name": "city", "type": "string"},
-        {"name": "state", "type": "string"},
-        {"name": "date_time", "type": "int64"},
-        {"name": "extra", "type": "string"},
-    ]
-}
+# person
+# QUERY_RESULT_SCHEMA = {
+#     "fields": [
+#         {"name": "id", "type": "int64"},
+#         {"name": "name", "type": "string"},
+#         {"name": "email_address", "type": "string"},
+#         {"name": "credit_card", "type": "string"},
+#         {"name": "city", "type": "string"},
+#         {"name": "state", "type": "string"},
+#         {"name": "date_time", "type": "int64"},
+#         {"name": "extra", "type": "string"},
+#     ]
+# }
 
+# bid
 QUERY_RESULT_SCHEMA = {
     "fields": [
         {"name": "auction", "type": "int64"},
@@ -73,14 +75,7 @@ NODES = {
 TOPOLOGY = """
 s1 -> p1
 p1 -> sn1
-
-s1 -> p1
-p1 -> sn1
 """
-
-# TOPOLOGY = """
-# s1 -> sn1
-# """
 
 SETTINGS = {
     "stream": "nexmark_bid",
@@ -143,12 +138,13 @@ OPT_MODES = [
     # {"comp": "lz4", "enc": "dictionary", "buffering": False},
 ]
 
-QUERIES = [
-    # ("all", "SELECT * FROM nexmark_data"),
-    ("gtH", "SELECT * FROM nexmark_data WHERE name > 'H'"),
-    # ("ltH", "SELECT * FROM nexmark_data WHERE name < 'H'"),
-    # ("ltm", "SELECT * FROM nexmark_data WHERE name > 'm'"),
-]
+# person
+# QUERIES = [
+#     ("all", "SELECT * FROM nexmark_data"),
+#     ("gtH", "SELECT * FROM nexmark_data WHERE name > 'H'"),
+#     ("ltH", "SELECT * FROM nexmark_data WHERE name < 'H'"),
+#     ("ltm", "SELECT * FROM nexmark_data WHERE name > 'm'"),
+# ]
 
 QUERIES = [
     ("all", "SELECT * FROM nexmark_data"),
