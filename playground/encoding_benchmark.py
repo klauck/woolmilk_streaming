@@ -30,15 +30,15 @@ def run(table, batch_sizes, columns):
             orig = 0
             enc = 0
             elapsed = 0.0
-            acutal_batch_sizes = []
+            actual_batch_sizes = []
             for batch in table.to_reader(max_chunksize=batch_size):
-                acutal_batch_sizes.append(batch.num_rows)
+                actual_batch_sizes.append(batch.num_rows)
                 orig += ipc_size(batch)
                 start = time.perf_counter()
                 encoded = encode_column(batch, column)
                 elapsed += time.perf_counter() - start
                 enc += ipc_size(encoded)
-            print(f"{column:<14}{sum(acutal_batch_sizes)/len(acutal_batch_sizes):>14}{orig / 10**6:>12.2f}{enc / 10**6:>12.2f}{orig / enc:>8.2f}{elapsed * 1000:>10.2f}")
+            print(f"{column:<14}{sum(actual_batch_sizes)/len(actual_batch_sizes):>14}{orig / 10**6:>12.2f}{enc / 10**6:>12.2f}{orig / enc:>8.2f}{elapsed * 1000:>10.2f}")
 
 
 def parse_args():

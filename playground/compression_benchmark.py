@@ -48,8 +48,8 @@ def levels(codec, max_level):
 
 
 def run(table, batch_size, max_level):
-    print(f"{'codec':<10}{'level':>7}{'orig (MB)':>12}{'comp (MB)':>12}{'ratio':>8}{'ms':>10}")
-    print("-" * 59)
+    print(f"{'avg. batch size':<17}{'codec':<10}{'level':>7}{'orig (MB)':>12}{'comp (MB)':>12}{'ratio':>8}{'ms':>10}")
+    print("-" * 76)
     for codec in CODECS:
         for lvl in levels(codec, max_level):
             codec_obj = pa.Codec(codec, compression_level=lvl) if lvl is not None else pa.Codec(codec)
@@ -57,8 +57,10 @@ def run(table, batch_size, max_level):
             comp = 0
             elapsed = 0.0
             failed = False
+            actual_batch_sizes = []
             for batch in table.to_reader(max_chunksize=batch_size):
                 buf = serialize(batch)
+                actual_batch_sizes.append(batch.num_rows)
                 try:
                     start = time.perf_counter()
                     out = codec_obj.compress(buf)
@@ -72,7 +74,7 @@ def run(table, batch_size, max_level):
                 print(f"{codec:<10}{'-':>7}{'not supported one-shot':>42}")
                 break
             level_str = "-" if lvl is None else str(lvl)
-            print(f"{codec:<10}{level_str:>7}{orig/10**6:>12.2f}{comp/10**6:>12.2f}{orig / comp:>8.2f}{elapsed * 1000:>10.2f}")
+            print(f"{sum(actual_batch_sizes)/len(actual_batch_sizes):>14}   {codec:<10}{level_str:>7}{orig/10**6:>12.2f}{comp/10**6:>12.2f}{orig / comp:>8.2f}{elapsed * 1000:>10.2f}")
 
 
 def parse_args():
@@ -85,7 +87,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    table = pq.read_table(args.input_file) if args.input_file else make_data(ROWS)
+    table = pq.read_table(args.input_file).combine_chunks() if args.input_file else make_data(ROWS)
     run(table, args.batch_size, args.max_level)
 
 
