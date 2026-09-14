@@ -16,13 +16,13 @@ batch_times = []
 for batch_id in range(len(send_times)):
     batch_time = {"duration": [], "start": []}
     batch_time["duration"].append(send_times[batch_id][1] - send_times[batch_id][0])
-    batch_time["start"].append(send_times[batch_id][0]-send_times[0][0])
+    batch_time["start"].append(send_times[batch_id][0] - send_times[0][0])
 
     batch_time["duration"].append(forward_times[batch_id][1] - forward_times[batch_id][0])
-    batch_time["start"].append(forward_times[batch_id][0]-send_times[0][0])
+    batch_time["start"].append(forward_times[batch_id][0] - send_times[0][0])
 
-    batch_time["duration"].append(receive_times[batch_id][1] - forward_times[batch_id][0])
-    batch_time["start"].append(receive_times[batch_id][0]-send_times[0][0])
+    batch_time["duration"].append(receive_times[batch_id][1] - receive_times[batch_id][0])
+    batch_time["start"].append(receive_times[batch_id][0] - send_times[0][0])
 
     batch_times.append(batch_time)
 
