@@ -3,8 +3,8 @@
   hosts: rpi_cluster
   become: yes # escalate privileges for package installation
   vars:
-     project_src: "{{ lookup('env', 'HOME') }}/usamabintariq/woolmilk_streaming" # local path on control machine
-     project_dest: /home/picocluster/usamabintariq/woolmilk # destination path on Raspberry Pis
+     project_src: "{{ lookup('env', 'HOME') }}/usama/woolmilk_streaming" # local path on control machine
+     project_dest: /home/picocluster/usama/woolmilk_streaming # destination path on Raspberry Pis
      venv_path: "{{ project_dest }}/venv" # virtual environment location
 
   tasks:
