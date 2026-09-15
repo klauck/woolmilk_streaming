@@ -1,48 +1,48 @@
 ---
 - name: (WoolMilk) setup Python environment and deploy files to Raspberry Pi cluster
   hosts: rpi_cluster
-  become: yes   # escalate privileges for package installation
+  become: yes # escalate privileges for package installation
   vars:
-    project_src: "{{ lookup('env', 'HOME') }}/woolmilk_streaming"    # local path on control machine
-    project_dest: /home/picocluster/woolmilk   # destination path on Raspberry Pis
-    venv_path: "{{ project_dest }}/venv"    # virtual environment location
+     project_src: "{{ lookup('env', 'HOME') }}/usamabintariq/woolmilk_streaming" # local path on control machine
+     project_dest: /home/picocluster/usamabintariq/woolmilk # destination path on Raspberry Pis
+     venv_path: "{{ project_dest }}/venv" # virtual environment location
 
   tasks:
-    - name: Create project directory
-      file:
-        path: "{{ project_dest }}"
-        state: directory
-        owner: picocluster
-        group: picocluster
-        mode: '0755'
+     - name: Create project directory
+       file:
+          path: "{{ project_dest }}"
+          state: directory
+          owner: picocluster
+          group: picocluster
+          mode: "0755"
 
-    - name: Copy project files to Raspberry Pis
-      synchronize:
-        src: "{{ project_src }}/"
-        dest: "{{ project_dest }}/"
-        recursive: yes
-        delete: no
-        rsync_opts:
-          - "--chown=picocluster:picocluster"
+     - name: Copy project files to Raspberry Pis
+       synchronize:
+          src: "{{ project_src }}/"
+          dest: "{{ project_dest }}/"
+          recursive: yes
+          delete: no
+          rsync_opts:
+             - "--chown=picocluster:picocluster"
 
-    - name: Create Python virtual environment
-      command: python3 -m venv "{{ venv_path }}"
-      args:
-        creates: "{{ venv_path }}/bin/activate"
+     - name: Create Python virtual environment
+       command: python3 -m venv "{{ venv_path }}"
+       args:
+          creates: "{{ venv_path }}/bin/activate"
 
-    - name: Upgrade pip inside venv
-      pip:
-        name: pip
-        state: latest
-        virtualenv: "{{ venv_path }}"
+     - name: Upgrade pip inside venv
+       pip:
+          name: pip
+          state: latest
+          virtualenv: "{{ venv_path }}"
 
-    - name: Install requirements if present
-      pip:
-        requirements: "{{ project_dest }}/requirements.txt"
-        virtualenv: "{{ venv_path }}"
-      ignore_errors: yes    # skips if no requirements.txt
-    - name: Install project in editable mode (pip install -e .)
-      pip:
-        name: "{{ project_dest }}"
-        editable: true
-        virtualenv: "{{ venv_path }}"
+     - name: Install requirements if present
+       pip:
+          requirements: "{{ project_dest }}/requirements.txt"
+          virtualenv: "{{ venv_path }}"
+       ignore_errors: yes # skips if no requirements.txt
+     - name: Install project in editable mode (pip install -e .)
+       pip:
+          name: "{{ project_dest }}"
+          editable: true
+          virtualenv: "{{ venv_path }}"
