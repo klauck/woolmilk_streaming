@@ -1,0 +1,3064 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.80": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.81": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.82": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.83": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.84": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.85": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.86": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.87": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.88": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.89": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.90": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.91": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.92": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.93": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.94": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.95": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.96": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.97": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.98": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.99": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         }
+      }
+   },
+   "source_nodes": [
+      {
+         "processing_nodes": [
+            "192.168.2.92:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.80:8007",
+         "deployment_server": "192.168.2.80",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.92:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.81:8007",
+         "deployment_server": "192.168.2.81",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.93:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.82:8007",
+         "deployment_server": "192.168.2.82",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.93:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.83:8007",
+         "deployment_server": "192.168.2.83",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.94:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.84:8007",
+         "deployment_server": "192.168.2.84",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.94:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.85:8007",
+         "deployment_server": "192.168.2.85",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.95:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.86:8007",
+         "deployment_server": "192.168.2.86",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.95:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.87:8007",
+         "deployment_server": "192.168.2.87",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.96:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.88:8007",
+         "deployment_server": "192.168.2.88",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.96:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.89:8007",
+         "deployment_server": "192.168.2.89",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.97:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.90:8007",
+         "deployment_server": "192.168.2.90",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      },
+      {
+         "processing_nodes": [
+            "192.168.2.97:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 10000000,
+         "tuples_per_batch": 50000,
+         "server_address": "192.168.2.91:8007",
+         "deployment_server": "192.168.2.91",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      }
+   ],
+   "node_configs": {
+      "raw_keep": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.81:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.82:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.83:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.84:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.85:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.86:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.87:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.88:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.89:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.90:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.91:8007": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.92:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.93:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.94:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.95:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.96:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.97:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "comp_keep": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.81:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.82:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.83:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.84:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.85:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.86:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.87:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.88:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.89:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.90:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.91:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.92:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.93:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.94:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.95:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.96:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.97:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "enccomp_keep": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.81:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.82:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.83:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.84:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.85:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.86:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.87:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.88:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.89:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.90:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.91:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.92:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.93:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.94:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.95:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.96:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.97:8017": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         }
+      },
+      "enccomp_proj_comp": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.81:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.82:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.83:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.84:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.85:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.86:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.87:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.88:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.89:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.90:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.91:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT * FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            },
+            "columns_to_encode": [
+               "channel"
+            ]
+         },
+         "192.168.2.92:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.93:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.94:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.95:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.96:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         },
+         "192.168.2.97:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      }
+   },
+   "experiments": [
+      {
+         "included_nodes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+         ],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null
+            }
+         ],
+         "name": "perhop_raw_keep",
+         "node_config": "raw_keep"
+      },
+      {
+         "included_nodes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+         ],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null
+            }
+         ],
+         "name": "perhop_comp_keep",
+         "node_config": "comp_keep"
+      },
+      {
+         "included_nodes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+         ],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            }
+         ],
+         "name": "perhop_enccomp_keep",
+         "node_config": "enccomp_keep"
+      },
+      {
+         "included_nodes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+         ],
+         "iterations": 1,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            },
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ]
+            }
+         ],
+         "name": "perhop_enccomp_proj_comp",
+         "node_config": "enccomp_proj_comp"
+      }
+   ],
+   "cluster_nodes": [
+      {
+         "node_type": "processing",
+         "server_address": "192.168.2.92:8017"
+      },
+      {
+         "node_type": "processing",
+         "server_address": "192.168.2.93:8017"
+      },
+      {
+         "node_type": "processing",
+         "server_address": "192.168.2.94:8017"
+      },
+      {
+         "node_type": "processing",
+         "server_address": "192.168.2.95:8017"
+      },
+      {
+         "node_type": "processing",
+         "server_address": "192.168.2.96:8017"
+      },
+      {
+         "node_type": "processing",
+         "server_address": "192.168.2.97:8017"
+      },
+      {
+         "node_type": "sink",
+         "server_address": "192.168.2.98:8027"
+      },
+      {
+         "node_type": "sink",
+         "server_address": "192.168.2.99:8027"
+      }
+   ]
+}

@@ -10,3 +10,4 @@ logs
 *.parquet
 woolmilk/experiments/*
 woolmilk.egg-info
+experiment-configurations/*/results
