@@ -1,0 +1,33 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.80": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+         },
+         "192.168.2.81": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+         },
+         "192.168.2.82": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/halfpap/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/halfpap/woolmilk_streaming/venv"
+         }
+      }
+   },
+   "sink_nodes": [
+      {
+         "server_address": "192.168.2.82:8027",
+         "result_folder": "results"
+      }
+   ],
+   "processing_nodes": [
+      {
+         "server_address": "192.168.2.81:8017",
+         "forward_node": "192.168.2.82:8027"
+      }
+   ]
+}
