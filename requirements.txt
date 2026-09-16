@@ -4,6 +4,10 @@ pyarrow==24.0.0
 # remote deployment
 paramiko
 
+# plotting results
+numpy
+matplotlib
+
 # linting and formatting
 flake8
 isort
