@@ -109,7 +109,8 @@ class ProcessingNode(flight.FlightServerBase):
     def _split_batch(
         self, batch: pa.RecordBatch, window_slide
     ) -> dict[int, list[pa.RecordBatch]]:
-        # Group tuples into slides based on the timestamp to avoid duplicating tuples into overlapping windows.
+        # Group tuples into slides based on the timestamp
+        # to avoid duplicating tuples into overlapping windows.
         slides = {}
         if batch.num_rows == 0:
             return slides
@@ -476,11 +477,9 @@ class ProcessingNode(flight.FlightServerBase):
                 # output_rows += result_batch.num_rows
                 if use_dictionary_encoding:
                     assert cfg.columns_to_encode is not None
-                    enc_start = time.time()
                     result_batch = dictionary_encode_batch(
                         result_batch, cfg.columns_to_encode
                     )
-                    encoding_total += time.time() - enc_start
 
                 forward_writer.write_batch(result_batch)
 
