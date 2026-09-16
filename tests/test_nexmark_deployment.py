@@ -110,7 +110,7 @@ class TestNexmarkDeployment(unittest.TestCase):
         ctx = datafusion.SessionContext()
         ctx.register_parquet(
             "bid",
-            self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_1000_0_1.parquet",
+            self.test_dir / "input" / "test_aggregation" / "nexmark_bid_1000_0_1.parquet",
         )
         expected = ctx.sql(
             "SELECT count(*) "
@@ -139,8 +139,8 @@ class TestNexmarkDeployment(unittest.TestCase):
         ctx = datafusion.SessionContext()
         dataset = ds.dataset(
             [
-                self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_500_1_2.parquet",
-                self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_500_0_2.parquet",
+                self.test_dir / "input" / "test_aggregation" / "nexmark_bid_500_1_2.parquet",
+                self.test_dir / "input" / "test_aggregation" / "nexmark_bid_500_0_2.parquet",
             ],
             format="parquet",
         )

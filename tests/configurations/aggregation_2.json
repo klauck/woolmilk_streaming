@@ -10,15 +10,15 @@
       {
          "server_address": "127.0.0.1:8917",
          "query": "SELECT count(*) FROM nexmark_data WHERE channel < 'H'",
-         "window_size": 20,
-         "window_slide": 20,
+         "window_size": 30,
+         "window_slide": 30,
          "forward_node": "127.0.0.1:8927",
          "query_result_schema": {"fields":[{"name":"count(*)","type":"int64", "nullable":false}]}
       }
    ],
    "source_nodes": [
       {
-         "processing_nodes": ["127.0.0.1:8917"],
+         "processing_nodes": ["127.0.0.1:8917", "127.0.0.1:8917"],
          "stream": "nexmark_bid",
          "overall_tuples": 1000,
          "tuples_per_batch": 100,
