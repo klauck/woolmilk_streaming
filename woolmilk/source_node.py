@@ -216,10 +216,7 @@ class SourceNode(flight.FlightServerBase):
             watermark = pc.max(batch.column("date_time")).as_py()
             batch_id = f"{source_node_id}:{thread_id}:{i}"
 
-            batch_meta_data = {
-                "watermark": watermark,
-                "batch_id": batch_id
-            }
+            batch_meta_data = {"watermark": watermark, "batch_id": batch_id}
 
             writer.write_with_metadata(batch, json.dumps(batch_meta_data).encode("utf-8"))
             batch_bytes = batch.nbytes

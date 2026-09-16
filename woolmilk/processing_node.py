@@ -106,7 +106,9 @@ class ProcessingNode(flight.FlightServerBase):
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
-    def _split_batch(self, batch: pa.RecordBatch, window_slide) -> dict[int, list[pa.RecordBatch]]:
+    def _split_batch(
+        self, batch: pa.RecordBatch, window_slide
+    ) -> dict[int, list[pa.RecordBatch]]:
         # Group tuples into slides based on the timestamp to avoid duplicating tuples into overlapping windows.
         slides = {}
         if batch.num_rows == 0:
@@ -130,7 +132,9 @@ class ProcessingNode(flight.FlightServerBase):
 
         return slides
 
-    def _assign_windows_to_timestamp(self, timestamp:int, window_size, window_slide) -> list[int]:
+    def _assign_windows_to_timestamp(
+        self, timestamp: int, window_size, window_slide
+    ) -> list[int]:
         # Compute all windows an event belongs to
         windows = []
 
@@ -148,7 +152,9 @@ class ProcessingNode(flight.FlightServerBase):
 
     def _register_pending_windows(self, slide_starts, window_size, window_slide) -> None:
         for slide_start in slide_starts:
-            for window_start in self._assign_windows_to_timestamp(slide_start, window_size, window_slide):
+            for window_start in self._assign_windows_to_timestamp(
+                slide_start, window_size, window_slide
+            ):
                 self.pending_windows.add(window_start)
 
     def _filter_batches_before(self, batches, window_end):
@@ -184,7 +190,11 @@ class ProcessingNode(flight.FlightServerBase):
     def _collect_windows_to_flush(self, window_size, window_slide):
         # Get completed windows by comparing to the global watermark
         to_flush = []
-        active_watermarks = [src["watermark"] for src in self.active_sources.values() if not src["is_finished"]]
+        active_watermarks = [
+            src["watermark"]
+            for src in self.active_sources.values()
+            if not src["is_finished"]
+        ]
 
         if not active_watermarks:
             # All sources are finished; flush all remaining windows
@@ -317,7 +327,9 @@ class ProcessingNode(flight.FlightServerBase):
             nonlocal input_bytes, output_bytes, input_rows, output_rows
 
             metadata = (
-                json.loads(bytes(incoming_metadata).decode("utf-8")) if incoming_metadata else None
+                json.loads(bytes(incoming_metadata).decode("utf-8"))
+                if incoming_metadata
+                else None
             )
             if metadata:
                 batch_id = metadata.get("batch_id")
@@ -343,12 +355,16 @@ class ProcessingNode(flight.FlightServerBase):
                     for slide_start, sub_batches in slide_batches.items():
                         self.state.setdefault(slide_start, []).extend(sub_batches)
                     print("register pending batches")
-                    self._register_pending_windows(slide_batches.keys(), window_size, window_slide)
+                    self._register_pending_windows(
+                        slide_batches.keys(), window_size, window_slide
+                    )
                     to_flush = self._collect_windows_to_flush(window_size, window_slide)
                     print("flush", to_flush)
                     result = []
                     for window_end, window_slides in to_flush:
-                        batches = self._materialize_window_batches(window_end, window_slides, window_slide)
+                        batches = self._materialize_window_batches(
+                            window_end, window_slides, window_slide
+                        )
                         if not batches:
                             continue
                         ctx.register_record_batches(self.default_table_name, [batches])
@@ -446,7 +462,9 @@ class ProcessingNode(flight.FlightServerBase):
 
                 result = []
                 for window_end, window_slides in to_flush:
-                    batches = self._materialize_window_batches(window_end, window_slides, window_slide)
+                    batches = self._materialize_window_batches(
+                        window_end, window_slides, window_slide
+                    )
                     if not batches:
                         continue
                     ctx.register_record_batches(self.default_table_name, [batches])
@@ -533,16 +551,8 @@ if __name__ == "__main__":
         default=None,
         help="JSON schema definition for the query result",
     )
-    parser.add_argument(
-        "--window-size",
-        type=int,
-        default=None
-    )
-    parser.add_argument(
-        "--window-slide",
-        type=int,
-        default=None
-    )
+    parser.add_argument("--window-size", type=int, default=None)
+    parser.add_argument("--window-slide", type=int, default=None)
     parser.add_argument(
         "--tuples-per-batch",
         type=int,
@@ -598,7 +608,11 @@ if __name__ == "__main__":
     columns_to_encode = (
         args.columns_to_encode.split(",") if args.columns_to_encode else None
     )
-    windowing = {"window_size": args.window_size, "window_slide": args.window_slide} if args.window_size and args.window_slide else None
+    windowing = (
+        {"window_size": args.window_size, "window_slide": args.window_slide}
+        if args.window_size and args.window_slide
+        else None
+    )
     startup_cfg = RuntimeConfig(
         compression=args.compression,
         encoding=args.encoding,
@@ -607,7 +621,7 @@ if __name__ == "__main__":
         tuples_per_batch=args.tuples_per_batch,
         query=args.query,
         query_result_schema=schema_dict,
-        windowing=windowing
+        windowing=windowing,
     )
     processing_node = ProcessingNode(
         location=f"grpc://0.0.0.0:{args.port}",

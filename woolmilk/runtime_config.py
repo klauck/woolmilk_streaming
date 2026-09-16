@@ -48,7 +48,7 @@ class RuntimeConfig:
             tuples_per_batch=int(data.get("tuples_per_batch", 8192)),
             query=data.get("query"),
             query_result_schema=data.get("query_result_schema"),
-            windowing=data.get("windowing")
+            windowing=data.get("windowing"),
         )
         cfg.validate()
         return cfg

@@ -363,7 +363,7 @@ class DeploymentRunner:
                 cmd.append(str(source_node.iteration_id))
 
             source_node_id = source_node.id if source_node.id is not None else i
-            #if source_node.id is not None:
+            # if source_node.id is not None:
             cmd.append("--source-node-id")
             cmd.append(str(source_node_id))
 
