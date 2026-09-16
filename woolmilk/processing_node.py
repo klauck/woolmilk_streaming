@@ -177,17 +177,6 @@ class ProcessingNode(flight.FlightServerBase):
                 batches.extend(self._filter_batches_before(slide_batches, window_end))
         return batches
 
-    def _flush_window(self, batches: list[pa.RecordBatch], forward_writer):
-        # Run query on materialized window once it's ready and forward the results
-        if not batches:
-            return
-        ctx = SessionContext()
-        ctx.register_record_batches("nexmark_data", partitions=[batches])
-        df = ctx.sql(self.query)
-        for batch in df.collect():
-            forward_writer.write_batch(batch.cast(self.predefined_schema))
-        ctx.deregister_table("nexmark_data")
-
     def _collect_windows_to_flush(self, window_size, window_slide):
         # Get completed windows by comparing to the global watermark
         to_flush = []
@@ -327,14 +316,10 @@ class ProcessingNode(flight.FlightServerBase):
         def process_batch(batch, batch_in_hand_t, incoming_metadata):
             nonlocal input_bytes, output_bytes, input_rows, output_rows
 
-            metadata = (
-                json.loads(bytes(incoming_metadata).decode("utf-8"))
-                if incoming_metadata
-                else None
-            )
-            if metadata:
-                batch_id = metadata.get("batch_id")
-                watermark = metadata.get("watermark")
+            assert incoming_metadata is not None
+            metadata = json.loads(bytes(incoming_metadata).decode("utf-8"))
+            batch_id = metadata.get("batch_id")
+            watermark = metadata.get("watermark")
 
             decoding_start = time.time()
             if use_dictionary_encoding:
@@ -395,16 +380,18 @@ class ProcessingNode(flight.FlightServerBase):
                     encoding_total += time.time() - enc_start
                 outgoing_id = (
                     batch_id
-                    if batch_id is None or len(result) == 1
+                    if len(result) == 1
                     else f"{batch_id}.{j}"
                 )
-                send_start = time.time()
-                if outgoing_id is not None:
-                    forward_writer.write_with_metadata(
-                        result_batch, outgoing_id.encode("utf-8")
-                    )
+                if j == len(result) - 1:
+                    # add watermark only to last batch
+                    batch_meta_data = {"watermark": watermark, "batch_id": outgoing_id}
                 else:
-                    forward_writer.write_batch(result_batch)
+                    batch_meta_data = {"batch_id": outgoing_id}
+                send_start = time.time()
+                forward_writer.write_with_metadata(
+                    result_batch, json.dumps(batch_meta_data).encode("utf-8")
+                )
                 sending_total += time.time() - send_start
                 output_bytes += result_batch.nbytes
                 batch_output_bytes += result_batch.nbytes
