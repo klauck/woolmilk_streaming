@@ -344,10 +344,9 @@ class ProcessingNode(flight.FlightServerBase):
             input_bytes += batch.nbytes
             input_rows += batch.num_rows
 
-            print("\n\n\nprocess batch", batch_id, watermark, window_size, window_slide)
             querying_start = time.time()
             if windowing:
-                print(batch)
+                print("\n\n\nprocess batch", batch_id, watermark, window_size, window_slide)
                 slide_batches = self._split_batch(batch, window_slide)
                 print("slide_batches", slide_batches)
                 print("get lock")
