@@ -331,7 +331,9 @@ class ProcessingNode(flight.FlightServerBase):
 
             querying_start = time.time()
             if windowing:
-                print("\n\n\nprocess batch", batch_id, watermark, window_size, window_slide)
+                print(
+                    "\n\n\nprocess batch", batch_id, watermark, window_size, window_slide
+                )
                 slide_batches = self._split_batch(batch, window_slide)
                 print("slide_batches", slide_batches)
                 print("get lock")
@@ -378,11 +380,7 @@ class ProcessingNode(flight.FlightServerBase):
                         result_batch, cfg.columns_to_encode
                     )
                     encoding_total += time.time() - enc_start
-                outgoing_id = (
-                    batch_id
-                    if len(result) == 1
-                    else f"{batch_id}.{j}"
-                )
+                outgoing_id = batch_id if len(result) == 1 else f"{batch_id}.{j}"
                 if j == len(result) - 1:
                     # add watermark only to last batch
                     batch_meta_data = {"watermark": watermark, "batch_id": outgoing_id}

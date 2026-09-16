@@ -4,7 +4,6 @@ from pathlib import Path
 
 import datafusion
 import pyarrow
-
 import pyarrow.dataset as ds
 
 import woolmilk.source_node
@@ -109,7 +108,10 @@ class TestNexmarkDeployment(unittest.TestCase):
 
         # Calculate expected result
         ctx = datafusion.SessionContext()
-        ctx.register_parquet("bid", self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_1000_0_1.parquet")
+        ctx.register_parquet(
+            "bid",
+            self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_1000_0_1.parquet",
+        )
         expected = ctx.sql(
             "SELECT count(*) "
             "FROM Bid "
@@ -135,10 +137,13 @@ class TestNexmarkDeployment(unittest.TestCase):
 
         # Calculate expected result
         ctx = datafusion.SessionContext()
-        dataset = ds.dataset([
-            self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_500_1_2.parquet",
-            self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_500_0_2.parquet"
-        ], format="parquet")
+        dataset = ds.dataset(
+            [
+                self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_500_1_2.parquet",
+                self.test_dir / "input" / "test_Q1_bid" / "nexmark_bid_500_0_2.parquet",
+            ],
+            format="parquet",
+        )
         ctx.register_dataset("bid", dataset)
         expected = ctx.sql(
             "SELECT count(*) "
@@ -151,6 +156,7 @@ class TestNexmarkDeployment(unittest.TestCase):
         )
 
         self._assert_tables_equal(actual_table, expected_table)
+
 
 if __name__ == "__main__":
     unittest.main()
