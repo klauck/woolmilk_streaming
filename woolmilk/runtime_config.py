@@ -15,6 +15,7 @@ class RuntimeConfig:
     tuples_per_batch: int = 8192
     query: Optional[str] = None
     query_result_schema: Optional[dict] = None
+    windowing: Optional[dict] = None
 
     def validate(self) -> None:
         if self.compression not in VALID_COMPRESSIONS:
@@ -47,6 +48,7 @@ class RuntimeConfig:
             tuples_per_batch=int(data.get("tuples_per_batch", 8192)),
             query=data.get("query"),
             query_result_schema=data.get("query_result_schema"),
+            windowing=data.get("windowing"),
         )
         cfg.validate()
         return cfg
