@@ -1,0 +1,113 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.80": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.81": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.82": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.83": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.84": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.85": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.86": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.87": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.88": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.89": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.90": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.91": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.92": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.93": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.94": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.95": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.96": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.97": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.98": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.99": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         }
+      }
+   },
+   "sink_nodes": [
+      {
+         "server_address": "192.168.2.85:8027",
+         "result_folder": "results"
+      }
+   ],
+   "processing_nodes": []
+}
