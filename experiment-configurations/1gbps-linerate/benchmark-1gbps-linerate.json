@@ -188,7 +188,7 @@
       }
    ],
    "node_configs": {
-      "maxbps_25k_buffered_none_raw_all": {
+      "maxbps_25k_buffered_none_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -370,7 +370,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_none_raw_gtH": {
+      "maxbps_25k_buffered_none_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -552,7 +552,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_none_raw_ltB": {
+      "maxbps_25k_buffered_none_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -734,7 +734,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_none_raw_gtz": {
+      "maxbps_25k_buffered_none_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -916,7 +916,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_none_raw_all": {
+      "maxbps_50k_buffered_none_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -1098,7 +1098,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_none_raw_gtH": {
+      "maxbps_50k_buffered_none_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -1280,7 +1280,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_none_raw_ltB": {
+      "maxbps_50k_buffered_none_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -1462,7 +1462,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_none_raw_gtz": {
+      "maxbps_50k_buffered_none_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -1644,7 +1644,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_none_raw_all": {
+      "maxbps_100k_buffered_none_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -1826,7 +1826,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_none_raw_gtH": {
+      "maxbps_100k_buffered_none_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -2008,7 +2008,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_none_raw_ltB": {
+      "maxbps_100k_buffered_none_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -2190,7 +2190,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_none_raw_gtz": {
+      "maxbps_100k_buffered_none_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -2372,7 +2372,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_none_raw_all": {
+      "maxbps_25k_unbuffered_none_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -2554,7 +2554,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_none_raw_gtH": {
+      "maxbps_25k_unbuffered_none_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -2736,7 +2736,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_none_raw_ltB": {
+      "maxbps_25k_unbuffered_none_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -2918,7 +2918,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_none_raw_gtz": {
+      "maxbps_25k_unbuffered_none_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -3100,7 +3100,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_none_raw_all": {
+      "maxbps_50k_unbuffered_none_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -3282,7 +3282,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_none_raw_gtH": {
+      "maxbps_50k_unbuffered_none_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -3464,7 +3464,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_none_raw_ltB": {
+      "maxbps_50k_unbuffered_none_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -3646,7 +3646,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_none_raw_gtz": {
+      "maxbps_50k_unbuffered_none_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -3828,7 +3828,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_none_raw_all": {
+      "maxbps_100k_unbuffered_none_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -4010,7 +4010,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_none_raw_gtH": {
+      "maxbps_100k_unbuffered_none_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -4192,7 +4192,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_none_raw_ltB": {
+      "maxbps_100k_unbuffered_none_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -4374,7 +4374,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_none_raw_gtz": {
+      "maxbps_100k_unbuffered_none_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": null,
@@ -4556,7 +4556,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_enc_raw_all": {
+      "maxbps_25k_buffered_enc_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -4754,7 +4754,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_enc_raw_gtH": {
+      "maxbps_25k_buffered_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -4952,7 +4952,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_enc_raw_ltB": {
+      "maxbps_25k_buffered_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -5150,7 +5150,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_enc_raw_gtz": {
+      "maxbps_25k_buffered_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -5348,7 +5348,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_enc_raw_all": {
+      "maxbps_50k_buffered_enc_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -5546,7 +5546,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_enc_raw_gtH": {
+      "maxbps_50k_buffered_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -5744,7 +5744,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_enc_raw_ltB": {
+      "maxbps_50k_buffered_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -5942,7 +5942,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_enc_raw_gtz": {
+      "maxbps_50k_buffered_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -6140,7 +6140,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_enc_raw_all": {
+      "maxbps_100k_buffered_enc_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -6338,7 +6338,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_enc_raw_gtH": {
+      "maxbps_100k_buffered_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -6536,7 +6536,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_enc_raw_ltB": {
+      "maxbps_100k_buffered_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -6734,7 +6734,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_enc_raw_gtz": {
+      "maxbps_100k_buffered_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -6932,7 +6932,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_enc_raw_all": {
+      "maxbps_25k_unbuffered_enc_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -7130,7 +7130,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_enc_raw_gtH": {
+      "maxbps_25k_unbuffered_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -7328,7 +7328,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_enc_raw_ltB": {
+      "maxbps_25k_unbuffered_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -7526,7 +7526,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_enc_raw_gtz": {
+      "maxbps_25k_unbuffered_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -7724,7 +7724,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_enc_raw_all": {
+      "maxbps_50k_unbuffered_enc_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -7922,7 +7922,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_enc_raw_gtH": {
+      "maxbps_50k_unbuffered_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -8120,7 +8120,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_enc_raw_ltB": {
+      "maxbps_50k_unbuffered_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -8318,7 +8318,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_enc_raw_gtz": {
+      "maxbps_50k_unbuffered_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -8516,7 +8516,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_enc_raw_all": {
+      "maxbps_100k_unbuffered_enc_all": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -8714,7 +8714,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_enc_raw_gtH": {
+      "maxbps_100k_unbuffered_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -8912,7 +8912,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_enc_raw_ltB": {
+      "maxbps_100k_unbuffered_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -9110,7 +9110,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_enc_raw_gtz": {
+      "maxbps_100k_unbuffered_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": null,
             "encoding": "dictionary",
@@ -9308,7 +9308,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_zstd_all": {
+      "maxbps_25k_buffered_comp_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -9490,7 +9490,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_zstd_gtH": {
+      "maxbps_25k_buffered_comp_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -9672,7 +9672,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_zstd_ltB": {
+      "maxbps_25k_buffered_comp_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -9854,7 +9854,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_zstd_gtz": {
+      "maxbps_25k_buffered_comp_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -10036,7 +10036,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_zstd_all": {
+      "maxbps_50k_buffered_comp_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -10218,7 +10218,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_zstd_gtH": {
+      "maxbps_50k_buffered_comp_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -10400,7 +10400,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_zstd_ltB": {
+      "maxbps_50k_buffered_comp_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -10582,7 +10582,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_zstd_gtz": {
+      "maxbps_50k_buffered_comp_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -10764,7 +10764,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_zstd_all": {
+      "maxbps_100k_buffered_comp_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -10946,7 +10946,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_zstd_gtH": {
+      "maxbps_100k_buffered_comp_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -11128,7 +11128,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_zstd_ltB": {
+      "maxbps_100k_buffered_comp_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -11310,7 +11310,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_zstd_gtz": {
+      "maxbps_100k_buffered_comp_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -11492,7 +11492,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_zstd_all": {
+      "maxbps_25k_unbuffered_comp_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -11674,7 +11674,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_zstd_gtH": {
+      "maxbps_25k_unbuffered_comp_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -11856,7 +11856,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_zstd_ltB": {
+      "maxbps_25k_unbuffered_comp_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -12038,7 +12038,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_zstd_gtz": {
+      "maxbps_25k_unbuffered_comp_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -12220,7 +12220,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_zstd_all": {
+      "maxbps_50k_unbuffered_comp_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -12402,7 +12402,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_zstd_gtH": {
+      "maxbps_50k_unbuffered_comp_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -12584,7 +12584,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_zstd_ltB": {
+      "maxbps_50k_unbuffered_comp_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -12766,7 +12766,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_zstd_gtz": {
+      "maxbps_50k_unbuffered_comp_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -12948,7 +12948,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_zstd_all": {
+      "maxbps_100k_unbuffered_comp_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -13130,7 +13130,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_zstd_gtH": {
+      "maxbps_100k_unbuffered_comp_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -13312,7 +13312,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_zstd_ltB": {
+      "maxbps_100k_unbuffered_comp_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -13494,7 +13494,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_zstd_gtz": {
+      "maxbps_100k_unbuffered_comp_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": null,
@@ -13676,7 +13676,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_enc_zstd_all": {
+      "maxbps_25k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -13874,7 +13874,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_enc_zstd_gtH": {
+      "maxbps_25k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -14072,7 +14072,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_enc_zstd_ltB": {
+      "maxbps_25k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -14270,7 +14270,7 @@
             }
          }
       },
-      "maxbps_25k_buffered_comp_enc_zstd_gtz": {
+      "maxbps_25k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -14468,7 +14468,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_enc_zstd_all": {
+      "maxbps_50k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -14666,7 +14666,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_enc_zstd_gtH": {
+      "maxbps_50k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -14864,7 +14864,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_enc_zstd_ltB": {
+      "maxbps_50k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -15062,7 +15062,7 @@
             }
          }
       },
-      "maxbps_50k_buffered_comp_enc_zstd_gtz": {
+      "maxbps_50k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -15260,7 +15260,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_enc_zstd_all": {
+      "maxbps_100k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -15458,7 +15458,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_enc_zstd_gtH": {
+      "maxbps_100k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -15656,7 +15656,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_enc_zstd_ltB": {
+      "maxbps_100k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -15854,7 +15854,7 @@
             }
          }
       },
-      "maxbps_100k_buffered_comp_enc_zstd_gtz": {
+      "maxbps_100k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -16052,7 +16052,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_enc_zstd_all": {
+      "maxbps_25k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -16250,7 +16250,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_enc_zstd_gtH": {
+      "maxbps_25k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -16448,7 +16448,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_enc_zstd_ltB": {
+      "maxbps_25k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -16646,7 +16646,7 @@
             }
          }
       },
-      "maxbps_25k_unbuffered_comp_enc_zstd_gtz": {
+      "maxbps_25k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -16844,7 +16844,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_enc_zstd_all": {
+      "maxbps_50k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -17042,7 +17042,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_enc_zstd_gtH": {
+      "maxbps_50k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -17240,7 +17240,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_enc_zstd_ltB": {
+      "maxbps_50k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -17438,7 +17438,7 @@
             }
          }
       },
-      "maxbps_50k_unbuffered_comp_enc_zstd_gtz": {
+      "maxbps_50k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -17636,7 +17636,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_enc_zstd_all": {
+      "maxbps_100k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -17834,7 +17834,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_enc_zstd_gtH": {
+      "maxbps_100k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -18032,7 +18032,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_enc_zstd_ltB": {
+      "maxbps_100k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -18230,7 +18230,7 @@
             }
          }
       },
-      "maxbps_100k_unbuffered_comp_enc_zstd_gtz": {
+      "maxbps_100k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "zstd",
             "encoding": "dictionary",
@@ -18508,8 +18508,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_none_raw_all",
-         "node_config": "maxbps_25k_buffered_none_raw_all"
+         "name": "maxbps_25k_buffered_none_all",
+         "node_config": "maxbps_25k_buffered_none_all"
       },
       {
          "included_nodes": [
@@ -18589,8 +18589,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_none_raw_gtH",
-         "node_config": "maxbps_25k_buffered_none_raw_gtH"
+         "name": "maxbps_25k_buffered_none_gtH",
+         "node_config": "maxbps_25k_buffered_none_gtH"
       },
       {
          "included_nodes": [
@@ -18670,8 +18670,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_none_raw_ltB",
-         "node_config": "maxbps_25k_buffered_none_raw_ltB"
+         "name": "maxbps_25k_buffered_none_ltB",
+         "node_config": "maxbps_25k_buffered_none_ltB"
       },
       {
          "included_nodes": [
@@ -18751,8 +18751,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_none_raw_gtz",
-         "node_config": "maxbps_25k_buffered_none_raw_gtz"
+         "name": "maxbps_25k_buffered_none_gtz",
+         "node_config": "maxbps_25k_buffered_none_gtz"
       },
       {
          "included_nodes": [
@@ -18832,8 +18832,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_none_raw_all",
-         "node_config": "maxbps_50k_buffered_none_raw_all"
+         "name": "maxbps_50k_buffered_none_all",
+         "node_config": "maxbps_50k_buffered_none_all"
       },
       {
          "included_nodes": [
@@ -18913,8 +18913,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_none_raw_gtH",
-         "node_config": "maxbps_50k_buffered_none_raw_gtH"
+         "name": "maxbps_50k_buffered_none_gtH",
+         "node_config": "maxbps_50k_buffered_none_gtH"
       },
       {
          "included_nodes": [
@@ -18994,8 +18994,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_none_raw_ltB",
-         "node_config": "maxbps_50k_buffered_none_raw_ltB"
+         "name": "maxbps_50k_buffered_none_ltB",
+         "node_config": "maxbps_50k_buffered_none_ltB"
       },
       {
          "included_nodes": [
@@ -19075,8 +19075,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_none_raw_gtz",
-         "node_config": "maxbps_50k_buffered_none_raw_gtz"
+         "name": "maxbps_50k_buffered_none_gtz",
+         "node_config": "maxbps_50k_buffered_none_gtz"
       },
       {
          "included_nodes": [
@@ -19156,8 +19156,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_none_raw_all",
-         "node_config": "maxbps_100k_buffered_none_raw_all"
+         "name": "maxbps_100k_buffered_none_all",
+         "node_config": "maxbps_100k_buffered_none_all"
       },
       {
          "included_nodes": [
@@ -19237,8 +19237,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_none_raw_gtH",
-         "node_config": "maxbps_100k_buffered_none_raw_gtH"
+         "name": "maxbps_100k_buffered_none_gtH",
+         "node_config": "maxbps_100k_buffered_none_gtH"
       },
       {
          "included_nodes": [
@@ -19318,8 +19318,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_none_raw_ltB",
-         "node_config": "maxbps_100k_buffered_none_raw_ltB"
+         "name": "maxbps_100k_buffered_none_ltB",
+         "node_config": "maxbps_100k_buffered_none_ltB"
       },
       {
          "included_nodes": [
@@ -19399,8 +19399,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_none_raw_gtz",
-         "node_config": "maxbps_100k_buffered_none_raw_gtz"
+         "name": "maxbps_100k_buffered_none_gtz",
+         "node_config": "maxbps_100k_buffered_none_gtz"
       },
       {
          "included_nodes": [
@@ -19480,8 +19480,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_none_raw_all",
-         "node_config": "maxbps_25k_unbuffered_none_raw_all"
+         "name": "maxbps_25k_unbuffered_none_all",
+         "node_config": "maxbps_25k_unbuffered_none_all"
       },
       {
          "included_nodes": [
@@ -19561,8 +19561,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_none_raw_gtH",
-         "node_config": "maxbps_25k_unbuffered_none_raw_gtH"
+         "name": "maxbps_25k_unbuffered_none_gtH",
+         "node_config": "maxbps_25k_unbuffered_none_gtH"
       },
       {
          "included_nodes": [
@@ -19642,8 +19642,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_none_raw_ltB",
-         "node_config": "maxbps_25k_unbuffered_none_raw_ltB"
+         "name": "maxbps_25k_unbuffered_none_ltB",
+         "node_config": "maxbps_25k_unbuffered_none_ltB"
       },
       {
          "included_nodes": [
@@ -19723,8 +19723,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_none_raw_gtz",
-         "node_config": "maxbps_25k_unbuffered_none_raw_gtz"
+         "name": "maxbps_25k_unbuffered_none_gtz",
+         "node_config": "maxbps_25k_unbuffered_none_gtz"
       },
       {
          "included_nodes": [
@@ -19804,8 +19804,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_none_raw_all",
-         "node_config": "maxbps_50k_unbuffered_none_raw_all"
+         "name": "maxbps_50k_unbuffered_none_all",
+         "node_config": "maxbps_50k_unbuffered_none_all"
       },
       {
          "included_nodes": [
@@ -19885,8 +19885,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_none_raw_gtH",
-         "node_config": "maxbps_50k_unbuffered_none_raw_gtH"
+         "name": "maxbps_50k_unbuffered_none_gtH",
+         "node_config": "maxbps_50k_unbuffered_none_gtH"
       },
       {
          "included_nodes": [
@@ -19966,8 +19966,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_none_raw_ltB",
-         "node_config": "maxbps_50k_unbuffered_none_raw_ltB"
+         "name": "maxbps_50k_unbuffered_none_ltB",
+         "node_config": "maxbps_50k_unbuffered_none_ltB"
       },
       {
          "included_nodes": [
@@ -20047,8 +20047,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_none_raw_gtz",
-         "node_config": "maxbps_50k_unbuffered_none_raw_gtz"
+         "name": "maxbps_50k_unbuffered_none_gtz",
+         "node_config": "maxbps_50k_unbuffered_none_gtz"
       },
       {
          "included_nodes": [
@@ -20128,8 +20128,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_none_raw_all",
-         "node_config": "maxbps_100k_unbuffered_none_raw_all"
+         "name": "maxbps_100k_unbuffered_none_all",
+         "node_config": "maxbps_100k_unbuffered_none_all"
       },
       {
          "included_nodes": [
@@ -20209,8 +20209,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_none_raw_gtH",
-         "node_config": "maxbps_100k_unbuffered_none_raw_gtH"
+         "name": "maxbps_100k_unbuffered_none_gtH",
+         "node_config": "maxbps_100k_unbuffered_none_gtH"
       },
       {
          "included_nodes": [
@@ -20290,8 +20290,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_none_raw_ltB",
-         "node_config": "maxbps_100k_unbuffered_none_raw_ltB"
+         "name": "maxbps_100k_unbuffered_none_ltB",
+         "node_config": "maxbps_100k_unbuffered_none_ltB"
       },
       {
          "included_nodes": [
@@ -20371,8 +20371,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_none_raw_gtz",
-         "node_config": "maxbps_100k_unbuffered_none_raw_gtz"
+         "name": "maxbps_100k_unbuffered_none_gtz",
+         "node_config": "maxbps_100k_unbuffered_none_gtz"
       },
       {
          "included_nodes": [
@@ -20468,8 +20468,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_enc_raw_all",
-         "node_config": "maxbps_25k_buffered_enc_raw_all"
+         "name": "maxbps_25k_buffered_enc_all",
+         "node_config": "maxbps_25k_buffered_enc_all"
       },
       {
          "included_nodes": [
@@ -20565,8 +20565,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_enc_raw_gtH",
-         "node_config": "maxbps_25k_buffered_enc_raw_gtH"
+         "name": "maxbps_25k_buffered_enc_gtH",
+         "node_config": "maxbps_25k_buffered_enc_gtH"
       },
       {
          "included_nodes": [
@@ -20662,8 +20662,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_enc_raw_ltB",
-         "node_config": "maxbps_25k_buffered_enc_raw_ltB"
+         "name": "maxbps_25k_buffered_enc_ltB",
+         "node_config": "maxbps_25k_buffered_enc_ltB"
       },
       {
          "included_nodes": [
@@ -20759,8 +20759,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_enc_raw_gtz",
-         "node_config": "maxbps_25k_buffered_enc_raw_gtz"
+         "name": "maxbps_25k_buffered_enc_gtz",
+         "node_config": "maxbps_25k_buffered_enc_gtz"
       },
       {
          "included_nodes": [
@@ -20856,8 +20856,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_enc_raw_all",
-         "node_config": "maxbps_50k_buffered_enc_raw_all"
+         "name": "maxbps_50k_buffered_enc_all",
+         "node_config": "maxbps_50k_buffered_enc_all"
       },
       {
          "included_nodes": [
@@ -20953,8 +20953,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_enc_raw_gtH",
-         "node_config": "maxbps_50k_buffered_enc_raw_gtH"
+         "name": "maxbps_50k_buffered_enc_gtH",
+         "node_config": "maxbps_50k_buffered_enc_gtH"
       },
       {
          "included_nodes": [
@@ -21050,8 +21050,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_enc_raw_ltB",
-         "node_config": "maxbps_50k_buffered_enc_raw_ltB"
+         "name": "maxbps_50k_buffered_enc_ltB",
+         "node_config": "maxbps_50k_buffered_enc_ltB"
       },
       {
          "included_nodes": [
@@ -21147,8 +21147,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_enc_raw_gtz",
-         "node_config": "maxbps_50k_buffered_enc_raw_gtz"
+         "name": "maxbps_50k_buffered_enc_gtz",
+         "node_config": "maxbps_50k_buffered_enc_gtz"
       },
       {
          "included_nodes": [
@@ -21244,8 +21244,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_enc_raw_all",
-         "node_config": "maxbps_100k_buffered_enc_raw_all"
+         "name": "maxbps_100k_buffered_enc_all",
+         "node_config": "maxbps_100k_buffered_enc_all"
       },
       {
          "included_nodes": [
@@ -21341,8 +21341,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_enc_raw_gtH",
-         "node_config": "maxbps_100k_buffered_enc_raw_gtH"
+         "name": "maxbps_100k_buffered_enc_gtH",
+         "node_config": "maxbps_100k_buffered_enc_gtH"
       },
       {
          "included_nodes": [
@@ -21438,8 +21438,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_enc_raw_ltB",
-         "node_config": "maxbps_100k_buffered_enc_raw_ltB"
+         "name": "maxbps_100k_buffered_enc_ltB",
+         "node_config": "maxbps_100k_buffered_enc_ltB"
       },
       {
          "included_nodes": [
@@ -21535,8 +21535,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_enc_raw_gtz",
-         "node_config": "maxbps_100k_buffered_enc_raw_gtz"
+         "name": "maxbps_100k_buffered_enc_gtz",
+         "node_config": "maxbps_100k_buffered_enc_gtz"
       },
       {
          "included_nodes": [
@@ -21632,8 +21632,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_enc_raw_all",
-         "node_config": "maxbps_25k_unbuffered_enc_raw_all"
+         "name": "maxbps_25k_unbuffered_enc_all",
+         "node_config": "maxbps_25k_unbuffered_enc_all"
       },
       {
          "included_nodes": [
@@ -21729,8 +21729,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_enc_raw_gtH",
-         "node_config": "maxbps_25k_unbuffered_enc_raw_gtH"
+         "name": "maxbps_25k_unbuffered_enc_gtH",
+         "node_config": "maxbps_25k_unbuffered_enc_gtH"
       },
       {
          "included_nodes": [
@@ -21826,8 +21826,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_enc_raw_ltB",
-         "node_config": "maxbps_25k_unbuffered_enc_raw_ltB"
+         "name": "maxbps_25k_unbuffered_enc_ltB",
+         "node_config": "maxbps_25k_unbuffered_enc_ltB"
       },
       {
          "included_nodes": [
@@ -21923,8 +21923,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_enc_raw_gtz",
-         "node_config": "maxbps_25k_unbuffered_enc_raw_gtz"
+         "name": "maxbps_25k_unbuffered_enc_gtz",
+         "node_config": "maxbps_25k_unbuffered_enc_gtz"
       },
       {
          "included_nodes": [
@@ -22020,8 +22020,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_enc_raw_all",
-         "node_config": "maxbps_50k_unbuffered_enc_raw_all"
+         "name": "maxbps_50k_unbuffered_enc_all",
+         "node_config": "maxbps_50k_unbuffered_enc_all"
       },
       {
          "included_nodes": [
@@ -22117,8 +22117,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_enc_raw_gtH",
-         "node_config": "maxbps_50k_unbuffered_enc_raw_gtH"
+         "name": "maxbps_50k_unbuffered_enc_gtH",
+         "node_config": "maxbps_50k_unbuffered_enc_gtH"
       },
       {
          "included_nodes": [
@@ -22214,8 +22214,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_enc_raw_ltB",
-         "node_config": "maxbps_50k_unbuffered_enc_raw_ltB"
+         "name": "maxbps_50k_unbuffered_enc_ltB",
+         "node_config": "maxbps_50k_unbuffered_enc_ltB"
       },
       {
          "included_nodes": [
@@ -22311,8 +22311,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_enc_raw_gtz",
-         "node_config": "maxbps_50k_unbuffered_enc_raw_gtz"
+         "name": "maxbps_50k_unbuffered_enc_gtz",
+         "node_config": "maxbps_50k_unbuffered_enc_gtz"
       },
       {
          "included_nodes": [
@@ -22408,8 +22408,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_enc_raw_all",
-         "node_config": "maxbps_100k_unbuffered_enc_raw_all"
+         "name": "maxbps_100k_unbuffered_enc_all",
+         "node_config": "maxbps_100k_unbuffered_enc_all"
       },
       {
          "included_nodes": [
@@ -22505,8 +22505,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_enc_raw_gtH",
-         "node_config": "maxbps_100k_unbuffered_enc_raw_gtH"
+         "name": "maxbps_100k_unbuffered_enc_gtH",
+         "node_config": "maxbps_100k_unbuffered_enc_gtH"
       },
       {
          "included_nodes": [
@@ -22602,8 +22602,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_enc_raw_ltB",
-         "node_config": "maxbps_100k_unbuffered_enc_raw_ltB"
+         "name": "maxbps_100k_unbuffered_enc_ltB",
+         "node_config": "maxbps_100k_unbuffered_enc_ltB"
       },
       {
          "included_nodes": [
@@ -22699,8 +22699,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_enc_raw_gtz",
-         "node_config": "maxbps_100k_unbuffered_enc_raw_gtz"
+         "name": "maxbps_100k_unbuffered_enc_gtz",
+         "node_config": "maxbps_100k_unbuffered_enc_gtz"
       },
       {
          "included_nodes": [
@@ -22780,8 +22780,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_zstd_all",
-         "node_config": "maxbps_25k_buffered_comp_zstd_all"
+         "name": "maxbps_25k_buffered_comp_all",
+         "node_config": "maxbps_25k_buffered_comp_all"
       },
       {
          "included_nodes": [
@@ -22861,8 +22861,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_zstd_gtH",
-         "node_config": "maxbps_25k_buffered_comp_zstd_gtH"
+         "name": "maxbps_25k_buffered_comp_gtH",
+         "node_config": "maxbps_25k_buffered_comp_gtH"
       },
       {
          "included_nodes": [
@@ -22942,8 +22942,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_zstd_ltB",
-         "node_config": "maxbps_25k_buffered_comp_zstd_ltB"
+         "name": "maxbps_25k_buffered_comp_ltB",
+         "node_config": "maxbps_25k_buffered_comp_ltB"
       },
       {
          "included_nodes": [
@@ -23023,8 +23023,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_zstd_gtz",
-         "node_config": "maxbps_25k_buffered_comp_zstd_gtz"
+         "name": "maxbps_25k_buffered_comp_gtz",
+         "node_config": "maxbps_25k_buffered_comp_gtz"
       },
       {
          "included_nodes": [
@@ -23104,8 +23104,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_zstd_all",
-         "node_config": "maxbps_50k_buffered_comp_zstd_all"
+         "name": "maxbps_50k_buffered_comp_all",
+         "node_config": "maxbps_50k_buffered_comp_all"
       },
       {
          "included_nodes": [
@@ -23185,8 +23185,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_zstd_gtH",
-         "node_config": "maxbps_50k_buffered_comp_zstd_gtH"
+         "name": "maxbps_50k_buffered_comp_gtH",
+         "node_config": "maxbps_50k_buffered_comp_gtH"
       },
       {
          "included_nodes": [
@@ -23266,8 +23266,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_zstd_ltB",
-         "node_config": "maxbps_50k_buffered_comp_zstd_ltB"
+         "name": "maxbps_50k_buffered_comp_ltB",
+         "node_config": "maxbps_50k_buffered_comp_ltB"
       },
       {
          "included_nodes": [
@@ -23347,8 +23347,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_zstd_gtz",
-         "node_config": "maxbps_50k_buffered_comp_zstd_gtz"
+         "name": "maxbps_50k_buffered_comp_gtz",
+         "node_config": "maxbps_50k_buffered_comp_gtz"
       },
       {
          "included_nodes": [
@@ -23428,8 +23428,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_zstd_all",
-         "node_config": "maxbps_100k_buffered_comp_zstd_all"
+         "name": "maxbps_100k_buffered_comp_all",
+         "node_config": "maxbps_100k_buffered_comp_all"
       },
       {
          "included_nodes": [
@@ -23509,8 +23509,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_zstd_gtH",
-         "node_config": "maxbps_100k_buffered_comp_zstd_gtH"
+         "name": "maxbps_100k_buffered_comp_gtH",
+         "node_config": "maxbps_100k_buffered_comp_gtH"
       },
       {
          "included_nodes": [
@@ -23590,8 +23590,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_zstd_ltB",
-         "node_config": "maxbps_100k_buffered_comp_zstd_ltB"
+         "name": "maxbps_100k_buffered_comp_ltB",
+         "node_config": "maxbps_100k_buffered_comp_ltB"
       },
       {
          "included_nodes": [
@@ -23671,8 +23671,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_zstd_gtz",
-         "node_config": "maxbps_100k_buffered_comp_zstd_gtz"
+         "name": "maxbps_100k_buffered_comp_gtz",
+         "node_config": "maxbps_100k_buffered_comp_gtz"
       },
       {
          "included_nodes": [
@@ -23752,8 +23752,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_zstd_all",
-         "node_config": "maxbps_25k_unbuffered_comp_zstd_all"
+         "name": "maxbps_25k_unbuffered_comp_all",
+         "node_config": "maxbps_25k_unbuffered_comp_all"
       },
       {
          "included_nodes": [
@@ -23833,8 +23833,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_zstd_gtH",
-         "node_config": "maxbps_25k_unbuffered_comp_zstd_gtH"
+         "name": "maxbps_25k_unbuffered_comp_gtH",
+         "node_config": "maxbps_25k_unbuffered_comp_gtH"
       },
       {
          "included_nodes": [
@@ -23914,8 +23914,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_zstd_ltB",
-         "node_config": "maxbps_25k_unbuffered_comp_zstd_ltB"
+         "name": "maxbps_25k_unbuffered_comp_ltB",
+         "node_config": "maxbps_25k_unbuffered_comp_ltB"
       },
       {
          "included_nodes": [
@@ -23995,8 +23995,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_zstd_gtz",
-         "node_config": "maxbps_25k_unbuffered_comp_zstd_gtz"
+         "name": "maxbps_25k_unbuffered_comp_gtz",
+         "node_config": "maxbps_25k_unbuffered_comp_gtz"
       },
       {
          "included_nodes": [
@@ -24076,8 +24076,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_zstd_all",
-         "node_config": "maxbps_50k_unbuffered_comp_zstd_all"
+         "name": "maxbps_50k_unbuffered_comp_all",
+         "node_config": "maxbps_50k_unbuffered_comp_all"
       },
       {
          "included_nodes": [
@@ -24157,8 +24157,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_zstd_gtH",
-         "node_config": "maxbps_50k_unbuffered_comp_zstd_gtH"
+         "name": "maxbps_50k_unbuffered_comp_gtH",
+         "node_config": "maxbps_50k_unbuffered_comp_gtH"
       },
       {
          "included_nodes": [
@@ -24238,8 +24238,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_zstd_ltB",
-         "node_config": "maxbps_50k_unbuffered_comp_zstd_ltB"
+         "name": "maxbps_50k_unbuffered_comp_ltB",
+         "node_config": "maxbps_50k_unbuffered_comp_ltB"
       },
       {
          "included_nodes": [
@@ -24319,8 +24319,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_zstd_gtz",
-         "node_config": "maxbps_50k_unbuffered_comp_zstd_gtz"
+         "name": "maxbps_50k_unbuffered_comp_gtz",
+         "node_config": "maxbps_50k_unbuffered_comp_gtz"
       },
       {
          "included_nodes": [
@@ -24400,8 +24400,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_zstd_all",
-         "node_config": "maxbps_100k_unbuffered_comp_zstd_all"
+         "name": "maxbps_100k_unbuffered_comp_all",
+         "node_config": "maxbps_100k_unbuffered_comp_all"
       },
       {
          "included_nodes": [
@@ -24481,8 +24481,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_zstd_gtH",
-         "node_config": "maxbps_100k_unbuffered_comp_zstd_gtH"
+         "name": "maxbps_100k_unbuffered_comp_gtH",
+         "node_config": "maxbps_100k_unbuffered_comp_gtH"
       },
       {
          "included_nodes": [
@@ -24562,8 +24562,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_zstd_ltB",
-         "node_config": "maxbps_100k_unbuffered_comp_zstd_ltB"
+         "name": "maxbps_100k_unbuffered_comp_ltB",
+         "node_config": "maxbps_100k_unbuffered_comp_ltB"
       },
       {
          "included_nodes": [
@@ -24643,8 +24643,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_zstd_gtz",
-         "node_config": "maxbps_100k_unbuffered_comp_zstd_gtz"
+         "name": "maxbps_100k_unbuffered_comp_gtz",
+         "node_config": "maxbps_100k_unbuffered_comp_gtz"
       },
       {
          "included_nodes": [
@@ -24740,8 +24740,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_enc_zstd_all",
-         "node_config": "maxbps_25k_buffered_comp_enc_zstd_all"
+         "name": "maxbps_25k_buffered_comp_enc_all",
+         "node_config": "maxbps_25k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -24837,8 +24837,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_enc_zstd_gtH",
-         "node_config": "maxbps_25k_buffered_comp_enc_zstd_gtH"
+         "name": "maxbps_25k_buffered_comp_enc_gtH",
+         "node_config": "maxbps_25k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -24934,8 +24934,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_enc_zstd_ltB",
-         "node_config": "maxbps_25k_buffered_comp_enc_zstd_ltB"
+         "name": "maxbps_25k_buffered_comp_enc_ltB",
+         "node_config": "maxbps_25k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -25031,8 +25031,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_25k_buffered_comp_enc_zstd_gtz",
-         "node_config": "maxbps_25k_buffered_comp_enc_zstd_gtz"
+         "name": "maxbps_25k_buffered_comp_enc_gtz",
+         "node_config": "maxbps_25k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -25128,8 +25128,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_enc_zstd_all",
-         "node_config": "maxbps_50k_buffered_comp_enc_zstd_all"
+         "name": "maxbps_50k_buffered_comp_enc_all",
+         "node_config": "maxbps_50k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -25225,8 +25225,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_enc_zstd_gtH",
-         "node_config": "maxbps_50k_buffered_comp_enc_zstd_gtH"
+         "name": "maxbps_50k_buffered_comp_enc_gtH",
+         "node_config": "maxbps_50k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -25322,8 +25322,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_enc_zstd_ltB",
-         "node_config": "maxbps_50k_buffered_comp_enc_zstd_ltB"
+         "name": "maxbps_50k_buffered_comp_enc_ltB",
+         "node_config": "maxbps_50k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -25419,8 +25419,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_50k_buffered_comp_enc_zstd_gtz",
-         "node_config": "maxbps_50k_buffered_comp_enc_zstd_gtz"
+         "name": "maxbps_50k_buffered_comp_enc_gtz",
+         "node_config": "maxbps_50k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -25516,8 +25516,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_enc_zstd_all",
-         "node_config": "maxbps_100k_buffered_comp_enc_zstd_all"
+         "name": "maxbps_100k_buffered_comp_enc_all",
+         "node_config": "maxbps_100k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -25613,8 +25613,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_enc_zstd_gtH",
-         "node_config": "maxbps_100k_buffered_comp_enc_zstd_gtH"
+         "name": "maxbps_100k_buffered_comp_enc_gtH",
+         "node_config": "maxbps_100k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -25710,8 +25710,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_enc_zstd_ltB",
-         "node_config": "maxbps_100k_buffered_comp_enc_zstd_ltB"
+         "name": "maxbps_100k_buffered_comp_enc_ltB",
+         "node_config": "maxbps_100k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -25807,8 +25807,8 @@
                "use_buffering": true
             }
          ],
-         "name": "maxbps_100k_buffered_comp_enc_zstd_gtz",
-         "node_config": "maxbps_100k_buffered_comp_enc_zstd_gtz"
+         "name": "maxbps_100k_buffered_comp_enc_gtz",
+         "node_config": "maxbps_100k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -25904,8 +25904,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_enc_zstd_all",
-         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_all"
+         "name": "maxbps_25k_unbuffered_comp_enc_all",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -26001,8 +26001,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_enc_zstd_gtH",
-         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_gtH"
+         "name": "maxbps_25k_unbuffered_comp_enc_gtH",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -26098,8 +26098,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_enc_zstd_ltB",
-         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_ltB"
+         "name": "maxbps_25k_unbuffered_comp_enc_ltB",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -26195,8 +26195,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_25k_unbuffered_comp_enc_zstd_gtz",
-         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_gtz"
+         "name": "maxbps_25k_unbuffered_comp_enc_gtz",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -26292,8 +26292,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_enc_zstd_all",
-         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_all"
+         "name": "maxbps_50k_unbuffered_comp_enc_all",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -26389,8 +26389,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_enc_zstd_gtH",
-         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_gtH"
+         "name": "maxbps_50k_unbuffered_comp_enc_gtH",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -26486,8 +26486,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_enc_zstd_ltB",
-         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_ltB"
+         "name": "maxbps_50k_unbuffered_comp_enc_ltB",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -26583,8 +26583,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_50k_unbuffered_comp_enc_zstd_gtz",
-         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_gtz"
+         "name": "maxbps_50k_unbuffered_comp_enc_gtz",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -26680,8 +26680,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_enc_zstd_all",
-         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_all"
+         "name": "maxbps_100k_unbuffered_comp_enc_all",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -26777,8 +26777,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_enc_zstd_gtH",
-         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_gtH"
+         "name": "maxbps_100k_unbuffered_comp_enc_gtH",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -26874,8 +26874,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_enc_zstd_ltB",
-         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_ltB"
+         "name": "maxbps_100k_unbuffered_comp_enc_ltB",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -26971,8 +26971,8 @@
                "use_buffering": false
             }
          ],
-         "name": "maxbps_100k_unbuffered_comp_enc_zstd_gtz",
-         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_gtz"
+         "name": "maxbps_100k_unbuffered_comp_enc_gtz",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_gtz"
       }
    ],
    "cluster_nodes": [

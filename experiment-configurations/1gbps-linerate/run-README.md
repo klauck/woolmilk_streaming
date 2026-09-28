@@ -30,7 +30,7 @@ emits ~0.5 Gbps -> two procs saturate a sink's 1 GbE NIC.
 | selectivity (4) | all · channel>'H' (50% = design point) · channel<'B' (12.5%) · channel>'z' (0%) |
 
 96 experiments x 2 iterations = 192 runs.
-name: `maxbps_<batch>k_<buffered|unbuffered>_<none|enc|comp|comp_enc>_<raw|zstd>_<all|gtH|ltB|gtz>`
+name: `maxbps_<batch>k_<buffered|unbuffered>_<none|enc|comp|comp_enc>_<all|gtH|ltB|gtz>`
 
 ## Prerequisites
 1. Deploy the 14 nodes:

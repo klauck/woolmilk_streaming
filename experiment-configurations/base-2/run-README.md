@@ -33,8 +33,8 @@ pure wire ceiling. Mirrors one cell of the 20-node design.
 | selectivity (4) | all · channel>'H' (50%) · channel<'B' (12.5%) · channel>'z' (0%) |
 
 96 experiments x 2 iterations = 192 runs.
-name pattern: `maxbps_<batch>k_<buffered|unbuffered>_<none|enc|comp|comp_enc>_<raw|lz4|zstd>_<all|gtH|ltB|gtz>`
-(visualizer: opt-mode = none/enc/comp/comp_enc; query facet = codec_selectivity, 12 chips)
+name pattern: `maxbps_<batch>k_<buffered|unbuffered>_<none|enc|comp|comp_enc>_<all|gtH|ltB|gtz>`
+(visualizer: opt-mode = none/enc/comp/comp_enc; query facet = selectivity (all/gtH/ltB/gtz))
 
 ## Prerequisites
 1. Deploy the 3 nodes:

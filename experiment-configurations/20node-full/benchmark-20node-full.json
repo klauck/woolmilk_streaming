@@ -274,7 +274,7 @@
       }
    ],
    "node_configs": {
-      "perhop_25k_20bps_buffered_all": {
+      "20bps_25k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -546,7 +546,7 @@
             }
          }
       },
-      "perhop_25k_20bps_buffered_gtH": {
+      "20bps_25k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -818,7 +818,7 @@
             }
          }
       },
-      "perhop_25k_20bps_buffered_ltB": {
+      "20bps_25k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -1090,7 +1090,7 @@
             }
          }
       },
-      "perhop_25k_20bps_buffered_gtz": {
+      "20bps_25k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -1362,7 +1362,7 @@
             }
          }
       },
-      "perhop_25k_20bps_unbuffered_all": {
+      "20bps_25k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -1634,7 +1634,7 @@
             }
          }
       },
-      "perhop_25k_20bps_unbuffered_gtH": {
+      "20bps_25k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -1906,7 +1906,7 @@
             }
          }
       },
-      "perhop_25k_20bps_unbuffered_ltB": {
+      "20bps_25k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -2178,7 +2178,7 @@
             }
          }
       },
-      "perhop_25k_20bps_unbuffered_gtz": {
+      "20bps_25k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -2450,7 +2450,7 @@
             }
          }
       },
-      "perhop_25k_40bps_buffered_all": {
+      "40bps_25k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -2722,7 +2722,7 @@
             }
          }
       },
-      "perhop_25k_40bps_buffered_gtH": {
+      "40bps_25k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -2994,7 +2994,7 @@
             }
          }
       },
-      "perhop_25k_40bps_buffered_ltB": {
+      "40bps_25k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -3266,7 +3266,7 @@
             }
          }
       },
-      "perhop_25k_40bps_buffered_gtz": {
+      "40bps_25k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -3538,7 +3538,7 @@
             }
          }
       },
-      "perhop_25k_40bps_unbuffered_all": {
+      "40bps_25k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -3810,7 +3810,7 @@
             }
          }
       },
-      "perhop_25k_40bps_unbuffered_gtH": {
+      "40bps_25k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -4082,7 +4082,7 @@
             }
          }
       },
-      "perhop_25k_40bps_unbuffered_ltB": {
+      "40bps_25k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -4354,7 +4354,7 @@
             }
          }
       },
-      "perhop_25k_40bps_unbuffered_gtz": {
+      "40bps_25k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -4626,7 +4626,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_buffered_all": {
+      "maxbps_25k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -4898,7 +4898,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_buffered_gtH": {
+      "maxbps_25k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -5170,7 +5170,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_buffered_ltB": {
+      "maxbps_25k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -5442,7 +5442,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_buffered_gtz": {
+      "maxbps_25k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -5714,7 +5714,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_unbuffered_all": {
+      "maxbps_25k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -5986,7 +5986,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_unbuffered_gtH": {
+      "maxbps_25k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -6258,7 +6258,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_unbuffered_ltB": {
+      "maxbps_25k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -6530,7 +6530,7 @@
             }
          }
       },
-      "perhop_25k_maxbps_unbuffered_gtz": {
+      "maxbps_25k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -6802,7 +6802,7 @@
             }
          }
       },
-      "perhop_50k_10bps_buffered_all": {
+      "10bps_50k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -7074,7 +7074,7 @@
             }
          }
       },
-      "perhop_50k_10bps_buffered_gtH": {
+      "10bps_50k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -7346,7 +7346,7 @@
             }
          }
       },
-      "perhop_50k_10bps_buffered_ltB": {
+      "10bps_50k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -7618,7 +7618,7 @@
             }
          }
       },
-      "perhop_50k_10bps_buffered_gtz": {
+      "10bps_50k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -7890,7 +7890,7 @@
             }
          }
       },
-      "perhop_50k_10bps_unbuffered_all": {
+      "10bps_50k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -8162,7 +8162,7 @@
             }
          }
       },
-      "perhop_50k_10bps_unbuffered_gtH": {
+      "10bps_50k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -8434,7 +8434,7 @@
             }
          }
       },
-      "perhop_50k_10bps_unbuffered_ltB": {
+      "10bps_50k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -8706,7 +8706,7 @@
             }
          }
       },
-      "perhop_50k_10bps_unbuffered_gtz": {
+      "10bps_50k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -8978,7 +8978,7 @@
             }
          }
       },
-      "perhop_50k_20bps_buffered_all": {
+      "20bps_50k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -9250,7 +9250,7 @@
             }
          }
       },
-      "perhop_50k_20bps_buffered_gtH": {
+      "20bps_50k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -9522,7 +9522,7 @@
             }
          }
       },
-      "perhop_50k_20bps_buffered_ltB": {
+      "20bps_50k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -9794,7 +9794,7 @@
             }
          }
       },
-      "perhop_50k_20bps_buffered_gtz": {
+      "20bps_50k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -10066,7 +10066,7 @@
             }
          }
       },
-      "perhop_50k_20bps_unbuffered_all": {
+      "20bps_50k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -10338,7 +10338,7 @@
             }
          }
       },
-      "perhop_50k_20bps_unbuffered_gtH": {
+      "20bps_50k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -10610,7 +10610,7 @@
             }
          }
       },
-      "perhop_50k_20bps_unbuffered_ltB": {
+      "20bps_50k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -10882,7 +10882,7 @@
             }
          }
       },
-      "perhop_50k_20bps_unbuffered_gtz": {
+      "20bps_50k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -11154,7 +11154,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_buffered_all": {
+      "maxbps_50k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -11426,7 +11426,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_buffered_gtH": {
+      "maxbps_50k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -11698,7 +11698,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_buffered_ltB": {
+      "maxbps_50k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -11970,7 +11970,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_buffered_gtz": {
+      "maxbps_50k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -12242,7 +12242,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_unbuffered_all": {
+      "maxbps_50k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -12514,7 +12514,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_unbuffered_gtH": {
+      "maxbps_50k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -12786,7 +12786,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_unbuffered_ltB": {
+      "maxbps_50k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -13058,7 +13058,7 @@
             }
          }
       },
-      "perhop_50k_maxbps_unbuffered_gtz": {
+      "maxbps_50k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -13330,7 +13330,7 @@
             }
          }
       },
-      "perhop_100k_5bps_buffered_all": {
+      "5bps_100k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -13602,7 +13602,7 @@
             }
          }
       },
-      "perhop_100k_5bps_buffered_gtH": {
+      "5bps_100k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -13874,7 +13874,7 @@
             }
          }
       },
-      "perhop_100k_5bps_buffered_ltB": {
+      "5bps_100k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -14146,7 +14146,7 @@
             }
          }
       },
-      "perhop_100k_5bps_buffered_gtz": {
+      "5bps_100k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -14418,7 +14418,7 @@
             }
          }
       },
-      "perhop_100k_5bps_unbuffered_all": {
+      "5bps_100k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -14690,7 +14690,7 @@
             }
          }
       },
-      "perhop_100k_5bps_unbuffered_gtH": {
+      "5bps_100k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -14962,7 +14962,7 @@
             }
          }
       },
-      "perhop_100k_5bps_unbuffered_ltB": {
+      "5bps_100k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -15234,7 +15234,7 @@
             }
          }
       },
-      "perhop_100k_5bps_unbuffered_gtz": {
+      "5bps_100k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -15506,7 +15506,7 @@
             }
          }
       },
-      "perhop_100k_10bps_buffered_all": {
+      "10bps_100k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -15778,7 +15778,7 @@
             }
          }
       },
-      "perhop_100k_10bps_buffered_gtH": {
+      "10bps_100k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -16050,7 +16050,7 @@
             }
          }
       },
-      "perhop_100k_10bps_buffered_ltB": {
+      "10bps_100k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -16322,7 +16322,7 @@
             }
          }
       },
-      "perhop_100k_10bps_buffered_gtz": {
+      "10bps_100k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -16594,7 +16594,7 @@
             }
          }
       },
-      "perhop_100k_10bps_unbuffered_all": {
+      "10bps_100k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -16866,7 +16866,7 @@
             }
          }
       },
-      "perhop_100k_10bps_unbuffered_gtH": {
+      "10bps_100k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -17138,7 +17138,7 @@
             }
          }
       },
-      "perhop_100k_10bps_unbuffered_ltB": {
+      "10bps_100k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -17410,7 +17410,7 @@
             }
          }
       },
-      "perhop_100k_10bps_unbuffered_gtz": {
+      "10bps_100k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -17682,7 +17682,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_buffered_all": {
+      "maxbps_100k_buffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -17954,7 +17954,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_buffered_gtH": {
+      "maxbps_100k_buffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -18226,7 +18226,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_buffered_ltB": {
+      "maxbps_100k_buffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -18498,7 +18498,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_buffered_gtz": {
+      "maxbps_100k_buffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -18770,7 +18770,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_unbuffered_all": {
+      "maxbps_100k_unbuffered_comp_enc_all": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -19042,7 +19042,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_unbuffered_gtH": {
+      "maxbps_100k_unbuffered_comp_enc_gtH": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -19314,7 +19314,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_unbuffered_ltB": {
+      "maxbps_100k_unbuffered_comp_enc_ltB": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -19586,7 +19586,7 @@
             }
          }
       },
-      "perhop_100k_maxbps_unbuffered_gtz": {
+      "maxbps_100k_unbuffered_comp_enc_gtz": {
          "192.168.2.80:8007": {
             "compression": "lz4",
             "encoding": "dictionary",
@@ -19998,8 +19998,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_20bps_buffered_all",
-         "node_config": "perhop_25k_20bps_buffered_all"
+         "name": "20bps_25k_buffered_comp_enc_all",
+         "node_config": "20bps_25k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -20139,8 +20139,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_20bps_buffered_gtH",
-         "node_config": "perhop_25k_20bps_buffered_gtH"
+         "name": "20bps_25k_buffered_comp_enc_gtH",
+         "node_config": "20bps_25k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -20280,8 +20280,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_20bps_buffered_ltB",
-         "node_config": "perhop_25k_20bps_buffered_ltB"
+         "name": "20bps_25k_buffered_comp_enc_ltB",
+         "node_config": "20bps_25k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -20421,8 +20421,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_20bps_buffered_gtz",
-         "node_config": "perhop_25k_20bps_buffered_gtz"
+         "name": "20bps_25k_buffered_comp_enc_gtz",
+         "node_config": "20bps_25k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -20562,8 +20562,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_20bps_unbuffered_all",
-         "node_config": "perhop_25k_20bps_unbuffered_all"
+         "name": "20bps_25k_unbuffered_comp_enc_all",
+         "node_config": "20bps_25k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -20703,8 +20703,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_20bps_unbuffered_gtH",
-         "node_config": "perhop_25k_20bps_unbuffered_gtH"
+         "name": "20bps_25k_unbuffered_comp_enc_gtH",
+         "node_config": "20bps_25k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -20844,8 +20844,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_20bps_unbuffered_ltB",
-         "node_config": "perhop_25k_20bps_unbuffered_ltB"
+         "name": "20bps_25k_unbuffered_comp_enc_ltB",
+         "node_config": "20bps_25k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -20985,8 +20985,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_20bps_unbuffered_gtz",
-         "node_config": "perhop_25k_20bps_unbuffered_gtz"
+         "name": "20bps_25k_unbuffered_comp_enc_gtz",
+         "node_config": "20bps_25k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -21126,8 +21126,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_40bps_buffered_all",
-         "node_config": "perhop_25k_40bps_buffered_all"
+         "name": "40bps_25k_buffered_comp_enc_all",
+         "node_config": "40bps_25k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -21267,8 +21267,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_40bps_buffered_gtH",
-         "node_config": "perhop_25k_40bps_buffered_gtH"
+         "name": "40bps_25k_buffered_comp_enc_gtH",
+         "node_config": "40bps_25k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -21408,8 +21408,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_40bps_buffered_ltB",
-         "node_config": "perhop_25k_40bps_buffered_ltB"
+         "name": "40bps_25k_buffered_comp_enc_ltB",
+         "node_config": "40bps_25k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -21549,8 +21549,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_40bps_buffered_gtz",
-         "node_config": "perhop_25k_40bps_buffered_gtz"
+         "name": "40bps_25k_buffered_comp_enc_gtz",
+         "node_config": "40bps_25k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -21690,8 +21690,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_40bps_unbuffered_all",
-         "node_config": "perhop_25k_40bps_unbuffered_all"
+         "name": "40bps_25k_unbuffered_comp_enc_all",
+         "node_config": "40bps_25k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -21831,8 +21831,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_40bps_unbuffered_gtH",
-         "node_config": "perhop_25k_40bps_unbuffered_gtH"
+         "name": "40bps_25k_unbuffered_comp_enc_gtH",
+         "node_config": "40bps_25k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -21972,8 +21972,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_40bps_unbuffered_ltB",
-         "node_config": "perhop_25k_40bps_unbuffered_ltB"
+         "name": "40bps_25k_unbuffered_comp_enc_ltB",
+         "node_config": "40bps_25k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -22113,8 +22113,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_40bps_unbuffered_gtz",
-         "node_config": "perhop_25k_40bps_unbuffered_gtz"
+         "name": "40bps_25k_unbuffered_comp_enc_gtz",
+         "node_config": "40bps_25k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -22254,8 +22254,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_maxbps_buffered_all",
-         "node_config": "perhop_25k_maxbps_buffered_all"
+         "name": "maxbps_25k_buffered_comp_enc_all",
+         "node_config": "maxbps_25k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -22395,8 +22395,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_maxbps_buffered_gtH",
-         "node_config": "perhop_25k_maxbps_buffered_gtH"
+         "name": "maxbps_25k_buffered_comp_enc_gtH",
+         "node_config": "maxbps_25k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -22536,8 +22536,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_maxbps_buffered_ltB",
-         "node_config": "perhop_25k_maxbps_buffered_ltB"
+         "name": "maxbps_25k_buffered_comp_enc_ltB",
+         "node_config": "maxbps_25k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -22677,8 +22677,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_25k_maxbps_buffered_gtz",
-         "node_config": "perhop_25k_maxbps_buffered_gtz"
+         "name": "maxbps_25k_buffered_comp_enc_gtz",
+         "node_config": "maxbps_25k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -22818,8 +22818,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_maxbps_unbuffered_all",
-         "node_config": "perhop_25k_maxbps_unbuffered_all"
+         "name": "maxbps_25k_unbuffered_comp_enc_all",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -22959,8 +22959,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_maxbps_unbuffered_gtH",
-         "node_config": "perhop_25k_maxbps_unbuffered_gtH"
+         "name": "maxbps_25k_unbuffered_comp_enc_gtH",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -23100,8 +23100,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_maxbps_unbuffered_ltB",
-         "node_config": "perhop_25k_maxbps_unbuffered_ltB"
+         "name": "maxbps_25k_unbuffered_comp_enc_ltB",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -23241,8 +23241,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_25k_maxbps_unbuffered_gtz",
-         "node_config": "perhop_25k_maxbps_unbuffered_gtz"
+         "name": "maxbps_25k_unbuffered_comp_enc_gtz",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -23382,8 +23382,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_10bps_buffered_all",
-         "node_config": "perhop_50k_10bps_buffered_all"
+         "name": "10bps_50k_buffered_comp_enc_all",
+         "node_config": "10bps_50k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -23523,8 +23523,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_10bps_buffered_gtH",
-         "node_config": "perhop_50k_10bps_buffered_gtH"
+         "name": "10bps_50k_buffered_comp_enc_gtH",
+         "node_config": "10bps_50k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -23664,8 +23664,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_10bps_buffered_ltB",
-         "node_config": "perhop_50k_10bps_buffered_ltB"
+         "name": "10bps_50k_buffered_comp_enc_ltB",
+         "node_config": "10bps_50k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -23805,8 +23805,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_10bps_buffered_gtz",
-         "node_config": "perhop_50k_10bps_buffered_gtz"
+         "name": "10bps_50k_buffered_comp_enc_gtz",
+         "node_config": "10bps_50k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -23946,8 +23946,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_10bps_unbuffered_all",
-         "node_config": "perhop_50k_10bps_unbuffered_all"
+         "name": "10bps_50k_unbuffered_comp_enc_all",
+         "node_config": "10bps_50k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -24087,8 +24087,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_10bps_unbuffered_gtH",
-         "node_config": "perhop_50k_10bps_unbuffered_gtH"
+         "name": "10bps_50k_unbuffered_comp_enc_gtH",
+         "node_config": "10bps_50k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -24228,8 +24228,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_10bps_unbuffered_ltB",
-         "node_config": "perhop_50k_10bps_unbuffered_ltB"
+         "name": "10bps_50k_unbuffered_comp_enc_ltB",
+         "node_config": "10bps_50k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -24369,8 +24369,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_10bps_unbuffered_gtz",
-         "node_config": "perhop_50k_10bps_unbuffered_gtz"
+         "name": "10bps_50k_unbuffered_comp_enc_gtz",
+         "node_config": "10bps_50k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -24510,8 +24510,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_20bps_buffered_all",
-         "node_config": "perhop_50k_20bps_buffered_all"
+         "name": "20bps_50k_buffered_comp_enc_all",
+         "node_config": "20bps_50k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -24651,8 +24651,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_20bps_buffered_gtH",
-         "node_config": "perhop_50k_20bps_buffered_gtH"
+         "name": "20bps_50k_buffered_comp_enc_gtH",
+         "node_config": "20bps_50k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -24792,8 +24792,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_20bps_buffered_ltB",
-         "node_config": "perhop_50k_20bps_buffered_ltB"
+         "name": "20bps_50k_buffered_comp_enc_ltB",
+         "node_config": "20bps_50k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -24933,8 +24933,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_20bps_buffered_gtz",
-         "node_config": "perhop_50k_20bps_buffered_gtz"
+         "name": "20bps_50k_buffered_comp_enc_gtz",
+         "node_config": "20bps_50k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -25074,8 +25074,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_20bps_unbuffered_all",
-         "node_config": "perhop_50k_20bps_unbuffered_all"
+         "name": "20bps_50k_unbuffered_comp_enc_all",
+         "node_config": "20bps_50k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -25215,8 +25215,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_20bps_unbuffered_gtH",
-         "node_config": "perhop_50k_20bps_unbuffered_gtH"
+         "name": "20bps_50k_unbuffered_comp_enc_gtH",
+         "node_config": "20bps_50k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -25356,8 +25356,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_20bps_unbuffered_ltB",
-         "node_config": "perhop_50k_20bps_unbuffered_ltB"
+         "name": "20bps_50k_unbuffered_comp_enc_ltB",
+         "node_config": "20bps_50k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -25497,8 +25497,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_20bps_unbuffered_gtz",
-         "node_config": "perhop_50k_20bps_unbuffered_gtz"
+         "name": "20bps_50k_unbuffered_comp_enc_gtz",
+         "node_config": "20bps_50k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -25638,8 +25638,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_maxbps_buffered_all",
-         "node_config": "perhop_50k_maxbps_buffered_all"
+         "name": "maxbps_50k_buffered_comp_enc_all",
+         "node_config": "maxbps_50k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -25779,8 +25779,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_maxbps_buffered_gtH",
-         "node_config": "perhop_50k_maxbps_buffered_gtH"
+         "name": "maxbps_50k_buffered_comp_enc_gtH",
+         "node_config": "maxbps_50k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -25920,8 +25920,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_maxbps_buffered_ltB",
-         "node_config": "perhop_50k_maxbps_buffered_ltB"
+         "name": "maxbps_50k_buffered_comp_enc_ltB",
+         "node_config": "maxbps_50k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -26061,8 +26061,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_50k_maxbps_buffered_gtz",
-         "node_config": "perhop_50k_maxbps_buffered_gtz"
+         "name": "maxbps_50k_buffered_comp_enc_gtz",
+         "node_config": "maxbps_50k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -26202,8 +26202,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_maxbps_unbuffered_all",
-         "node_config": "perhop_50k_maxbps_unbuffered_all"
+         "name": "maxbps_50k_unbuffered_comp_enc_all",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -26343,8 +26343,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_maxbps_unbuffered_gtH",
-         "node_config": "perhop_50k_maxbps_unbuffered_gtH"
+         "name": "maxbps_50k_unbuffered_comp_enc_gtH",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -26484,8 +26484,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_maxbps_unbuffered_ltB",
-         "node_config": "perhop_50k_maxbps_unbuffered_ltB"
+         "name": "maxbps_50k_unbuffered_comp_enc_ltB",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -26625,8 +26625,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_50k_maxbps_unbuffered_gtz",
-         "node_config": "perhop_50k_maxbps_unbuffered_gtz"
+         "name": "maxbps_50k_unbuffered_comp_enc_gtz",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -26766,8 +26766,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_5bps_buffered_all",
-         "node_config": "perhop_100k_5bps_buffered_all"
+         "name": "5bps_100k_buffered_comp_enc_all",
+         "node_config": "5bps_100k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -26907,8 +26907,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_5bps_buffered_gtH",
-         "node_config": "perhop_100k_5bps_buffered_gtH"
+         "name": "5bps_100k_buffered_comp_enc_gtH",
+         "node_config": "5bps_100k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -27048,8 +27048,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_5bps_buffered_ltB",
-         "node_config": "perhop_100k_5bps_buffered_ltB"
+         "name": "5bps_100k_buffered_comp_enc_ltB",
+         "node_config": "5bps_100k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -27189,8 +27189,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_5bps_buffered_gtz",
-         "node_config": "perhop_100k_5bps_buffered_gtz"
+         "name": "5bps_100k_buffered_comp_enc_gtz",
+         "node_config": "5bps_100k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -27330,8 +27330,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_5bps_unbuffered_all",
-         "node_config": "perhop_100k_5bps_unbuffered_all"
+         "name": "5bps_100k_unbuffered_comp_enc_all",
+         "node_config": "5bps_100k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -27471,8 +27471,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_5bps_unbuffered_gtH",
-         "node_config": "perhop_100k_5bps_unbuffered_gtH"
+         "name": "5bps_100k_unbuffered_comp_enc_gtH",
+         "node_config": "5bps_100k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -27612,8 +27612,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_5bps_unbuffered_ltB",
-         "node_config": "perhop_100k_5bps_unbuffered_ltB"
+         "name": "5bps_100k_unbuffered_comp_enc_ltB",
+         "node_config": "5bps_100k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -27753,8 +27753,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_5bps_unbuffered_gtz",
-         "node_config": "perhop_100k_5bps_unbuffered_gtz"
+         "name": "5bps_100k_unbuffered_comp_enc_gtz",
+         "node_config": "5bps_100k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -27894,8 +27894,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_10bps_buffered_all",
-         "node_config": "perhop_100k_10bps_buffered_all"
+         "name": "10bps_100k_buffered_comp_enc_all",
+         "node_config": "10bps_100k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -28035,8 +28035,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_10bps_buffered_gtH",
-         "node_config": "perhop_100k_10bps_buffered_gtH"
+         "name": "10bps_100k_buffered_comp_enc_gtH",
+         "node_config": "10bps_100k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -28176,8 +28176,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_10bps_buffered_ltB",
-         "node_config": "perhop_100k_10bps_buffered_ltB"
+         "name": "10bps_100k_buffered_comp_enc_ltB",
+         "node_config": "10bps_100k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -28317,8 +28317,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_10bps_buffered_gtz",
-         "node_config": "perhop_100k_10bps_buffered_gtz"
+         "name": "10bps_100k_buffered_comp_enc_gtz",
+         "node_config": "10bps_100k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -28458,8 +28458,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_10bps_unbuffered_all",
-         "node_config": "perhop_100k_10bps_unbuffered_all"
+         "name": "10bps_100k_unbuffered_comp_enc_all",
+         "node_config": "10bps_100k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -28599,8 +28599,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_10bps_unbuffered_gtH",
-         "node_config": "perhop_100k_10bps_unbuffered_gtH"
+         "name": "10bps_100k_unbuffered_comp_enc_gtH",
+         "node_config": "10bps_100k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -28740,8 +28740,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_10bps_unbuffered_ltB",
-         "node_config": "perhop_100k_10bps_unbuffered_ltB"
+         "name": "10bps_100k_unbuffered_comp_enc_ltB",
+         "node_config": "10bps_100k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -28881,8 +28881,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_10bps_unbuffered_gtz",
-         "node_config": "perhop_100k_10bps_unbuffered_gtz"
+         "name": "10bps_100k_unbuffered_comp_enc_gtz",
+         "node_config": "10bps_100k_unbuffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -29022,8 +29022,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_maxbps_buffered_all",
-         "node_config": "perhop_100k_maxbps_buffered_all"
+         "name": "maxbps_100k_buffered_comp_enc_all",
+         "node_config": "maxbps_100k_buffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -29163,8 +29163,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_maxbps_buffered_gtH",
-         "node_config": "perhop_100k_maxbps_buffered_gtH"
+         "name": "maxbps_100k_buffered_comp_enc_gtH",
+         "node_config": "maxbps_100k_buffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -29304,8 +29304,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_maxbps_buffered_ltB",
-         "node_config": "perhop_100k_maxbps_buffered_ltB"
+         "name": "maxbps_100k_buffered_comp_enc_ltB",
+         "node_config": "maxbps_100k_buffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -29445,8 +29445,8 @@
                "use_buffering": true
             }
          ],
-         "name": "perhop_100k_maxbps_buffered_gtz",
-         "node_config": "perhop_100k_maxbps_buffered_gtz"
+         "name": "maxbps_100k_buffered_comp_enc_gtz",
+         "node_config": "maxbps_100k_buffered_comp_enc_gtz"
       },
       {
          "included_nodes": [
@@ -29586,8 +29586,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_maxbps_unbuffered_all",
-         "node_config": "perhop_100k_maxbps_unbuffered_all"
+         "name": "maxbps_100k_unbuffered_comp_enc_all",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_all"
       },
       {
          "included_nodes": [
@@ -29727,8 +29727,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_maxbps_unbuffered_gtH",
-         "node_config": "perhop_100k_maxbps_unbuffered_gtH"
+         "name": "maxbps_100k_unbuffered_comp_enc_gtH",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_gtH"
       },
       {
          "included_nodes": [
@@ -29868,8 +29868,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_maxbps_unbuffered_ltB",
-         "node_config": "perhop_100k_maxbps_unbuffered_ltB"
+         "name": "maxbps_100k_unbuffered_comp_enc_ltB",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_ltB"
       },
       {
          "included_nodes": [
@@ -30009,8 +30009,8 @@
                "use_buffering": false
             }
          ],
-         "name": "perhop_100k_maxbps_unbuffered_gtz",
-         "node_config": "perhop_100k_maxbps_unbuffered_gtz"
+         "name": "maxbps_100k_unbuffered_comp_enc_gtz",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_gtz"
       }
    ],
    "cluster_nodes": [

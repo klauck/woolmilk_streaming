@@ -30,7 +30,7 @@ gtH  … WHERE channel > 'H'    ltB  … WHERE channel < 'B'    gtz  … WHERE c
 
 ## Totals
 72 experiments x 3 iterations = 216 runs (~4-5h; throttled runs slower).
-name: `perhop_<batch>k_<bps|maxbps>_<buffered|unbuffered>_<all|gtH|ltB|gtz>`
+name: `<bps|maxbps>_<batch>k_<buffered|unbuffered>_comp_enc_<all|gtH|ltB|gtz>` (comp_enc token = visualizer opt-mode pivot)
 
 ## Prerequisites
 1. 20 Pis deployed:
