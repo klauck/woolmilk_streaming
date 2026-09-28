@@ -1,0 +1,6195 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.80": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.81": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.85": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         }
+      }
+   },
+   "source_nodes": [
+      {
+         "processing_nodes": [
+            "192.168.2.81:8017"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 20000000,
+         "tuples_per_batch": 10000,
+         "server_address": "192.168.2.80:8007",
+         "deployment_server": "192.168.2.80",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      }
+   ],
+   "node_configs": {
+      "maxbps_25k_buffered_none_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_none_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_none_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_none_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_none_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_none_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_none_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_none_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_none_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_none_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_none_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_none_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_none_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_none_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_none_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_none_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_none_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_none_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_none_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_none_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_none_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_none_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_none_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_none_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_enc_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_enc_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_enc_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_enc_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_enc_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_enc_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_enc_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_enc_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_enc_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_enc_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_enc_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_enc_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_enc_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_enc_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_enc_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_enc_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_enc_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_enc_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_enc_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_enc_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_enc_raw_all": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_enc_raw_gtH": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_enc_raw_ltB": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_enc_raw_gtz": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": null,
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_enc_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_enc_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_enc_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_buffered_comp_enc_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_enc_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_enc_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_enc_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_buffered_comp_enc_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_enc_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_enc_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_enc_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_buffered_comp_enc_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": true,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": true,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_enc_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_enc_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_enc_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_25k_unbuffered_comp_enc_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 25000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_enc_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_enc_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_enc_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_50k_unbuffered_comp_enc_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 50000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_enc_zstd_all": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_enc_zstd_gtH": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'H'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_enc_zstd_ltB": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel < 'B'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      },
+      "maxbps_100k_unbuffered_comp_enc_zstd_gtz": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": "dictionary",
+            "columns_to_encode": [
+               "channel"
+            ],
+            "use_buffering": false,
+            "tuples_per_batch": 100000
+         },
+         "192.168.2.81:8017": {
+            "compression": "zstd",
+            "encoding": null,
+            "use_buffering": false,
+            "tuples_per_batch": 100000,
+            "query": "SELECT auction, bidder, price, channel, url, date_time FROM nexmark_data WHERE channel > 'z'",
+            "query_result_schema": {
+               "fields": [
+                  {
+                     "name": "auction",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "bidder",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "price",
+                     "type": "int64"
+                  },
+                  {
+                     "name": "channel",
+                     "type": "string"
+                  },
+                  {
+                     "name": "url",
+                     "type": "string"
+                  },
+                  {
+                     "name": "date_time",
+                     "type": "int64"
+                  }
+               ]
+            }
+         }
+      }
+   },
+   "experiments": [
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_none_raw_all",
+         "node_config": "maxbps_25k_buffered_none_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_none_raw_gtH",
+         "node_config": "maxbps_25k_buffered_none_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_none_raw_ltB",
+         "node_config": "maxbps_25k_buffered_none_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_none_raw_gtz",
+         "node_config": "maxbps_25k_buffered_none_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_none_raw_all",
+         "node_config": "maxbps_50k_buffered_none_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_none_raw_gtH",
+         "node_config": "maxbps_50k_buffered_none_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_none_raw_ltB",
+         "node_config": "maxbps_50k_buffered_none_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_none_raw_gtz",
+         "node_config": "maxbps_50k_buffered_none_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_none_raw_all",
+         "node_config": "maxbps_100k_buffered_none_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_none_raw_gtH",
+         "node_config": "maxbps_100k_buffered_none_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_none_raw_ltB",
+         "node_config": "maxbps_100k_buffered_none_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_none_raw_gtz",
+         "node_config": "maxbps_100k_buffered_none_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_none_raw_all",
+         "node_config": "maxbps_25k_unbuffered_none_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_none_raw_gtH",
+         "node_config": "maxbps_25k_unbuffered_none_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_none_raw_ltB",
+         "node_config": "maxbps_25k_unbuffered_none_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_none_raw_gtz",
+         "node_config": "maxbps_25k_unbuffered_none_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_none_raw_all",
+         "node_config": "maxbps_50k_unbuffered_none_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_none_raw_gtH",
+         "node_config": "maxbps_50k_unbuffered_none_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_none_raw_ltB",
+         "node_config": "maxbps_50k_unbuffered_none_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_none_raw_gtz",
+         "node_config": "maxbps_50k_unbuffered_none_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_none_raw_all",
+         "node_config": "maxbps_100k_unbuffered_none_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_none_raw_gtH",
+         "node_config": "maxbps_100k_unbuffered_none_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_none_raw_ltB",
+         "node_config": "maxbps_100k_unbuffered_none_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_none_raw_gtz",
+         "node_config": "maxbps_100k_unbuffered_none_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_enc_raw_all",
+         "node_config": "maxbps_25k_buffered_enc_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_enc_raw_gtH",
+         "node_config": "maxbps_25k_buffered_enc_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_enc_raw_ltB",
+         "node_config": "maxbps_25k_buffered_enc_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_enc_raw_gtz",
+         "node_config": "maxbps_25k_buffered_enc_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_enc_raw_all",
+         "node_config": "maxbps_50k_buffered_enc_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_enc_raw_gtH",
+         "node_config": "maxbps_50k_buffered_enc_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_enc_raw_ltB",
+         "node_config": "maxbps_50k_buffered_enc_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_enc_raw_gtz",
+         "node_config": "maxbps_50k_buffered_enc_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_enc_raw_all",
+         "node_config": "maxbps_100k_buffered_enc_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_enc_raw_gtH",
+         "node_config": "maxbps_100k_buffered_enc_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_enc_raw_ltB",
+         "node_config": "maxbps_100k_buffered_enc_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_enc_raw_gtz",
+         "node_config": "maxbps_100k_buffered_enc_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_enc_raw_all",
+         "node_config": "maxbps_25k_unbuffered_enc_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_enc_raw_gtH",
+         "node_config": "maxbps_25k_unbuffered_enc_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_enc_raw_ltB",
+         "node_config": "maxbps_25k_unbuffered_enc_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_enc_raw_gtz",
+         "node_config": "maxbps_25k_unbuffered_enc_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_enc_raw_all",
+         "node_config": "maxbps_50k_unbuffered_enc_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_enc_raw_gtH",
+         "node_config": "maxbps_50k_unbuffered_enc_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_enc_raw_ltB",
+         "node_config": "maxbps_50k_unbuffered_enc_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_enc_raw_gtz",
+         "node_config": "maxbps_50k_unbuffered_enc_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_enc_raw_all",
+         "node_config": "maxbps_100k_unbuffered_enc_raw_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_enc_raw_gtH",
+         "node_config": "maxbps_100k_unbuffered_enc_raw_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_enc_raw_ltB",
+         "node_config": "maxbps_100k_unbuffered_enc_raw_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_enc_raw_gtz",
+         "node_config": "maxbps_100k_unbuffered_enc_raw_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_zstd_all",
+         "node_config": "maxbps_25k_buffered_comp_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_zstd_gtH",
+         "node_config": "maxbps_25k_buffered_comp_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_zstd_ltB",
+         "node_config": "maxbps_25k_buffered_comp_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_zstd_gtz",
+         "node_config": "maxbps_25k_buffered_comp_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_zstd_all",
+         "node_config": "maxbps_50k_buffered_comp_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_zstd_gtH",
+         "node_config": "maxbps_50k_buffered_comp_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_zstd_ltB",
+         "node_config": "maxbps_50k_buffered_comp_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_zstd_gtz",
+         "node_config": "maxbps_50k_buffered_comp_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_zstd_all",
+         "node_config": "maxbps_100k_buffered_comp_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_zstd_gtH",
+         "node_config": "maxbps_100k_buffered_comp_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_zstd_ltB",
+         "node_config": "maxbps_100k_buffered_comp_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_zstd_gtz",
+         "node_config": "maxbps_100k_buffered_comp_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_zstd_all",
+         "node_config": "maxbps_25k_unbuffered_comp_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_zstd_gtH",
+         "node_config": "maxbps_25k_unbuffered_comp_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_zstd_ltB",
+         "node_config": "maxbps_25k_unbuffered_comp_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_zstd_gtz",
+         "node_config": "maxbps_25k_unbuffered_comp_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_zstd_all",
+         "node_config": "maxbps_50k_unbuffered_comp_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_zstd_gtH",
+         "node_config": "maxbps_50k_unbuffered_comp_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_zstd_ltB",
+         "node_config": "maxbps_50k_unbuffered_comp_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_zstd_gtz",
+         "node_config": "maxbps_50k_unbuffered_comp_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_zstd_all",
+         "node_config": "maxbps_100k_unbuffered_comp_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_zstd_gtH",
+         "node_config": "maxbps_100k_unbuffered_comp_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_zstd_ltB",
+         "node_config": "maxbps_100k_unbuffered_comp_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_zstd_gtz",
+         "node_config": "maxbps_100k_unbuffered_comp_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_enc_zstd_all",
+         "node_config": "maxbps_25k_buffered_comp_enc_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_enc_zstd_gtH",
+         "node_config": "maxbps_25k_buffered_comp_enc_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_enc_zstd_ltB",
+         "node_config": "maxbps_25k_buffered_comp_enc_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_25k_buffered_comp_enc_zstd_gtz",
+         "node_config": "maxbps_25k_buffered_comp_enc_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_enc_zstd_all",
+         "node_config": "maxbps_50k_buffered_comp_enc_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_enc_zstd_gtH",
+         "node_config": "maxbps_50k_buffered_comp_enc_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_enc_zstd_ltB",
+         "node_config": "maxbps_50k_buffered_comp_enc_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_50k_buffered_comp_enc_zstd_gtz",
+         "node_config": "maxbps_50k_buffered_comp_enc_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_enc_zstd_all",
+         "node_config": "maxbps_100k_buffered_comp_enc_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_enc_zstd_gtH",
+         "node_config": "maxbps_100k_buffered_comp_enc_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_enc_zstd_ltB",
+         "node_config": "maxbps_100k_buffered_comp_enc_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": true
+            }
+         ],
+         "name": "maxbps_100k_buffered_comp_enc_zstd_gtz",
+         "node_config": "maxbps_100k_buffered_comp_enc_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_enc_zstd_all",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_enc_zstd_gtH",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_enc_zstd_ltB",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_unbuffered_comp_enc_zstd_gtz",
+         "node_config": "maxbps_25k_unbuffered_comp_enc_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_enc_zstd_all",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_enc_zstd_gtH",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_enc_zstd_ltB",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_unbuffered_comp_enc_zstd_gtz",
+         "node_config": "maxbps_50k_unbuffered_comp_enc_zstd_gtz"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_enc_zstd_all",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_all"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_enc_zstd_gtH",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_gtH"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_enc_zstd_ltB",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_ltB"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 2,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 100000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": "dictionary",
+               "columns_to_encode": [
+                  "channel"
+               ],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_100k_unbuffered_comp_enc_zstd_gtz",
+         "node_config": "maxbps_100k_unbuffered_comp_enc_zstd_gtz"
+      }
+   ],
+   "cluster_nodes": [
+      {
+         "node_type": "processing",
+         "server_address": "192.168.2.81:8017"
+      },
+      {
+         "node_type": "sink",
+         "server_address": "192.168.2.85:8027"
+      }
+   ]
+}
