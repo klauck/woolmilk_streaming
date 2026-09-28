@@ -18,7 +18,7 @@ emits ~0.5 Gbps -> two procs saturate a sink's 1 GbE NIC.
 - source: no_extra 6-col (auction,bidder,price,channel,url,date_time), compression + dict(channel)
 - proc: FILTER on channel, then PROJECT channel OUT -> 5-col (auction,bidder,price,url,date_time)
         proc compression = source codec, no dict
-- data: 20M tuples/source (160M total, ~2.25 GB/source raw)
+- data: 10M tuples/source (80M total, ~1.12 GB/source raw)
 - iterations: 2
 
 ## Swept (96 experiments)
@@ -35,11 +35,13 @@ name: `maxbps_<batch>k_<buffered|unbuffered>_<none|enc|comp|comp_enc>_<raw|zstd>
 ## Prerequisites
 1. Deploy the 14 nodes:
    `ansible-playbook -i experiment-configurations/1gbps-linerate/inventory.ini scripts/deployment.yml -K -e "ansible_python_interpreter=/usr/bin/python3"`
-2. 20M no_extra (6-col) parquet on EACH of the 8 source Pis, named to the cache:
-   `nexmark_bid_20000000_0_1.parquet` in `woolmilk/input_data/`.
-   .80 already has it (base-1/base-2). Copy to the other 7 sources:
-   `for ip in 81 85 86 90 91 95 96; do scp -J duck data/base-1/nexmark_bid_20000000_0_1.parquet picocluster@192.168.2.$ip:~/usama/woolmilk_streaming/woolmilk/input_data/; done`
-   (all sources share the same 20M file; duplicate data is fine for a throughput run.)
+2. 10M no_extra (6-col, WITH url) parquet on EACH of the 8 source Pis, named to the cache:
+   `nexmark_bid_10000000_0_1.parquet` in `woolmilk/input_data/`.
+   NOTE: the old 10M files on the Pis are 5-col (no url) — must overwrite with the new 6-col file.
+   Generate: `local-scripts/generate_bid_variants.py` style, COLUMNS = no_extra 6-col, ROWS = 10M.
+   Copy to ALL 8 sources (80 81 85 86 90 91 95 96):
+   `for ip in 80 81 85 86 90 91 95 96; do scp -J duck data/linerate/nexmark_bid_10000000_0_1.parquet picocluster@192.168.2.$ip:~/usama/woolmilk_streaming/woolmilk/input_data/; done`
+   (all sources share the same 10M file; duplicate data is fine for a throughput run.)
 
 ## Launch (duck, detached)
 ```

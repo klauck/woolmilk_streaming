@@ -79,7 +79,7 @@
             "192.168.2.82:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.80:8007",
          "deployment_server": "192.168.2.80",
@@ -93,7 +93,7 @@
             "192.168.2.82:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.81:8007",
          "deployment_server": "192.168.2.81",
@@ -107,7 +107,7 @@
             "192.168.2.87:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.85:8007",
          "deployment_server": "192.168.2.85",
@@ -121,7 +121,7 @@
             "192.168.2.87:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.86:8007",
          "deployment_server": "192.168.2.86",
@@ -135,7 +135,7 @@
             "192.168.2.92:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.90:8007",
          "deployment_server": "192.168.2.90",
@@ -149,7 +149,7 @@
             "192.168.2.92:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.91:8007",
          "deployment_server": "192.168.2.91",
@@ -163,7 +163,7 @@
             "192.168.2.97:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.95:8007",
          "deployment_server": "192.168.2.95",
@@ -177,7 +177,7 @@
             "192.168.2.97:8017"
          ],
          "stream": "nexmark_bid",
-         "overall_tuples": 20000000,
+         "overall_tuples": 10000000,
          "tuples_per_batch": 10000,
          "server_address": "192.168.2.96:8007",
          "deployment_server": "192.168.2.96",
