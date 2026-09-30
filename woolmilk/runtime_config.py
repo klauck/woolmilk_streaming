@@ -4,6 +4,7 @@ from typing import List, Optional
 
 VALID_COMPRESSIONS = {None, "zstd", "lz4"}
 VALID_ENCODINGS = {None, "dictionary"}
+VALID_PARTITIONINGS = {None, "hash", "range"}
 
 
 @dataclass
@@ -13,6 +14,10 @@ class RuntimeConfig:
     columns_to_encode: Optional[List[str]] = None
     use_buffering: bool = False
     tuples_per_batch: int = 8192
+    forward_nodes: Optional[List[str]] = None
+    partitioning: Optional[str] = None
+    partition_key: Optional[str] = None
+    bounds: Optional[list] = None
     query: Optional[str] = None
     query_result_schema: Optional[dict] = None
 
@@ -33,9 +38,21 @@ class RuntimeConfig:
             self.query_result_schema, dict
         ):
             raise ValueError("query_result_schema must be a dict (parsed JSON)")
+        if self.partitioning not in VALID_PARTITIONINGS:
+            raise ValueError(f"invalid partitioning: {self.partitioning!r}")
+        if self.partitioning and not self.partition_key:
+            raise ValueError(f"partition_key is required for {self.partitioning}")
+        bounds = self.bounds or []
+        if self.partitioning == "range" and (
+            len(bounds) != max(len(self.forward_nodes or []) - 1, 0) or bounds != sorted(bounds)
+        ):
+            raise ValueError("range needs sorted bounds between the forward nodes")
+
+    def to_dict(self) -> dict:
+        return asdict(self)
 
     def to_json(self) -> bytes:
-        return json.dumps(asdict(self)).encode("utf-8")
+        return json.dumps(self.to_dict()).encode("utf-8")
 
     @classmethod
     def from_dict(cls, data: dict) -> "RuntimeConfig":
@@ -45,6 +62,10 @@ class RuntimeConfig:
             columns_to_encode=data.get("columns_to_encode"),
             use_buffering=bool(data.get("use_buffering", False)),
             tuples_per_batch=int(data.get("tuples_per_batch", 8192)),
+            forward_nodes=data.get("forward_nodes"),
+            partitioning=data.get("partitioning"),
+            partition_key=data.get("partition_key"),
+            bounds=data.get("bounds"),
             query=data.get("query"),
             query_result_schema=data.get("query_result_schema"),
         )

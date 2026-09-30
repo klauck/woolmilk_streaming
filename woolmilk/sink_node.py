@@ -3,6 +3,7 @@ import json
 import os
 import threading
 import time
+from collections import Counter
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -25,7 +26,19 @@ class SinkNode(flight.FlightServerBase):
         self.logs_lock = threading.Lock()
         self.open_requests = 0
         self.open_requests_lock = threading.Lock()
+        self.totals = Counter()
+        self.totals_lock = threading.Lock()
+        self.started_at = time.time()
         self.runtime_config = RuntimeConfig()
+
+    def node_status(self):
+        with self.open_requests_lock:
+            busy = self.open_requests > 0
+        return NodeStatus.RECEIVING_DATA if busy else NodeStatus.IDLE
+
+    def metrics(self):
+        with self.totals_lock:
+            return dict(self.totals, uptime=time.time() - self.started_at)
 
     def do_action(self, context, action):
         if action.type == "get_logs":
@@ -45,19 +58,29 @@ class SinkNode(flight.FlightServerBase):
             print(f"SET_CONFIG applied: {cfg}")
             yield flight.Result(b"OK")
         elif action.type == SourceNodeActions.GET_STATUS:
-            with self.open_requests_lock:
-                if self.open_requests == 0:
-                    status = NodeStatus.IDLE
-                else:
-                    status = NodeStatus.RECEIVING_DATA
-            yield flight.Result(status.encode("utf-8"))
+            yield flight.Result(self.node_status().encode("utf-8"))
+        elif action.type == SourceNodeActions.GET_INFO:
+            info = {
+                "role": "sink",
+                "status": self.node_status(),
+                "config": {"result_folder": self.result_folder},
+                "metrics": self.metrics(),
+                "targets": [],
+            }
+            yield flight.Result(json.dumps(info).encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
         with self.open_requests_lock:
             self.open_requests += 1
+        try:
+            self.process_stream(descriptor, reader)
+        finally:
+            with self.open_requests_lock:
+                self.open_requests -= 1
 
+    def process_stream(self, descriptor, reader):
         experiment_id = None
         iteration_id = None
         source_node_id = None
@@ -97,6 +120,9 @@ class SinkNode(flight.FlightServerBase):
 
             receive_times.append((batch_start, batch_work_end, batch_id, batch_bytes))
             batch_start = batch_work_end
+            with self.totals_lock:
+                self.totals["rows_in"] += batch.num_rows
+                self.totals["bytes_in"] += batch_bytes
         end = time.time()
 
         duration = end - start
@@ -132,9 +158,6 @@ class SinkNode(flight.FlightServerBase):
                 table = pa.Table.from_batches(result)
                 pq.write_table(table, f"{self.result_folder}/{local_id}.parquet")
                 print(f"Wrote .. {self.result_folder}/{local_id}.parquet")
-
-        with self.open_requests_lock:
-            self.open_requests -= 1
 
 
 if __name__ == "__main__":

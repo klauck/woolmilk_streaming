@@ -11,6 +11,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
 
+from woolmilk import routing, runtime_config
 from woolmilk.encoding import (
     dictionary_encode_batch,
     get_compressed_flight_options,
@@ -29,6 +30,8 @@ class NodeStatus:
 class SourceNodeActions:
     GENERATE_DATA = "GENERATE_DATA"
     SEND_DATA = "SEND_DATA"
+    SET_CONFIG = "SET_CONFIG"
+    GET_INFO = "GET_INFO"
     GET_STATUS = "GET_STATUS"
 
 
@@ -79,10 +82,22 @@ class SourceNode(flight.FlightServerBase):
         self.threads = []
         self.completed_threads = 0
         self.lock = threading.Lock()
+        self.runtime_config = runtime_config.RuntimeConfig(
+            compression=compression,
+            encoding=encoding,
+            columns_to_encode=columns_to_encode,
+        )
+        self.started_at = time.time()
 
     def start(self):
         print(f"WoolMilk source node running at {self.location}")
         self.serve()
+
+    def fields(self):
+        table = self.thread_tables[0]
+        if table is None:
+            return []
+        return [{"name": field.name, "type": str(field.type)} for field in table.schema]
 
     def do_action(self, context, action):
         if action.type == SourceNodeActions.GET_STATUS:
@@ -96,6 +111,38 @@ class SourceNode(flight.FlightServerBase):
             self.current_status = NodeStatus.SENDING_DATA
             self.start_streaming()
             yield flight.Result(self.current_status.encode("utf-8"))
+        elif action.type == SourceNodeActions.SET_CONFIG:
+            try:
+                self.runtime_config = routing.accept(bytes(action.body.to_pybytes()))
+            except Exception as e:
+                yield flight.Result(f"ERR:{e}".encode("utf-8"))
+                return
+            yield flight.Result(b"OK")
+        elif action.type == SourceNodeActions.GET_INFO:
+            config = dict(
+                self.runtime_config.to_dict(),
+                stream=self.stream,
+                overall_tuples=self.overall_tuples,
+                tuples_per_batch=self.tuples_per_batch,
+                batches_per_second=(
+                    float(self.batches_per_second) if self.batches_per_second else None
+                ),
+                fields=self.fields(),
+            )
+            info = {
+                "role": "source",
+                "status": self.current_status,
+                "config": config,
+                "metrics": {
+                    "rows_sent": routing.rows_sent(),
+                    "uptime": time.time() - self.started_at,
+                },
+                "targets": routing.targets(
+                    self.runtime_config,
+                    [f"{host}:{port}" for host, port in self.processing_nodes],
+                ),
+            }
+            yield flight.Result(json.dumps(info).encode("utf-8"))
 
     def generate_data(self):
         tuples_per_thread = self.overall_tuples // len(self.processing_nodes)
@@ -174,7 +221,7 @@ class SourceNode(flight.FlightServerBase):
         }
         encoded_path = json.dumps(path_info)
 
-        client = flight.FlightClient(f"grpc://{processing_node[0]}:{processing_node[1]}")
+        own_target = f"{processing_node[0]}:{processing_node[1]}"
 
         use_dictionary_encoding = self.encoding == "dictionary"
         target_schema = schema
@@ -186,10 +233,13 @@ class SourceNode(flight.FlightServerBase):
         if self.compression:
             call_options = get_compressed_flight_options(codec=self.compression)
 
-        writer, _ = client.do_put(
+        writer = routing.Writer(
             flight.FlightDescriptor.for_path(encoded_path),
             target_schema,
-            options=call_options,
+            call_options,
+            lambda: self.runtime_config,
+            [own_target],
+            thread_id,
         )
 
         start = time.time()

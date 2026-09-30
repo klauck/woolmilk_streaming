@@ -3,11 +3,13 @@ import json
 import queue
 import threading
 import time
+from collections import Counter
 
 import pyarrow as pa
 from datafusion import SessionConfig, SessionContext
 from pyarrow import flight
 
+from woolmilk import routing
 from woolmilk.encoding import (
     dictionary_decode_batch,
     dictionary_encode_batch,
@@ -27,12 +29,15 @@ class ProcessingNodeActions:
 class ProcessingNode(flight.FlightServerBase):
     def __init__(self, location, forward_node, runtime_config=None):
         super().__init__(location)
-        self.forwarding_client = flight.FlightClient(f"grpc://{forward_node}")
+        self.forward_node = forward_node
         self.default_table_name = "nexmark_data"
         self.logs = []
         self.logs_lock = threading.Lock()
         self.open_requests = 0
         self.open_requests_lock = threading.Lock()
+        self.totals = Counter()
+        self.totals_lock = threading.Lock()
+        self.started_at = time.time()
 
         self.runtime_config = runtime_config or RuntimeConfig()
 
@@ -63,6 +68,19 @@ class ProcessingNode(flight.FlightServerBase):
 
         return pa.schema(fields)
 
+    def node_status(self):
+        with self.open_requests_lock:
+            busy = self.open_requests > 0
+        return NodeStatus.SENDING_DATA if busy else NodeStatus.IDLE
+
+    def metrics(self):
+        with self.totals_lock:
+            return dict(
+                self.totals,
+                uptime=time.time() - self.started_at,
+                rows_sent=routing.rows_sent(),
+            )
+
     def do_action(self, context, action):
         if action.type == ProcessingNodeActions.GET_LOGS:
             with self.logs_lock:
@@ -73,7 +91,7 @@ class ProcessingNode(flight.FlightServerBase):
                 self.logs = []
         elif action.type == ProcessingNodeActions.SET_CONFIG:
             try:
-                cfg = RuntimeConfig.from_json(bytes(action.body.to_pybytes()))
+                cfg = routing.accept(bytes(action.body.to_pybytes()))
             except Exception as e:
                 yield flight.Result(f"ERR:{e}".encode("utf-8"))
                 return
@@ -85,16 +103,29 @@ class ProcessingNode(flight.FlightServerBase):
             print(f"SET_CONFIG applied: {cfg}")
             yield flight.Result(b"OK")
         elif action.type == SourceNodeActions.GET_STATUS:
-            with self.open_requests_lock:
-                if self.open_requests == 0:
-                    status = NodeStatus.IDLE
-                else:
-                    status = NodeStatus.SENDING_DATA
-            yield flight.Result(status.encode("utf-8"))
+            yield flight.Result(self.node_status().encode("utf-8"))
+        elif action.type == SourceNodeActions.GET_INFO:
+            info = {
+                "role": "processing",
+                "status": self.node_status(),
+                "config": self.runtime_config.to_dict(),
+                "metrics": self.metrics(),
+                "targets": routing.targets(self.runtime_config, [self.forward_node]),
+            }
+            yield flight.Result(json.dumps(info).encode("utf-8"))
         else:
             raise NotImplementedError(f"Unknown action: {action.type}")
 
     def do_put(self, context, descriptor, reader, writer):
+        with self.open_requests_lock:
+            self.open_requests += 1
+        try:
+            self.process_stream(descriptor, reader)
+        finally:
+            with self.open_requests_lock:
+                self.open_requests -= 1
+
+    def process_stream(self, descriptor, reader):
         cfg = self.runtime_config
         if not cfg.query:
             raise flight.FlightServerError(
@@ -106,9 +137,6 @@ class ProcessingNode(flight.FlightServerBase):
                 "Invalid runtime config: 'query_result_schema' is unset. "
                 "Send SET_CONFIG with a 'query_result_schema' before sending data."
             )
-
-        with self.open_requests_lock:
-            self.open_requests += 1
 
         ctx = SessionContext(SessionConfig().with_batch_size(cfg.tuples_per_batch))
 
@@ -149,10 +177,13 @@ class ProcessingNode(flight.FlightServerBase):
             }
         )
 
-        forward_writer, _ = self.forwarding_client.do_put(
+        forward_writer = routing.Writer(
             flight.FlightDescriptor.for_path(forwarded_path_info),
-            schema=target_schema,
-            options=call_options,
+            target_schema,
+            call_options,
+            lambda: self.runtime_config,
+            [self.forward_node],
+            thread_id or 0,
         )
 
         input_bytes = 0
@@ -230,6 +261,11 @@ class ProcessingNode(flight.FlightServerBase):
             cost_break_down["querying"].append(querying_end - querying_start)
             cost_break_down["encoding"].append(encoding_total)
             cost_break_down["sending"].append(sending_total)
+            with self.totals_lock:
+                self.totals["rows_in"] += batch.num_rows
+                self.totals["bytes_out"] += batch_output_bytes
+                self.totals["query_seconds"] += querying_end - querying_start
+                self.totals["send_seconds"] += sending_total
 
         if cfg.use_buffering:
             print("using buffering...")
@@ -302,9 +338,6 @@ class ProcessingNode(flight.FlightServerBase):
             self.logs.append(log)
         log_str = json.dumps(log)
         print(log_str)
-
-        with self.open_requests_lock:
-            self.open_requests -= 1
 
 
 if __name__ == "__main__":
