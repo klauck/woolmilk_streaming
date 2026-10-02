@@ -1,0 +1,285 @@
+{
+   "config": {
+      "remote_servers": {
+         "192.168.2.80": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         },
+         "192.168.2.81": {
+            "username": "picocluster",
+            "base_dir": "/home/picocluster/usama/woolmilk_streaming/woolmilk",
+            "python_env": "/home/picocluster/usama/woolmilk_streaming/venv"
+         }
+      }
+   },
+   "source_nodes": [
+      {
+         "processing_nodes": [
+            "192.168.2.81:8027"
+         ],
+         "stream": "nexmark_bid",
+         "overall_tuples": 5000000,
+         "tuples_per_batch": 10000,
+         "server_address": "192.168.2.80:8007",
+         "deployment_server": "192.168.2.80",
+         "generator_executable": "nexmark",
+         "input_folder": "input_data",
+         "store_input": true,
+         "step": 1
+      }
+   ],
+   "node_configs": {
+      "maxbps_10k_none_raw": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 10000
+         }
+      },
+      "maxbps_25k_none_raw": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         }
+      },
+      "maxbps_50k_none_raw": {
+         "192.168.2.80:8007": {
+            "compression": null,
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         }
+      },
+      "maxbps_10k_comp_lz4": {
+         "192.168.2.80:8007": {
+            "compression": "lz4",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 10000
+         }
+      },
+      "maxbps_25k_comp_lz4": {
+         "192.168.2.80:8007": {
+            "compression": "lz4",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         }
+      },
+      "maxbps_50k_comp_lz4": {
+         "192.168.2.80:8007": {
+            "compression": "lz4",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         }
+      },
+      "maxbps_10k_comp_zstd": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 10000
+         }
+      },
+      "maxbps_25k_comp_zstd": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 25000
+         }
+      },
+      "maxbps_50k_comp_zstd": {
+         "192.168.2.80:8007": {
+            "compression": "zstd",
+            "encoding": null,
+            "columns_to_encode": [],
+            "use_buffering": false,
+            "tuples_per_batch": 50000
+         }
+      }
+   },
+   "experiments": [
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 10000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_10k_none_raw",
+         "node_config": "maxbps_10k_none_raw"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_none_raw",
+         "node_config": "maxbps_25k_none_raw"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": null,
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_none_raw",
+         "node_config": "maxbps_50k_none_raw"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 10000,
+               "batches_per_second": null,
+               "compression": "lz4",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_10k_comp_lz4",
+         "node_config": "maxbps_10k_comp_lz4"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "lz4",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_comp_lz4",
+         "node_config": "maxbps_25k_comp_lz4"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "lz4",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_comp_lz4",
+         "node_config": "maxbps_50k_comp_lz4"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 10000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_10k_comp_zstd",
+         "node_config": "maxbps_10k_comp_zstd"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 25000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_25k_comp_zstd",
+         "node_config": "maxbps_25k_comp_zstd"
+      },
+      {
+         "included_nodes": [
+            0
+         ],
+         "iterations": 3,
+         "overridden_params": [
+            {
+               "tuples_per_batch": 50000,
+               "batches_per_second": null,
+               "compression": "zstd",
+               "encoding": null,
+               "columns_to_encode": [],
+               "use_buffering": false
+            }
+         ],
+         "name": "maxbps_50k_comp_zstd",
+         "node_config": "maxbps_50k_comp_zstd"
+      }
+   ],
+   "cluster_nodes": [
+      {
+         "node_type": "sink",
+         "server_address": "192.168.2.81:8027"
+      }
+   ]
+}
