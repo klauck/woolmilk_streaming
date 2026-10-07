@@ -1,9 +1,16 @@
-# WoolMilk Streaming
+# WoolMilk
+### Distributed Dataflow Research for Continuous Queries Using Open Data Management Technologies
 
-In this repository, we investigate how to run streaming queries in a multi-node cluster using [Apache DataFusion](https://datafusion.apache.org/), or more general in a composed data management system.
-The idea of using DataFusion is that we can "spend most time implementing value-adding features rather than replicating existing analytic engine technologies" [1].
+WoolMilk is a research testbed for distributed dataflow optimizations for continuous queries.
+It builds on open data management technologies, [Apache Arrow](https://arrow.apache.org/), Arrow Flight, and [Apache DataFusion](https://datafusion.apache.org/), and provides configurable queries and forward paths per node, per-link compression, automated deployment, and integrated monitoring.
 
-[Composable_Systems_for_Optimizing_Distributed_Stream_Processing.pdf](https://github.com/user-attachments/files/21215294/Composable_Systems_for_Optimizing_Distributed_Stream_Processing.pdf)
+WoolMilk is not a replacement for production stream processing systems, but a tool for rapid prototyping in research.
+Building on DataFusion lets us "spend most time implementing value-adding features rather than replicating existing analytic engine technologies" [1].
+
+## Reproducing the EDBT 2027 Paper
+
+The experiments of our EDBT 2027 short paper "WoolMilk: Distributed Dataflow Research for Continuous Queries Using Open Data Management Technologies" are described in [docs/edbt_experiments.md](docs/edbt_experiments.md), which maps each graph to the commands that reproduce it.
+
 
 
 ## Overview
@@ -174,6 +181,7 @@ See [WoolMilk Ansible Deployment](https://github.com/klauck/woolmilk_streaming/b
     
     https://voltrondata.com/codex
 
+  - [Composable_Systems_for_Optimizing_Distributed_Stream_Processing.pdf](https://github.com/user-attachments/files/21215294/Composable_Systems_for_Optimizing_Distributed_Stream_Processing.pdf)
 
     #### DataFusion Streaming
 
