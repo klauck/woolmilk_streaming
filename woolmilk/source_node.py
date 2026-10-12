@@ -7,6 +7,7 @@ import time
 from fractions import Fraction
 from pathlib import Path
 
+import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pyarrow import flight
@@ -16,6 +17,7 @@ from woolmilk.encoding import (
     get_compressed_flight_options,
     set_schema_encoding,
 )
+from woolmilk.rate_profile import build_rate_profile_per_thread, current_interval
 
 
 class NodeStatus:
@@ -30,6 +32,26 @@ class SourceNodeActions:
     GENERATE_DATA = "GENERATE_DATA"
     SEND_DATA = "SEND_DATA"
     GET_STATUS = "GET_STATUS"
+
+
+def scheduled_timestamps(base_ms, sched_elapsed, interval, n):
+    """int64 event timestamps (ms) for one batch: `base_ms` shifted by the
+    scheduled elapsed time, with the `n` tuples spread across the batch's
+    `interval` so their density follows the rate profile (dense during bursts,
+    sparse during baseline). `interval` None -> all tuples share `sched_elapsed`.
+    """
+    step = (interval / n) if interval else 0.0
+    offsets_s = sched_elapsed + np.arange(n) * step
+    return (base_ms + offsets_s * 1000.0).astype(np.int64)
+
+
+def _set_date_time(batch, ts_array):
+    """Return a copy of `batch` with its `date_time` column replaced."""
+    idx = batch.schema.names.index("date_time")
+    field_type = batch.schema.field(idx).type
+    arrays = [batch.column(i) for i in range(batch.num_columns)]
+    arrays[idx] = pa.array(ts_array, type=field_type)
+    return pa.RecordBatch.from_arrays(arrays, schema=batch.schema)
 
 
 class SourceNode(flight.FlightServerBase):
@@ -52,6 +74,8 @@ class SourceNode(flight.FlightServerBase):
         compression=None,
         encoding=None,
         columns_to_encode=None,
+        rate_profile=None,
+        rewrite_timestamps=True,
     ):
         super().__init__(location)
         self.location = location
@@ -75,6 +99,13 @@ class SourceNode(flight.FlightServerBase):
         self.compression = compression
         self.encoding = encoding
         self.columns_to_encode = columns_to_encode
+        # Time-varying send rate (temporal bursts). Falls back to a single
+        # constant phase derived from `batches_per_second`, else None
+        # (send as fast as possible).
+        self.rate_profile_per_thread = build_rate_profile_per_thread(
+            rate_profile, batches_per_second, len(processing_nodes)
+        )
+        self.rewrite_timestamps = rewrite_timestamps
         self.thread_tables = [None] * len(processing_nodes)
         self.threads = []
         self.completed_threads = 0
@@ -195,18 +226,38 @@ class SourceNode(flight.FlightServerBase):
         start = time.time()
         send_times = []
         total_bytes = 0
-
-        interval = None
-        if self.batches_per_second_per_thread:
-            interval = float(1 / self.batches_per_second_per_thread)
+        next_send_time = start
+        # Only rewrite event timestamps when there is an actual rate schedule to
+        # match; a plain run keeps Nexmark's original date_time values.
+        rewrite = (
+            self.rewrite_timestamps
+            and self.rate_profile_per_thread is not None
+            and "date_time" in schema.names
+        )
+        base_ms = None
 
         for i, batch in enumerate(batches):
-            now = time.time()
-            if interval and start + i * interval > now:
-                time.sleep(start + i * interval - now)
+            # Pace according to the (possibly time-varying) rate profile. This
+            # also covers a constant `batches_per_second`, which is folded into
+            # the profile as a single phase.
+            sched_elapsed = next_send_time - start
+            interval = current_interval(self.rate_profile_per_thread, sched_elapsed)
+            if interval is not None:
+                now = time.time()
+                if next_send_time > now:
+                    time.sleep(next_send_time - now)
                 send_start = time.time()
+                next_send_time += interval
             else:
-                send_start = now
+                send_start = time.time()
+                next_send_time = send_start
+
+            if rewrite and batch.num_rows:
+                if base_ms is None:
+                    dt_idx = schema.names.index("date_time")
+                    base_ms = int(batch.column(dt_idx).to_numpy().min())
+                ts = scheduled_timestamps(base_ms, sched_elapsed, interval, batch.num_rows)
+                batch = _set_date_time(batch, ts)
 
             if use_dictionary_encoding:
                 assert self.columns_to_encode is not None
@@ -385,6 +436,25 @@ if __name__ == "__main__":
         default=None,
         help="Comma-separated columns to dictionary-encode (e.g. city,name)",
     )
+    parser.add_argument(
+        "--rate-profile",
+        type=str,
+        default=None,
+        help=(
+            "JSON describing a time-varying send rate, e.g. to simulate "
+            'temporal bursts: \'{"phases": '
+            '[{"duration_s": 10, "batches_per_second": 2}, '
+            '{"duration_s": 5, "batches_per_second": 50}], "loop": true}\'. '
+            "Overrides --batches-per-second if set."
+        ),
+    )
+    parser.add_argument(
+        "--no-rewrite-timestamps",
+        dest="rewrite_timestamps",
+        action="store_false",
+        help="Do not rewrite tuple date_time to match the rate profile "
+        "(default: rewrite so event timestamps follow the burst pattern).",
+    )
     args = parser.parse_args()
 
     processing_nodes = []
@@ -403,6 +473,13 @@ if __name__ == "__main__":
     columns_to_encode = (
         args.columns_to_encode.split(",") if args.columns_to_encode else None
     )
+
+    rate_profile = None
+    if args.rate_profile:
+        rate_profile = json.loads(args.rate_profile)
+        assert "phases" in rate_profile and rate_profile["phases"], (
+            "rate_profile must contain a non-empty 'phases' list"
+        )
 
     print("\n" + "=" * 40)
     print(" WoolMilk Source Node Parameters")
@@ -424,6 +501,7 @@ if __name__ == "__main__":
     print(f" Compression                : {args.compression}")
     print(f" Encoding                   : {args.encoding}")
     print(f" Columns to Encode          : {args.columns_to_encode}")
+    print(f" Rate Profile               : {rate_profile}")
     print("=" * 40 + "\n")
 
     if len(processing_nodes) == 0:
@@ -456,6 +534,8 @@ if __name__ == "__main__":
         compression=args.compression,
         encoding=args.encoding,
         columns_to_encode=columns_to_encode,
+        rate_profile=rate_profile,
+        rewrite_timestamps=args.rewrite_timestamps,
     )
 
     if args.source_server_address:

@@ -54,6 +54,7 @@ class SourceNode:
     tuples_per_batch: int
     server_address: Optional[str] = None
     step: int = -1
+    offset: Optional[int] = None
     deployment_server: Optional[str] = "127.0.0.1"
     store_input: Optional[bool] = False
     input_folder: Optional[str] = None
@@ -65,6 +66,8 @@ class SourceNode:
     compression: Optional[str] = None
     encoding: Optional[str] = None
     columns_to_encode: Optional[List[str]] = None
+    rate_profile: Optional[Dict] = None
+    skew_config: Optional[Dict] = None
 
 
 @dataclass
@@ -73,6 +76,32 @@ class Config:
     processing_nodes: List[ProcessingNode]
     source_nodes: List[SourceNode]
     remote_servers: Dict[str, RemoteServerConfig] = field(default_factory=dict)
+
+
+def assign_source_node_partitions(source_nodes: List[SourceNode]) -> None:
+    """Fill in default `offset`/`step` so multiple source nodes partition the
+    overall Nexmark stream into disjoint, evenly-sized ranges.
+
+    Each source node's threads (one per processing node) are assigned
+    consecutive offsets into a shared cycle whose length (`step`) is the
+    total number of threads across all source nodes. This avoids the
+    default `step = len(own processing_nodes)` (which would make every
+    source node generate the same, overlapping data).
+
+    A source node with an explicit `offset` and/or `step` is left
+    untouched, so a non-default (variable) partitioning can be configured
+    by hand when needed. A single source node keeps the original defaults
+    (offset 0, step = number of its threads).
+    """
+    total_threads = sum(len(sn.processing_nodes) for sn in source_nodes)
+
+    cumulative_threads = 0
+    for sn in source_nodes:
+        if sn.step == -1:
+            sn.step = total_threads
+        if sn.offset is None:
+            sn.offset = cumulative_threads
+        cumulative_threads += len(sn.processing_nodes)
 
 
 def parse_config(json_path: Path) -> Config:
@@ -88,6 +117,7 @@ def parse_config(json_path: Path) -> Config:
     sink_nodes = [SinkNode(**sn) for sn in data.get("sink_nodes", [])]
     processing_nodes = [ProcessingNode(**pn) for pn in data.get("processing_nodes", [])]
     source_nodes = [SourceNode(**sn) for sn in data.get("source_nodes", [])]
+    assign_source_node_partitions(source_nodes)
 
     return Config(
         sink_nodes=sink_nodes,
@@ -179,7 +209,10 @@ class DeploymentRunner:
 
     def get_python(self, host: Optional[str]) -> str:
         if self.mode == "local":
-            return "python"
+            # Use the same interpreter running the deployment, so spawned
+            # nodes work on systems where `python` is not on PATH (e.g. only
+            # `python3` exists). The remote path below is unaffected.
+            return sys.executable
         else:
             assert self.mode == "remote" and host is not None
             return self.get_remote_server_config(host).python_env + "/bin/python"
@@ -312,6 +345,61 @@ class DeploymentRunner:
             )
         time.sleep(1)
 
+    def pre_generate_skewed_input(self):
+        """For each source node with a `skew_config`, pre-generate the skewed
+        Parquet files using the source node's own cache-naming convention, so
+        `source_node.py` picks them up (via its data cache) instead of
+        generating plain data. Local mode only.
+        """
+        import pyarrow.parquet as pq
+
+        from woolmilk.skew_generator import generate_skewed_table
+
+        for source_node in self.config.source_nodes:
+            if not source_node.skew_config:
+                continue
+            if self.mode != "local":
+                print(
+                    f"    Warning: skew_config set but mode={self.mode}; skew "
+                    "pre-generation is only supported in local mode. Skipping."
+                )
+                continue
+            if not source_node.input_folder:
+                raise ValueError(
+                    "a source node with skew_config requires an input_folder"
+                )
+
+            base_dir = self.get_base_dir(source_node.deployment_server)
+            input_folder = base_dir / Path(source_node.input_folder)
+            input_folder.mkdir(parents=True, exist_ok=True)
+
+            num_threads = len(source_node.processing_nodes)
+            tuples_per_thread = source_node.overall_tuples // num_threads
+            generator = source_node.generator_executable or "nexmark"
+
+            print(f"Pre-generating skewed input -> {input_folder}")
+            for thread_id in range(num_threads):
+                thread_offset = source_node.offset + thread_id
+                table = generate_skewed_table(
+                    number_of_tuples=tuples_per_thread,
+                    stream=source_node.stream,
+                    generator_executable=generator,
+                    offset=thread_offset,
+                    step=source_node.step,
+                    skew_config=source_node.skew_config,
+                )
+                path = input_folder / (
+                    f"{source_node.stream}_{tuples_per_thread}_"
+                    f"{thread_offset}_{source_node.step}.parquet"
+                )
+                pq.write_table(
+                    table,
+                    path,
+                    row_group_size=source_node.tuples_per_batch,
+                    compression="snappy",
+                )
+                print(f"    Wrote {path.name}")
+
     def run_source_nodes(self):
         print("Starting source nodes...")
         for i, source_node in enumerate(self.config.source_nodes):
@@ -336,6 +424,9 @@ class DeploymentRunner:
                 "--processing-nodes",
                 processing_nodes,
             ]
+            if source_node.offset is not None:
+                cmd.append("--offset")
+                cmd.append(str(source_node.offset))
             if source_node.store_input:
                 cmd.append("-store-input")
             if source_node.input_folder:
@@ -375,6 +466,10 @@ class DeploymentRunner:
             if source_node.columns_to_encode:
                 cmd.append("--columns-to-encode")
                 cmd.append(",".join(source_node.columns_to_encode))
+
+            if source_node.rate_profile is not None:
+                cmd.append("--rate-profile")
+                cmd.append(self.quote_if_remote(json.dumps(source_node.rate_profile)))
 
             node_identifier = (
                 source_node.server_address
@@ -476,6 +571,7 @@ class DeploymentRunner:
         try:
             self.run_sink_nodes()
             self.run_processing_nodes()
+            self.pre_generate_skewed_input()
             self.run_source_nodes()
         except Exception as e:
             print(f"Error during deployment: {e}")
