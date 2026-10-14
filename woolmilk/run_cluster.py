@@ -1,6 +1,7 @@
 import argparse
 import json
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -523,6 +524,11 @@ if __name__ == "__main__":
         "--local-results-dir",
         help="Local directory to store copied logs from remote servers",
     )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Start the cluster and hold until signalled, instead of prompting for input",
+    )
 
     args = parser.parse_args()
 
@@ -547,9 +553,23 @@ if __name__ == "__main__":
         local_log_dir=args.local_log_dir if args.local_log_dir else None,
         local_results_dir=args.local_results_dir if args.local_results_dir else None,
     )
-    runner.deploy_and_wait()
+    if args.headless:
+        runner.deploy()
+        wait_until_status(config.sink_nodes, NodeStatus.IDLE)
+        wait_until_status(config.processing_nodes, NodeStatus.IDLE)
 
-    time.sleep(2)
-    print("Press any key to exit")
-    input()
-    runner.cleanup()
+        def _stop(*_):
+            runner.cleanup()
+            sys.exit(0)
+
+        signal.signal(signal.SIGTERM, _stop)
+        signal.signal(signal.SIGINT, _stop)
+        print("Headless: cluster up, holding until signalled")
+        signal.pause()
+    else:
+        runner.deploy_and_wait()
+
+        time.sleep(2)
+        print("Press any key to exit")
+        input()
+        runner.cleanup()
