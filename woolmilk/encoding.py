@@ -7,7 +7,7 @@ from pyarrow import flight
 
 
 def set_schema_encoding(schema: pa.Schema, columns: List[str]) -> pa.Schema:
-    print("dictionary encoding schema...")
+    # print("dictionary encoding schema...")
     new_fields = []
     for field in schema:
         if field.name in columns and (
@@ -20,7 +20,7 @@ def set_schema_encoding(schema: pa.Schema, columns: List[str]) -> pa.Schema:
 
 
 def dictionary_encode_batch(batch: pa.RecordBatch, columns: List[str]) -> pa.RecordBatch:
-    print("dictionary encoding batches...")
+    # print("dictionary encoding batches...")
     new_arrays = []
     new_fields = []
     for i, field in enumerate(batch.schema):
@@ -38,14 +38,13 @@ def dictionary_encode_batch(batch: pa.RecordBatch, columns: List[str]) -> pa.Rec
 
 
 def dictionary_decode_batch(batch: pa.RecordBatch) -> pa.RecordBatch:
-    print("dictionary decoding batches...")
     # check if there is any dictionary encoded column
     has_dictionary_encoded_column = any(
         pa.types.is_dictionary(field.type) for field in batch.schema
     )
     if not has_dictionary_encoded_column:
         return batch
-
+    print("dictionary decoding batches...")
     new_arrays = []
     new_fields = []
     for i, field in enumerate(batch.schema):

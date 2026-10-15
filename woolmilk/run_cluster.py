@@ -39,6 +39,8 @@ class ProcessingNode:
     forward_node: str
     query: Optional[str] = None
     query_result_schema: Optional[Dict] = None
+    window_size: Optional[int] = None
+    window_slide: Optional[int] = None
     compression: Optional[str] = None
     encoding: Optional[str] = None
     columns_to_encode: Optional[List[str]] = None
@@ -292,6 +294,12 @@ class DeploymentRunner:
                 cmd.append(
                     self.quote_if_remote(json.dumps(proc_node.query_result_schema))
                 )
+            if proc_node.window_size is not None:
+                cmd.append("--window-size")
+                cmd.append(str(proc_node.window_size))
+            if proc_node.window_slide is not None:
+                cmd.append("--window-slide")
+                cmd.append(str(proc_node.window_slide))
             if proc_node.tuples_per_batch is not None:
                 cmd.append("--tuples-per-batch")
                 cmd.append(str(proc_node.tuples_per_batch))
@@ -354,9 +362,10 @@ class DeploymentRunner:
                 cmd.append("--iteration-id")
                 cmd.append(str(source_node.iteration_id))
 
-            if source_node.id is not None:
-                cmd.append("--source-node-id")
-                cmd.append(str(source_node.id))
+            source_node_id = source_node.id if source_node.id is not None else i
+            # if source_node.id is not None:
+            cmd.append("--source-node-id")
+            cmd.append(str(source_node_id))
 
             if source_node.server_address is not None:
                 cmd.append("--source-server-address")

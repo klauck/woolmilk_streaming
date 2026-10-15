@@ -4,6 +4,7 @@ from pathlib import Path
 
 import datafusion
 import pyarrow
+import pyarrow.dataset as ds
 
 import woolmilk.source_node
 from woolmilk.run_cluster import DeploymentRunner, parse_config
@@ -90,6 +91,68 @@ class TestNexmarkDeployment(unittest.TestCase):
         ).collect()
         expected_table = pyarrow.Table.from_batches(expected).sort_by(
             [("auction", "ascending"), ("price", "ascending")]
+        )
+
+        self._assert_tables_equal(actual_table, expected_table)
+
+    def test_nexmark_aggregation_1(self):
+        config = parse_config(self.test_dir / "configurations" / "aggregation_1.json")
+        runner = DeploymentRunner(config, "logs")
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
+
+        # Collect actual results
+        actual_table = self._collect_parquet_results(self.result_folder).sort_by(
+            [("count(*)", "ascending")]
+        )
+
+        # Calculate expected result
+        ctx = datafusion.SessionContext()
+        ctx.register_parquet(
+            "bid",
+            self.test_dir / "input" / "test_aggregation" / "nexmark_bid_1000_0_1.parquet",
+        )
+        expected = ctx.sql(
+            "SELECT count(*) "
+            "FROM Bid "
+            "WHERE  channel < 'H' "
+            "GROUP BY date_time / 20"
+        ).collect()
+        expected_table = pyarrow.Table.from_batches(expected).sort_by(
+            [("count(*)", "ascending")]
+        )
+
+        self._assert_tables_equal(actual_table, expected_table)
+
+    def test_nexmark_aggregation_2(self):
+        config = parse_config(self.test_dir / "configurations" / "aggregation_2.json")
+        runner = DeploymentRunner(config, "logs")
+        self.addCleanup(runner.cleanup)
+        runner.deploy_and_wait()
+
+        # Collect actual results
+        actual_table = self._collect_parquet_results(self.result_folder).sort_by(
+            [("count(*)", "ascending")]
+        )
+
+        # Calculate expected result
+        ctx = datafusion.SessionContext()
+        dataset = ds.dataset(
+            [
+                self.test_dir / "input" / "test_aggregation" / "nexmark_bid_500_1_2.parquet",
+                self.test_dir / "input" / "test_aggregation" / "nexmark_bid_500_0_2.parquet",
+            ],
+            format="parquet",
+        )
+        ctx.register_dataset("bid", dataset)
+        expected = ctx.sql(
+            "SELECT count(*) "
+            "FROM Bid "
+            "WHERE  channel < 'H' "
+            "GROUP BY date_time / 30"
+        ).collect()
+        expected_table = pyarrow.Table.from_batches(expected).sort_by(
+            [("count(*)", "ascending")]
         )
 
         self._assert_tables_equal(actual_table, expected_table)
