@@ -118,10 +118,8 @@ class ProcessingNode(flight.FlightServerBase):
         timestamps = batch.column("date_time")
         timestamps_np = timestamps.to_numpy(zero_copy_only=True)
         slide_starts_np = (timestamps_np // window_slide) * window_slide
-        print(slide_starts_np)
 
         change_idx = np.flatnonzero(slide_starts_np[1:] != slide_starts_np[:-1]) + 1
-        print(change_idx)
         start_idx = 0
         for end_idx in change_idx:
             sub_batch = batch.slice(start_idx, end_idx - start_idx)
@@ -331,22 +329,17 @@ class ProcessingNode(flight.FlightServerBase):
 
             querying_start = time.time()
             if windowing:
-                print(
-                    "\n\n\nprocess batch", batch_id, watermark, window_size, window_slide
-                )
                 slide_batches = self._split_batch(batch, window_slide)
-                print("slide_batches", slide_batches)
-                print("get lock")
                 with self.windowing_lock:
-                    self.active_sources[source_key]["watermark"] = watermark
+                    reported = self.active_sources[source_key]["watermark"]
+                    if watermark is not None and watermark > reported:
+                        self.active_sources[source_key]["watermark"] = watermark
                     for slide_start, sub_batches in slide_batches.items():
                         self.state.setdefault(slide_start, []).extend(sub_batches)
-                    print("register pending batches")
                     self._register_pending_windows(
                         slide_batches.keys(), window_size, window_slide
                     )
                     to_flush = self._collect_windows_to_flush(window_size, window_slide)
-                    print("flush", to_flush)
                     result = []
                     for window_end, window_slides in to_flush:
                         batches = self._materialize_window_batches(
@@ -357,7 +350,6 @@ class ProcessingNode(flight.FlightServerBase):
                         ctx.register_record_batches(self.default_table_name, [batches])
                         result_df = ctx.sql(query)
                         result.extend(result_df.collect())
-                        print("result", result)
                         ctx.deregister_table(self.default_table_name)
 
             else:
@@ -440,8 +432,10 @@ class ProcessingNode(flight.FlightServerBase):
                 recv_start = time.time()
 
         if windowing:
+            querying_start = time.time()
             with self.windowing_lock:
                 self.active_sources[source_key]["is_finished"] = True
+                final_watermark = self.active_sources[source_key]["watermark"]
 
                 to_flush = self._collect_windows_to_flush(window_size, window_slide)
 
@@ -456,16 +450,39 @@ class ProcessingNode(flight.FlightServerBase):
                     result_df = ctx.sql(query)
                     result.extend(result_df.collect())
                     ctx.deregister_table(self.default_table_name)
+            querying_end = time.time()
+            cost_break_down["querying"].append(querying_end - querying_start)
 
+            final_batch_id = f"{source_node_id}:{thread_id}:final"
+            encoding_total = 0.0
+            sending_total = 0.0
             for j, result_batch in enumerate(result):
-                # output_rows += result_batch.num_rows
+                output_rows += result_batch.num_rows
                 if use_dictionary_encoding:
                     assert cfg.columns_to_encode is not None
+                    enc_start = time.time()
                     result_batch = dictionary_encode_batch(
                         result_batch, cfg.columns_to_encode
                     )
-
-                forward_writer.write_batch(result_batch)
+                    encoding_total += time.time() - enc_start
+                outgoing_id = (
+                    final_batch_id if len(result) == 1 else f"{final_batch_id}.{j}"
+                )
+                if j == len(result) - 1:
+                    batch_meta_data = {
+                        "watermark": final_watermark,
+                        "batch_id": outgoing_id,
+                    }
+                else:
+                    batch_meta_data = {"batch_id": outgoing_id}
+                send_start = time.time()
+                forward_writer.write_with_metadata(
+                    result_batch, json.dumps(batch_meta_data).encode("utf-8")
+                )
+                sending_total += time.time() - send_start
+                output_bytes += result_batch.nbytes
+            cost_break_down["encoding"].append(encoding_total)
+            cost_break_down["sending"].append(sending_total)
 
         forward_writer.done_writing()
         end = time.time()
